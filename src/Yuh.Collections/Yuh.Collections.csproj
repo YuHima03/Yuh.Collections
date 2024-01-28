@@ -8,7 +8,29 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <SignAssembly>False</SignAssembly>
-    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Yuh.Collections</Title>
+    <Version>0.1.0</Version>
+    <AssemblyVersion>0.1.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
+    <Authors>YuHima</Authors>
+    <Copyright>(C) 2024 YuHima</Copyright>
+    <PackageProjectUrl>https://github.com/YuHima03/Yuh.Collections</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/YuHima03/Yuh.Collections</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>collection;deque</PackageTags>
+    <Description>Provides collection types and searching methods.</Description>
+    <NeutralLanguage>en</NeutralLanguage>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>
