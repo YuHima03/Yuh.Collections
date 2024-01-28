@@ -352,19 +352,19 @@ namespace Yuh.Collections
         /// Returns an enumerator that iterates through the <see cref="Deque{T}"/>.
         /// </summary>
         /// <returns>An enumerator that can be used to iterate through the <see cref="Deque{T}"/>.</returns>
-        public ReadOnlySpan<T>.Enumerator GetEnumerator()
+        public Enumerator GetEnumerator()
         {
-            return AsReadOnlySpan().GetEnumerator();
+            return new(this);
         }
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
-            return new Enumerator(this);
+            return GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return new Enumerator(this);
+            return GetEnumerator();
         }
 
         int IList.IndexOf(object? value)
