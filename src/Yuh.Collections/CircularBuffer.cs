@@ -89,9 +89,12 @@ namespace Yuh.Collections
         public CircularBuffer() : this(new T[_defaultCapacity]) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="CircularBuffer{T}"/> class that is empty and has the specified initial capacity.
+        /// Initializes a new instance of the <see cref="CircularBuffer{T}"/> class that is empty and has the specified capacity.
         /// </summary>
-        /// <param name="capacity"></param>
+        /// <param name="capacity">
+        ///     The number of elements that may be contained in the <see cref="CircularBuffer{T}"/> without resizing.
+        ///     This value must be power of 2.
+        /// </param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> must be greater than zero, and less than <see cref="Array.MaxLength"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="capacity"/> must be power or 2.</exception>
         public CircularBuffer(int capacity)
