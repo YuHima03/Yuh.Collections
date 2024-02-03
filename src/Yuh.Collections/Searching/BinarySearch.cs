@@ -8,6 +8,7 @@ namespace Yuh.Collections.Searching
     /// </summary>
     public static class BinarySearch
     {
+#if NET7_0_OR_GREATER
         /// <summary>
         /// Returns the zero-based index of the first element in the specified collection that equal to the specified value.
         /// </summary>
@@ -20,7 +21,9 @@ namespace Yuh.Collections.Searching
         {
             return FirstIndexOf<T, T>(span, value);
         }
+#endif
 
+#if NET7_0_OR_GREATER
         /// <summary>
         /// Returns the zero-based index of the first element in the specified collection that equal to the specified value.
         /// </summary>
@@ -55,6 +58,7 @@ namespace Yuh.Collections.Searching
 
             return span[begin] == value ? begin : -1;
         }
+#endif
 
         /// <summary>
         /// Returns the zero-based index of the first element in the specified collection that equal to the specified value.
@@ -109,6 +113,7 @@ namespace Yuh.Collections.Searching
             return (comparer(span[begin], value) == 0) ? begin : -1;
         }
 
+#if NET7_0_OR_GREATER
         /// <summary>
         /// Returns the zero-based index of the last element in the specified collection that equal to the specified value.
         /// </summary>
@@ -121,7 +126,9 @@ namespace Yuh.Collections.Searching
         {
             return LastIndexOf<T, T>(span, value);
         }
+#endif
 
+#if NET7_0_OR_GREATER
         /// <summary>
         /// Returns the zero-based index of the last element in the specified collection that equal to the specified value.
         /// </summary>
@@ -156,6 +163,7 @@ namespace Yuh.Collections.Searching
 
             return span[begin] == value ? begin : -1;
         }
+#endif
 
         /// <summary>
         /// Returns the zero-based index of the last element in the specified collection that equal to the specified value.
@@ -210,6 +218,8 @@ namespace Yuh.Collections.Searching
             return (comparer(span[begin], value) == 0) ? begin : -1;
         }
 
+
+#if NET7_0_OR_GREATER
         /// <summary>
         /// Returns the zero-based index of the first element in the specified collection that is greater than or equal to the specified value.
         /// </summary>
@@ -222,7 +232,9 @@ namespace Yuh.Collections.Searching
         {
             return LowerBound<T, T>(span, value);
         }
+#endif
 
+#if NET7_0_OR_GREATER
         /// <summary>
         /// Returns the zero-based index of the first element in the specified collection that is greater than or equal to the specified value.
         /// </summary>
@@ -257,6 +269,7 @@ namespace Yuh.Collections.Searching
 
             return span[begin] >= value ? begin : -1;
         }
+#endif
 
         /// <summary>
         /// Returns the zero-based index of the first element in the specified collection that is greater than or equal to the specified value.
@@ -312,6 +325,7 @@ namespace Yuh.Collections.Searching
             return (comparer(span[begin], value) >= 0) ? begin : -1;
         }
 
+#if NET7_0_OR_GREATER
         /// <summary>
         /// Returns the zero-based index of the first element in the specified collection that is greater than the specified value.
         /// </summary>
@@ -324,7 +338,9 @@ namespace Yuh.Collections.Searching
         {
             return UpperBound<T, T>(span, value);
         }
+#endif
 
+#if NET7_0_OR_GREATER
         /// <summary>
         /// Returns the zero-based index of the first element in the specified collection that is greater than the specified value.
         /// </summary>
@@ -359,6 +375,7 @@ namespace Yuh.Collections.Searching
 
             return span[begin] > value ? begin : -1;
         }
+#endif
 
         /// <summary>
         /// Returns the zero-based index of the first element in the specified collection that is greater than the specified value.
