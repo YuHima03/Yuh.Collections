@@ -126,7 +126,7 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> must be positive or zero, and less than or equal to the maximum length of an array.</exception>
         public DequeSlim(int capacity)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(capacity);
+            ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
 
             _capacity = capacity;
@@ -490,7 +490,7 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than the number of elements contained in the <see cref="DequeSlim{T}"/> or greater than <see cref="Array.MaxLength"/>.</exception>
         public void Resize(int capacity)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(capacity);
+            ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
             if (capacity < _count)
             {

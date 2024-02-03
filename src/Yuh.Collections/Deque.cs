@@ -129,7 +129,7 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than zero.</exception>
         public Deque(int capacity)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(capacity);
+            ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
 
             if (capacity == 0)
             {
@@ -280,7 +280,7 @@ namespace Yuh.Collections
         /// <returns></returns>
         public void EnsureCapacity(int capacity)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(capacity);
+            ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
 
             if (capacity > _items.Length)
@@ -297,8 +297,8 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="frontMargin"/> or <paramref name="backMargin"/> is 0.</exception>
         public void EnsureCapacity(int frontMargin, int backMargin)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(frontMargin);
-            ArgumentOutOfRangeException.ThrowIfNegative(backMargin);
+            ThrowHelpers.ThrowIfArgumentIsNegative(frontMargin);
+            ThrowHelpers.ThrowIfArgumentIsNegative(backMargin);
 
             if ((frontMargin, backMargin) == (FrontMargin, BackMargin))
             {
@@ -604,8 +604,8 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentException">The total required capacity is greater than the maximum size of an array.</exception>
         public void Resize(int frontMargin, int backMargin)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(frontMargin);
-            ArgumentOutOfRangeException.ThrowIfNegative(backMargin);
+            ThrowHelpers.ThrowIfArgumentIsNegative(frontMargin);
+            ThrowHelpers.ThrowIfArgumentIsNegative(backMargin);
 
             var capacity = frontMargin + backMargin + _count;
 

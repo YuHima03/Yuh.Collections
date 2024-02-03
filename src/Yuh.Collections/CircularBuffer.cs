@@ -100,7 +100,7 @@ namespace Yuh.Collections
             {
                 throw new ArgumentOutOfRangeException(nameof(capacity), "`capacity` must be less than the maximum number of elements that may be contained in an array.");
             }
-            ThrowHelpers.ThrowIfNotPowerOfTwo(capacity);
+            ThrowHelpers.ThrowIfArgumentIsNotPowerOfTwo(capacity);
 
             _buffer = new T[capacity];
             _capacity = capacity;
@@ -168,7 +168,7 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentException">The number of the elements in the source <see cref="CircularBuffer{T}"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
         public void CopyTo(T[] array, int arrayIndex)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(arrayIndex);
+            ThrowHelpers.ThrowIfArgumentIsNegative(arrayIndex);
             if (array.Length - arrayIndex < _count)
             {
                 throw new ArgumentException("The number of the elements in the source buffer is greater than the available space from the specified index to the end of the destination array.");
@@ -187,7 +187,7 @@ namespace Yuh.Collections
 
         void ICollection.CopyTo(Array array, int index)
         {
-            ArgumentOutOfRangeException.ThrowIfNegative(index);
+            ThrowHelpers.ThrowIfArgumentIsNegative(index);
             if (array.Length - index < _count)
             {
                 throw new ArgumentException("The number of the elements in the source buffer is greater than the available space from the specified index to the end of the destination array.");
