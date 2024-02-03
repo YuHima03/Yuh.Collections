@@ -2,4 +2,4 @@
 
 Provides collection types including deque, and also provides methods to search through a collection.
 
-両端キュー (deque) を含むコレクション型や、探索に使う関数群を提供します。
+荳｡遶ｯ繧ｭ繝･繝ｼ (deque) 繧貞性繧繧ｳ繝ｬ繧ｯ繧ｷ繝ｧ繝ｳ蝙九ｄ縲∵爾邏｢縺ｫ菴ｿ縺�髢｢謨ｰ鄒､繧呈署萓帙＠縺ｾ縺吶�
