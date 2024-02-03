@@ -24,7 +24,7 @@
     <Description>Provides collection types and searching methods.</Description>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <ReleaseNotes>Added supports for .NET 6 and 7.</ReleaseNotes>
+    <PackageReleaseNotes>Added supports for .NET 6 and 7.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
