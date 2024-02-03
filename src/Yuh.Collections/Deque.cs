@@ -137,7 +137,7 @@ namespace Yuh.Collections
             }
             else
             {
-                capacity = int.Min(capacity, Array.MaxLength);
+                capacity = Math.Min(capacity, Array.MaxLength);
                 _items = new T[capacity];
                 _head = _items.Length >> 1;
             }
@@ -305,8 +305,8 @@ namespace Yuh.Collections
                 return;
             }
 
-            int newFrontMargin = int.Max(frontMargin, this.FrontMargin);
-            int newBackMargin = int.Max(backMargin, this.BackMargin);
+            int newFrontMargin = Math.Max(frontMargin, this.FrontMargin);
+            int newBackMargin = Math.Max(backMargin, this.BackMargin);
             Resize(newFrontMargin, newBackMargin);
         }
 
@@ -727,8 +727,8 @@ namespace Yuh.Collections
         private void Grow()
         {
             // 値を [_defaultCapacity, Array.MaxLength] に収める.
-            int newCapacity = int.Min(
-                    int.Max(_items.Length << 1, _defaultCapacity),
+            int newCapacity = Math.Min(
+                    Math.Max(_items.Length << 1, _defaultCapacity),
                     Array.MaxLength
                     );
 

@@ -527,8 +527,8 @@ namespace Yuh.Collections
         /// <exception cref="Exception">The number of elements contained in the <see cref="DequeSlim{T}"/> has reached its upper limit.</exception>
         private void Grow()
         {
-            int capacity = int.Min(
-                int.Max(_capacity << 1, _defaultCapacity),
+            int capacity = Math.Min(
+                Math.Max(_capacity << 1, _defaultCapacity),
                 Array.MaxLength
                 );
 
