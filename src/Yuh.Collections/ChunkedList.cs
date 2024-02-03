@@ -59,8 +59,8 @@ namespace Yuh.Collections
         /// </summary>
         public ChunkedList(int chunkSize = DefaultChunkSize)
         {
-            ArgumentOutOfRangeException.ThrowIfLessThan(chunkSize, MinChunkSize);
-            ThrowHelpers.ThrowIfNotPowerOfTwo(chunkSize);
+            ThrowHelpers.ThrowIfArgumentIsLessThan(chunkSize, MinChunkSize);
+            ThrowHelpers.ThrowIfArgumentIsNotPowerOfTwo(chunkSize);
 
             _chunkSizeSqRoot = (int)Math.Sqrt(chunkSize);
             _chunks = new T[DefaultChunksListCapacity][];
