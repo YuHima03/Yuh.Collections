@@ -14,6 +14,8 @@ namespace Yuh.Collections
 
         internal const string M_TypeOfValueNotSupported = "The type of the value is not supported.";
 
+        internal const string M_ValueIsNegative = "The value is negative.";
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ThrowIfArgumentIsGreaterThanMaxArrayLength(int num, [CallerArgumentExpression(nameof(num))] string? argName = null)
         {
@@ -39,6 +41,31 @@ namespace Yuh.Collections
             {
                 throw new ArgumentException($"`{paramName}` must be power of 2.", paramName);
             }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void ThrowIfArgumentIsNegative(int num, [CallerArgumentExpression(nameof(num))] string? paramName = null)
+        {
+#if NET8_0_OR_GREATER
+            ArgumentOutOfRangeException.ThrowIfNegative(num, paramName);
+#else
+            if (num < 0)
+            {
+                throw new ArgumentOutOfRangeException(paramName, M_ValueIsNegative);
+            }
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void ThrowIfArgumentIsLessThan(int num, int other, [CallerArgumentExpression(nameof(num))] string? paramName = null)
+        {
+#if NET8_0_OR_GREATER
+            ArgumentOutOfRangeException.ThrowIfLessThan(num, other, paramName);
+#else
+            if (num < other)
+            {
+                throw new ArgumentOutOfRangeException(paramName, $"The value is less than {other}");
+            }
+#endif
         }
     }
 }
