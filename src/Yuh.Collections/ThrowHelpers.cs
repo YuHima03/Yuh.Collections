@@ -35,14 +35,6 @@ namespace Yuh.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void ThrowIfNotPowerOfTwo(int num, [CallerArgumentExpression(nameof(num))] string? paramName = null)
-        {
-            if (num <= 0 || (num & (num - 1)) != 0)
-            {
-                throw new ArgumentException($"`{paramName}` must be power of 2.", paramName);
-            }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ThrowIfArgumentIsNegative(int num, [CallerArgumentExpression(nameof(num))] string? paramName = null)
         {
 #if NET8_0_OR_GREATER
