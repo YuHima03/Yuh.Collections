@@ -602,7 +602,7 @@ namespace Yuh.Collections
         /// <param name="backMargin">The number of elements that can be added at the end of the <see cref="Deque{T}"/> without resizing the internal data structure.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="frontMargin"/> or <paramref name="backMargin"/> is negative.</exception>
         /// <exception cref="ArgumentException">The total required capacity is greater than the maximum size of an array.</exception>
-        public void Resize(int frontMargin, int backMargin)
+        internal void Resize(int frontMargin, int backMargin)
         {
             ThrowHelpers.ThrowIfArgumentIsNegative(frontMargin);
             ThrowHelpers.ThrowIfArgumentIsNegative(backMargin);
@@ -740,6 +740,47 @@ namespace Yuh.Collections
             ResizeInternal(newCapacity);
         }
 
+        /// <summary>
+        /// Enlarge the internal array to twice its size.
+        /// </summary>
+        /// <remarks>
+        /// This reduces the margin at the less-frequently-used end by half and gives the remaining capacity to another end.
+        /// </remarks>
+        private void GrowImproved()
+        {
+            int newCapacity = Math.Clamp(_items.Length << 1, _defaultCapacity, Array.MaxLength);
+
+            if (newCapacity < _count + 2)
+            {
+                ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+            }
+
+            int frontMargin = FrontMargin;
+            int backMargin = BackMargin;
+
+            switch (frontMargin - backMargin)
+            {
+                case 0: // frontMargin == backMargin
+                {
+                    ResizeInternal(newCapacity);
+                    break;
+                }
+
+                case < 0: // frontMargin < backMargin
+                {
+                    ResizeInternal(newCapacity, (frontMargin + 1) >> 1);
+                    break;
+                }
+
+                default: // frontMargin > backMargin
+                {
+                    backMargin >>= 1;
+                    ResizeInternal(newCapacity, newCapacity - _count - ((backMargin + 1) >> 1));
+                    break;
+                }
+            }
+        }
+
         private void InsertInternal(int index, T item)
         {
             if (index == 0)
@@ -845,12 +886,7 @@ namespace Yuh.Collections
         {
             int frontMargin = (capacity - _count) >> 1;
             ResizeInternal(capacity, frontMargin);
-            }
-            else
-            {
-                int newHead = (capacity - _count) >> 1;
-                T[] newArray = new T[capacity];
-                Array.Copy(_items, _head, newArray, newHead, _count);
+        }
 
         /// <summary>
         /// Creates a new array as an internal array at the specified size, and copies to the array starting at the specified index all the elements contained in the <see cref="Deque{T}"/>.
