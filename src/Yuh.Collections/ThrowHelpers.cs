@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Yuh.Collections
 {
@@ -15,6 +16,13 @@ namespace Yuh.Collections
         internal const string M_TypeOfValueNotSupported = "The type of the value is not supported.";
 
         internal const string M_ValueIsNegative = "The value is negative.";
+
+        [DoesNotReturn]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void ThrowException(string? message = null, Exception? innerException = null)
+        {
+            throw new Exception(message, innerException);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ThrowIfArgumentIsGreaterThanMaxArrayLength(int num, [CallerArgumentExpression(nameof(num))] string? argName = null)
