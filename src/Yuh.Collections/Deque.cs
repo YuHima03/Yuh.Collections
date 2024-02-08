@@ -620,7 +620,7 @@ namespace Yuh.Collections
                 throw new ArgumentException("The total required capacity is greater than the maximum size of an array.");
             }
 
-            ResizeInternal(frontMargin, backMargin);
+            ResizeInternal(capacity, frontMargin);
         }
 
         /// <summary>
@@ -628,7 +628,7 @@ namespace Yuh.Collections
         /// </summary>
         public void ShrinkToFit()
         {
-            ResizeInternal(0, 0);
+            ResizeInternal(_count, 0);
         }
 
         /// <summary>
@@ -849,29 +849,25 @@ namespace Yuh.Collections
                 T[] newArray = new T[capacity];
                 Array.Copy(_items, _head, newArray, newHead, _count);
 
-                _items = newArray;
-                _head = newHead;
-            }
-
-            _version++;
-        }
-
-        private void ResizeInternal(int frontExtraCapacity, int backExtraCapacity)
+        /// <summary>
+        /// Creates a new array as an internal array at the specified size, and copies to the array starting at the specified index all the elements contained in the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <param name="capacity"></param>
+        /// <param name="frontMargin"></param>
+        private void ResizeInternal(int capacity, int frontMargin)
         {
-            int newCapacity = frontExtraCapacity + _count + backExtraCapacity;
-
-            if (newCapacity == 0)
+            if (capacity == 0)
             {
                 _items = _s_emptyArray;
                 _head = 0;
             }
             else
             {
-                T[] newArray = new T[newCapacity];
-                Array.Copy(_items, _head, newArray, frontExtraCapacity, _count);
+                T[] newArray = new T[capacity];
+                Array.Copy(_items, _head, newArray, frontMargin, _count);
 
                 _items = newArray;
-                _head = frontExtraCapacity;
+                _head = frontMargin;
             }
 
             _version++;
