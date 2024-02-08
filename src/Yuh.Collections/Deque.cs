@@ -913,7 +913,7 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Shifts all the elements in the internal data structure at specified time/times.
+        /// Shifts all the elements in the internal data structure at specified time(s).
         /// </summary>
         /// <remarks>
         /// This doesn't check whether <paramref name="diff"/> is valid or not.
