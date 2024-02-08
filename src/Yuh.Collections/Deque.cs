@@ -836,6 +836,11 @@ namespace Yuh.Collections
             }
         }
 
+        /// <summary>
+        /// Creates a new array as an internal array at the specified size, and copies to the array all the elements contained in the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <param name="capacity"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ResizeInternal(int capacity)
         {
             if (capacity == 0)
