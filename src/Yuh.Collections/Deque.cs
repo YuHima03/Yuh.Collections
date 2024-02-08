@@ -843,10 +843,8 @@ namespace Yuh.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ResizeInternal(int capacity)
         {
-            if (capacity == 0)
-            {
-                _items = _s_emptyArray;
-                _head = 0;
+            int frontMargin = (capacity - _count) >> 1;
+            ResizeInternal(capacity, frontMargin);
             }
             else
             {
