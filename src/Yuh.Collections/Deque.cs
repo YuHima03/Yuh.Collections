@@ -503,7 +503,7 @@ namespace Yuh.Collections
 
             if (index == _items.Length)
             {
-                Grow();
+                GrowImproved();
             }
 
             index = _head + _count;
@@ -523,7 +523,7 @@ namespace Yuh.Collections
         {
             if (_head == 0)
             {
-                Grow();
+                GrowImproved();
             }
 
             _items[--_head] = item;
