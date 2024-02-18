@@ -274,7 +274,7 @@ namespace Yuh.Collections
 
         /// <summary>
         ///     Ensures that the capacity of this <see cref="Deque{T}"/> is at least the specified one.
-        ///     If the current capacity is less than the specified one, resizes the internal array for the <see cref="Deque{T}"/> to be able to accommodate the specified number of elements without resizing.
+        ///     If the current capacity is less than the specified one, resizes the internal array so that the <see cref="Deque{T}"/> can accommodate the specified number of elements without resizing.
         /// </summary>
         /// <param name="capacity">The number of elements that the <see cref="Deque{T}"/> can hold without resizing.</param>
         /// <returns></returns>
