@@ -503,7 +503,7 @@ namespace Yuh.Collections
 
             if (index == _items.Length)
             {
-                GrowImproved();
+                Grow();
             }
 
             index = _head + _count;
@@ -523,7 +523,7 @@ namespace Yuh.Collections
         {
             if (_head == 0)
             {
-                GrowImproved();
+                Grow();
             }
 
             _items[--_head] = item;
@@ -726,7 +726,7 @@ namespace Yuh.Collections
         /// <remarks>
         /// This reduces the margin at the less-frequently-used end by half and gives the remaining capacity to another end.
         /// </remarks>
-        private void GrowImproved()
+        private void Grow()
         {
             int newCapacity = Math.Clamp(_items.Length << 1, _defaultCapacity, Array.MaxLength);
 
@@ -778,7 +778,7 @@ namespace Yuh.Collections
                     // shift the elements in [0, index) of the deque.
                     if (_head == 0)
                     {
-                        GrowImproved();
+                        Grow();
                     }
 
                     var span = MemoryMarshal.CreateSpan(ref _items[_head - 1], index + 1);
@@ -795,7 +795,7 @@ namespace Yuh.Collections
                     // shifts the elements in [index, _count) of the deque.
                     if (_items.Length - _head - _count == 0) // _head + _count == _items.Length
                     {
-                        GrowImproved();
+                        Grow();
                     }
 
                     var span = MemoryMarshal.CreateSpan(ref _items[_head + index], _count - index + 1);
