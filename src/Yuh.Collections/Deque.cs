@@ -723,26 +723,6 @@ namespace Yuh.Collections
         /// <summary>
         /// Enlarge the internal array to twice its size.
         /// </summary>
-        /// <exception cref="Exception">The number of elements contained in the <see cref="Deque{T}"/> has reached its upper limit.</exception>
-        private void Grow()
-        {
-            // 値を [_defaultCapacity, Array.MaxLength] に収める.
-            int newCapacity = Math.Min(
-                    Math.Max(_items.Length << 1, _defaultCapacity),
-                    Array.MaxLength
-                    );
-
-            if (newCapacity < _count + 2)
-            {
-                throw new Exception(ThrowHelpers.M_CapacityReachedUpperLimit);
-            }
-
-            ResizeInternal(newCapacity);
-        }
-
-        /// <summary>
-        /// Enlarge the internal array to twice its size.
-        /// </summary>
         /// <remarks>
         /// This reduces the margin at the less-frequently-used end by half and gives the remaining capacity to another end.
         /// </remarks>
@@ -798,7 +778,7 @@ namespace Yuh.Collections
                     // shift the elements in [0, index) of the deque.
                     if (_head == 0)
                     {
-                        Grow();
+                        GrowImproved();
                     }
 
                     var span = MemoryMarshal.CreateSpan(ref _items[_head - 1], index + 1);
@@ -815,7 +795,7 @@ namespace Yuh.Collections
                     // shifts the elements in [index, _count) of the deque.
                     if (_items.Length - _head - _count == 0) // _head + _count == _items.Length
                     {
-                        Grow();
+                        GrowImproved();
                     }
 
                     var span = MemoryMarshal.CreateSpan(ref _items[_head + index], _count - index + 1);
