@@ -766,16 +766,15 @@ namespace Yuh.Collections
                     break;
                 }
 
-                case < 0: // frontMargin < backMargin
+                case < 0: // frontMargin < backMargin (the front is more frequently used)
                 {
-                    ResizeInternal(newCapacity, (frontMargin + 1) >> 1);
+                    ResizeInternal(newCapacity, newCapacity - _count - ((backMargin + 1) >> 1));
                     break;
                 }
 
-                default: // frontMargin > backMargin
+                default: // frontMargin > backMargin (the back is more frequently used)
                 {
-                    backMargin >>= 1;
-                    ResizeInternal(newCapacity, newCapacity - _count - ((backMargin + 1) >> 1));
+                    ResizeInternal(newCapacity, (frontMargin + 1) >> 1);
                     break;
                 }
             }
