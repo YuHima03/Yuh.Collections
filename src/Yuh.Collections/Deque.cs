@@ -278,13 +278,13 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="capacity">The number of elements that the <see cref="Deque{T}"/> can hold without resizing.</param>
         /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is negative or greater than <see cref="Array.MaxLength"/>.</exception>
         public void EnsureCapacity(int capacity)
         {
             ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
             EnsureCapacityInternal(capacity);
             }
-        }
 
         /// <summary>
         /// Ensures that the margins at the beginning and back of the <see cref="Deque{T}"/> are respectively at least those specified.
@@ -758,9 +758,6 @@ namespace Yuh.Collections
         /// <summary>
         /// Enlarge the internal array to twice its size.
         /// </summary>
-        /// <remarks>
-        /// This reduces the margin at the less-frequently-used end by half and gives the remaining capacity to another end.
-        /// </remarks>
         private void Grow()
         {
             int newCapacity = Math.Clamp(_items.Length << 1, _defaultCapacity, Array.MaxLength);
