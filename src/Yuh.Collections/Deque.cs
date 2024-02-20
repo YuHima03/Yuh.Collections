@@ -781,18 +781,17 @@ namespace Yuh.Collections
                     break;
                 }
 
-                case < 0: // frontMargin < backMargin (the front is more frequently used)
+        /// <summary>
+        /// Enlarge the internal array to the specified size.
+        /// </summary>
+        /// <param name="capacity"></param>
+        private void Grow(int capacity)
                 {
-                    ResizeInternal(newCapacity, newCapacity - _count - ((backMargin + 1) >> 1));
-                    break;
-                }
+            int frontMargin = FrontMargin;
+            int backMargin = BackMargin;
 
-                default: // frontMargin > backMargin (the back is more frequently used)
-                {
-                    ResizeInternal(newCapacity, (frontMargin + 1) >> 1);
-                    break;
-                }
-            }
+            int diff = frontMargin - backMargin;
+            ResizeInternal(capacity, ((capacity - _count) >> 1) + diff);
         }
 
         private void InsertInternal(int index, T item)
