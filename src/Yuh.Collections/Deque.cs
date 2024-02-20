@@ -770,15 +770,7 @@ namespace Yuh.Collections
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
 
-            int frontMargin = FrontMargin;
-            int backMargin = BackMargin;
-
-            switch (frontMargin - backMargin)
-            {
-                case 0: // frontMargin == backMargin
-                {
-                    ResizeInternal(newCapacity);
-                    break;
+            Grow(newCapacity);
                 }
 
         /// <summary>
