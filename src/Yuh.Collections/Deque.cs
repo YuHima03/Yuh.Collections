@@ -282,10 +282,7 @@ namespace Yuh.Collections
         {
             ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
-
-            if (capacity > _items.Length)
-            {
-                Resize(capacity);
+            EnsureCapacityInternal(capacity);
             }
         }
 
@@ -300,8 +297,14 @@ namespace Yuh.Collections
             ThrowHelpers.ThrowIfArgumentIsNegative(frontMargin);
             ThrowHelpers.ThrowIfArgumentIsNegative(backMargin);
 
-            if ((frontMargin, backMargin) == (FrontMargin, BackMargin))
+            if (frontMargin + backMargin + _count > Array.MaxLength)
             {
+                ThrowHelpers.ThrowArgumentException("The total needed capacity is greater than `Array.MaxLength`.", "{ frontMargin, backMargin }");
+            }
+
+            EnsureCapacityInternal(frontMargin, backMargin);
+        }
+
         /// <remarks>
         /// If <paramref name="capacity"/> is greater than <see cref="Array.MaxLength"/>, this does NOT throw any exceptions and treats <paramref name="capacity"/> as equal to <see cref="Array.MaxLength"/>.
         /// </remarks>
