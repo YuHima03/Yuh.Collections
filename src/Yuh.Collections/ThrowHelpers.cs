@@ -24,6 +24,13 @@ namespace Yuh.Collections
             throw new Exception(message, innerException);
         }
 
+        [DoesNotReturn]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void ThrowArgumentException(string? message = null, string? argName = null, Exception? innerException = null)
+        {
+            throw new ArgumentException(message, argName, innerException);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ThrowIfArgumentIsGreaterThanMaxArrayLength(int num, [CallerArgumentExpression(nameof(num))] string? argName = null)
         {
