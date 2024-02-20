@@ -340,8 +340,8 @@ namespace Yuh.Collections
             else
             {
                 int capacityDiff = doubledCapacity - neededCapacity; // this is always positive.
-                int marginDiff = Math.Clamp(-capacityDiff, (frontMargin - backMargin), capacityDiff);
-                ResizeInternal(doubledCapacity, frontMargin + capacityDiff + marginDiff);
+                int marginDiff = Math.Clamp(-capacityDiff, (backMargin - frontMargin), capacityDiff);
+                ResizeInternal(doubledCapacity, frontMargin + ((capacityDiff + marginDiff) >> 1));
             }
         }
 
@@ -776,11 +776,8 @@ namespace Yuh.Collections
         /// <param name="capacity"></param>
         private void Grow(int capacity)
         {
-            int frontMargin = FrontMargin;
-            int backMargin = BackMargin;
-
-            int diff = frontMargin - backMargin;
-            ResizeInternal(capacity, ((capacity - _count) >> 1) + diff);
+            int diff = BackMargin - FrontMargin;
+            ResizeInternal(capacity, ((capacity - _count + diff) >> 1));
         }
 
         private void InsertInternal(int index, T item)
