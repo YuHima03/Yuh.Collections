@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -274,19 +274,16 @@ namespace Yuh.Collections
 
         /// <summary>
         ///     Ensures that the capacity of this <see cref="Deque{T}"/> is at least the specified one.
-        ///     If the current capacity is less than the specified one, resizes the internal array for the <see cref="Deque{T}"/> to be able to accommodate the specified number of elements without resizing.
+        ///     If the current capacity is less than the specified one, resizes the internal array so that the <see cref="Deque{T}"/> can accommodate the specified number of elements without resizing.
         /// </summary>
         /// <param name="capacity">The number of elements that the <see cref="Deque{T}"/> can hold without resizing.</param>
         /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is negative or greater than <see cref="Array.MaxLength"/>.</exception>
         public void EnsureCapacity(int capacity)
         {
             ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
-
-            if (capacity > _items.Length)
-            {
-                Resize(capacity);
-            }
+            EnsureCapacityInternal(capacity);
         }
 
         /// <summary>
@@ -300,14 +297,52 @@ namespace Yuh.Collections
             ThrowHelpers.ThrowIfArgumentIsNegative(frontMargin);
             ThrowHelpers.ThrowIfArgumentIsNegative(backMargin);
 
-            if ((frontMargin, backMargin) == (FrontMargin, BackMargin))
+            if (frontMargin + backMargin + _count > Array.MaxLength)
+            {
+                ThrowHelpers.ThrowArgumentException("The total needed capacity is greater than `Array.MaxLength`.", "{ frontMargin, backMargin }");
+            }
+
+            EnsureCapacityInternal(frontMargin, backMargin);
+        }
+
+        /// <remarks>
+        /// If <paramref name="capacity"/> is greater than <see cref="Array.MaxLength"/>, this does NOT throw any exceptions and treats <paramref name="capacity"/> as equal to <see cref="Array.MaxLength"/>.
+        /// </remarks>
+        private void EnsureCapacityInternal(int capacity)
+        {
+            if (capacity <= _items.Length)
             {
                 return;
             }
 
-            int newFrontMargin = Math.Max(frontMargin, this.FrontMargin);
-            int newBackMargin = Math.Max(backMargin, this.BackMargin);
-            Resize(newFrontMargin, newBackMargin);
+            int newCapacity = Math.Min(Math.Max(_items.Length << 1, capacity), Array.MaxLength);
+
+            Grow(newCapacity);
+        }
+
+        /// <remarks>
+        /// This does NOT examine whether the total required capacity is valid (between 0 and <see cref="Array.MaxLength"/>.)
+        /// </remarks>
+        private void EnsureCapacityInternal(int frontMargin, int backMargin)
+        {
+            if (frontMargin <= this.FrontMargin && backMargin <= this.BackMargin)
+            {
+                return;
+            }
+
+            int neededCapacity = frontMargin + backMargin + _count;
+            int doubledCapacity = Math.Min(_items.Length << 1, Array.MaxLength);
+
+            if (neededCapacity >= doubledCapacity)
+            {
+                ResizeInternal(neededCapacity, frontMargin);
+            }
+            else
+            {
+                int capacityDiff = doubledCapacity - neededCapacity; // this is always positive.
+                int marginDiff = Math.Clamp(-capacityDiff, (backMargin - frontMargin), capacityDiff);
+                ResizeInternal(doubledCapacity, frontMargin + ((capacityDiff + marginDiff) >> 1));
+            }
         }
 
         /// <summary>
@@ -602,7 +637,7 @@ namespace Yuh.Collections
         /// <param name="backMargin">The number of elements that can be added at the end of the <see cref="Deque{T}"/> without resizing the internal data structure.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="frontMargin"/> or <paramref name="backMargin"/> is negative.</exception>
         /// <exception cref="ArgumentException">The total required capacity is greater than the maximum size of an array.</exception>
-        public void Resize(int frontMargin, int backMargin)
+        internal void Resize(int frontMargin, int backMargin)
         {
             ThrowHelpers.ThrowIfArgumentIsNegative(frontMargin);
             ThrowHelpers.ThrowIfArgumentIsNegative(backMargin);
@@ -620,7 +655,7 @@ namespace Yuh.Collections
                 throw new ArgumentException("The total required capacity is greater than the maximum size of an array.");
             }
 
-            ResizeInternal(frontMargin, backMargin);
+            ResizeInternal(capacity, frontMargin);
         }
 
         /// <summary>
@@ -628,7 +663,7 @@ namespace Yuh.Collections
         /// </summary>
         public void ShrinkToFit()
         {
-            ResizeInternal(0, 0);
+            ResizeInternal(_count, 0);
         }
 
         /// <summary>
@@ -723,21 +758,26 @@ namespace Yuh.Collections
         /// <summary>
         /// Enlarge the internal array to twice its size.
         /// </summary>
-        /// <exception cref="Exception">The number of elements contained in the <see cref="Deque{T}"/> has reached its upper limit.</exception>
         private void Grow()
         {
-            // 値を [_defaultCapacity, Array.MaxLength] に収める.
-            int newCapacity = Math.Min(
-                    Math.Max(_items.Length << 1, _defaultCapacity),
-                    Array.MaxLength
-                    );
+            int newCapacity = Math.Clamp(_items.Length << 1, _defaultCapacity, Array.MaxLength);
 
             if (newCapacity < _count + 2)
             {
-                throw new Exception(ThrowHelpers.M_CapacityReachedUpperLimit);
+                ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
 
-            ResizeInternal(newCapacity);
+            Grow(newCapacity);
+        }
+
+        /// <summary>
+        /// Enlarge the internal array to the specified size.
+        /// </summary>
+        /// <param name="capacity"></param>
+        private void Grow(int capacity)
+        {
+            int diff = BackMargin - FrontMargin;
+            ResizeInternal(capacity, ((capacity - _count + diff) >> 1));
         }
 
         private void InsertInternal(int index, T item)
@@ -836,7 +876,23 @@ namespace Yuh.Collections
             }
         }
 
+        /// <summary>
+        /// Creates a new array as an internal array at the specified size, and copies to the array all the elements contained in the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <param name="capacity"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ResizeInternal(int capacity)
+        {
+            int frontMargin = (capacity - _count) >> 1;
+            ResizeInternal(capacity, frontMargin);
+        }
+
+        /// <summary>
+        /// Creates a new array as an internal array at the specified size, and copies to the array starting at the specified index all the elements contained in the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <param name="capacity"></param>
+        /// <param name="frontMargin"></param>
+        private void ResizeInternal(int capacity, int frontMargin)
         {
             if (capacity == 0)
             {
@@ -845,40 +901,18 @@ namespace Yuh.Collections
             }
             else
             {
-                int newHead = (capacity - _count) >> 1;
                 T[] newArray = new T[capacity];
-                Array.Copy(_items, _head, newArray, newHead, _count);
+                Array.Copy(_items, _head, newArray, frontMargin, _count);
 
                 _items = newArray;
-                _head = newHead;
-            }
-
-            _version++;
-        }
-
-        private void ResizeInternal(int frontExtraCapacity, int backExtraCapacity)
-        {
-            int newCapacity = frontExtraCapacity + _count + backExtraCapacity;
-
-            if (newCapacity == 0)
-            {
-                _items = _s_emptyArray;
-                _head = 0;
-            }
-            else
-            {
-                T[] newArray = new T[newCapacity];
-                Array.Copy(_items, _head, newArray, frontExtraCapacity, _count);
-
-                _items = newArray;
-                _head = frontExtraCapacity;
+                _head = frontMargin;
             }
 
             _version++;
         }
 
         /// <summary>
-        /// Shifts all the elements in the internal data structure at specified time/times.
+        /// Shifts all the elements in the internal data structure at specified time(s).
         /// </summary>
         /// <remarks>
         /// This doesn't check whether <paramref name="diff"/> is valid or not.
