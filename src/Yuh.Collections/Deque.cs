@@ -302,12 +302,44 @@ namespace Yuh.Collections
 
             if ((frontMargin, backMargin) == (FrontMargin, BackMargin))
             {
+        /// <remarks>
+        /// If <paramref name="capacity"/> is greater than <see cref="Array.MaxLength"/>, this does NOT throw any exceptions and treats <paramref name="capacity"/> as equal to <see cref="Array.MaxLength"/>.
+        /// </remarks>
+        private void EnsureCapacityInternal(int capacity)
+        {
+            if (capacity <= _items.Length)
+            {
                 return;
             }
 
-            int newFrontMargin = Math.Max(frontMargin, this.FrontMargin);
-            int newBackMargin = Math.Max(backMargin, this.BackMargin);
-            Resize(newFrontMargin, newBackMargin);
+            int newCapacity = Math.Min(Math.Max(_items.Length << 1, capacity), Array.MaxLength);
+
+            Grow(newCapacity);
+        }
+
+        /// <remarks>
+        /// This does NOT examine whether the total required capacity is valid (between 0 and <see cref="Array.MaxLength"/>.)
+        /// </remarks>
+        private void EnsureCapacityInternal(int frontMargin, int backMargin)
+        {
+            if (frontMargin <= this.FrontMargin && backMargin <= this.BackMargin)
+            {
+                return;
+            }
+
+            int neededCapacity = frontMargin + backMargin + _count;
+            int doubledCapacity = Math.Min(_items.Length << 1, Array.MaxLength);
+
+            if (neededCapacity >= doubledCapacity)
+            {
+                ResizeInternal(neededCapacity, frontMargin);
+            }
+            else
+            {
+                int capacityDiff = doubledCapacity - neededCapacity; // this is always positive.
+                int marginDiff = Math.Clamp(-capacityDiff, (frontMargin - backMargin), capacityDiff);
+                ResizeInternal(doubledCapacity, frontMargin + capacityDiff + marginDiff);
+            }
         }
 
         /// <summary>
