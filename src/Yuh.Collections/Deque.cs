@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -284,7 +284,7 @@ namespace Yuh.Collections
             ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
             EnsureCapacityInternal(capacity);
-            }
+        }
 
         /// <summary>
         /// Ensures that the margins at the beginning and back of the <see cref="Deque{T}"/> are respectively at least those specified.
@@ -768,14 +768,14 @@ namespace Yuh.Collections
             }
 
             Grow(newCapacity);
-                }
+        }
 
         /// <summary>
         /// Enlarge the internal array to the specified size.
         /// </summary>
         /// <param name="capacity"></param>
         private void Grow(int capacity)
-                {
+        {
             int frontMargin = FrontMargin;
             int backMargin = BackMargin;
 
