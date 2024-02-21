@@ -18,14 +18,12 @@ namespace Yuh.Collections
         internal const string M_ValueIsNegative = "The value is negative.";
 
         [DoesNotReturn]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ThrowException(string? message = null, Exception? innerException = null)
         {
             throw new Exception(message, innerException);
         }
 
         [DoesNotReturn]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ThrowArgumentException(string? message = null, string? argName = null, Exception? innerException = null)
         {
             throw new ArgumentException(message, argName, innerException);
