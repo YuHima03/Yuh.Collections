@@ -548,6 +548,61 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Adds the elements of the specified collection to the end of the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <param name="items">The collection whose elements should be added to the end of the <see cref="Deque{T}"/>.</param>
+        public void PushBackRange(IEnumerable<T> items)
+        {
+            ArgumentNullException.ThrowIfNull(items);
+
+            if (items is ICollection<T> collection)
+            {
+                int count = collection.Count;
+                int requiredCapacity = _count + count;
+
+                if (requiredCapacity > Array.MaxLength)
+                {
+                    ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+                }
+                else
+                {
+                    EnsureCapacityInternal(0, count);
+                    collection.CopyTo(_items, _head + _count);
+                    _count += count;
+                    _version++;
+                }
+            }
+            else
+            {
+                foreach (var v in items)
+                {
+                    PushBack(v);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds the elements of the specified memory region to the end of the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <param name="items">The read-only span whose elements should be added to the end of the <see cref="Deque{T}"/>.</param>
+        public void PushBackRange(ReadOnlySpan<T> items)
+        {
+            int requiredCapacity = _count + items.Length;
+
+            if (requiredCapacity > Array.MaxLength)
+            {
+                ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+            }
+            else
+            {
+                EnsureCapacityInternal(0, items.Length);
+                items.CopyTo(_items.AsSpan()[(_head + _count)..]);
+                _count += items.Length;
+                _version++;
+            }
+        }
+
+        /// <summary>
         /// Adds an object to the beginning of the <see cref="Deque{T}"/>.
         /// </summary>
         /// <param name="item">
@@ -758,6 +813,7 @@ namespace Yuh.Collections
         /// <summary>
         /// Enlarge the internal array to twice its size.
         /// </summary>
+        /// <exception cref="Exception">The capacity of the <see cref="Deque{T}"/> has reached its upper limit.</exception>
         private void Grow()
         {
             int newCapacity = Math.Clamp(_items.Length << 1, _defaultCapacity, Array.MaxLength);
@@ -773,7 +829,9 @@ namespace Yuh.Collections
         /// <summary>
         /// Enlarge the internal array to the specified size.
         /// </summary>
-        /// <param name="capacity"></param>
+        /// <remarks>
+        /// This does NOT examine whether the <paramref name="capacity"/> is valid (between the number of elements and <see cref="Array.MaxLength"/>.)
+        /// </remarks>
         private void Grow(int capacity)
         {
             int diff = BackMargin - FrontMargin;
