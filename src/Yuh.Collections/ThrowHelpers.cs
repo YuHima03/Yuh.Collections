@@ -29,6 +29,30 @@ namespace Yuh.Collections
             throw new ArgumentException(message, argName, innerException);
         }
 
+        [DoesNotReturn]
+        internal static void ThrowArgumentOutOfRangeException(string? argName = null, string? message = null)
+        {
+            throw new ArgumentOutOfRangeException(argName, message);
+        }
+
+        [DoesNotReturn]
+        internal static void ThrowArgumentOutOfRangeException(string? argName = null, object? actualValue = null, string? message = null)
+        {
+            throw new ArgumentOutOfRangeException(argName, actualValue, message);
+        }
+
+        [DoesNotReturn]
+        internal static void ThrowIndexOutOfRangeException(string? message = null, Exception? innerException = null)
+        {
+            throw new IndexOutOfRangeException(message, innerException);
+        }
+
+        [DoesNotReturn]
+        internal static void ThrowInvalidOperationException(string? message = null, Exception? innerException = null)
+        {
+            throw new InvalidOperationException(message, innerException);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ThrowIfArgumentIsGreaterThanMaxArrayLength(int num, [CallerArgumentExpression(nameof(num))] string? argName = null)
         {
