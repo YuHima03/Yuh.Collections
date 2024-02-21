@@ -524,10 +524,43 @@ namespace Yuh.Collections
             _version++;
             return item;
         }
+
+        /// <summary>
+        /// Removes and returns the specified number of objects at the end of the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <param name="count">The number of elements to remove at the end of the <see cref="Deque{T}"/>.</param>
+        /// <returns>An array that contains the objects removed at the end of the <see cref="Deque{T}"/>.</returns>
+        public T[] PopBackRange(int count)
+        {
+            var destinationArray = new T[count];
+            PopBackRange(count, destinationArray.AsSpan());
+            return destinationArray;
+        }
+
+        /// <summary>
+        /// Removes the specified number of objects at the end of the <see cref="Deque{T}"/> and copies them to the specified span.
+        /// </summary>
+        /// <param name="count">The number of elements to remove at the end of the <see cref="Deque{T}"/>.</param>
+        /// <param name="destination">The span to copy the removed objects to.</param>
+        public void PopBackRange(int count, Span<T> destination)
+        {
+            if (count > _count)
             {
-                true => item,
-                false => throw new InvalidOperationException(ThrowHelpers.M_CollectionIsEmpty)
-            };
+                ThrowHelpers.ThrowArgumentException("The value is greater than the number of elements contained in the deque.", nameof(count));
+            }
+            else
+            {
+                var source = AsSpan()[(^count)..];
+                source.CopyTo(destination);
+
+                _count -= count;
+                _version++;
+
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    source.Clear();
+                }
+            }
         }
 
         /// <summary>
