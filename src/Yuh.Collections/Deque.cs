@@ -42,7 +42,7 @@ namespace Yuh.Collections
             {
                 if ((uint)index >= (uint)_count)
                 {
-                    throw new IndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
+                    ThrowHelpers.ThrowIndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
                 }
                 return _items[_head + index];
             }
@@ -51,7 +51,7 @@ namespace Yuh.Collections
             {
                 if ((uint)index >= (uint)_count)
                 {
-                    throw new IndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
+                    ThrowHelpers.ThrowIndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
                 }
                 _items[_head + index] = value;
                 _version++;
@@ -73,7 +73,7 @@ namespace Yuh.Collections
                 }
                 else
                 {
-                    throw new InvalidOperationException(ThrowHelpers.M_TypeOfValueNotSupported);
+                    ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_TypeOfValueNotSupported);
                 }
             }
         }
@@ -450,7 +450,7 @@ namespace Yuh.Collections
         {
             if (index < 0 || _count < index)
             {
-                throw new ArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
             }
             InsertInternal(index, item);
         }
