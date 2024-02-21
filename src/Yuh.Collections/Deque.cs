@@ -504,7 +504,26 @@ namespace Yuh.Collections
         /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PopBack()
         {
-            return TryPopBack(out var item) switch
+            if (_count == 0)
+            {
+                ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
+                return default!;
+            }
+            else
+            {
+                return PopBackInternal();
+            }
+        }
+
+        private T PopBackInternal()
+        {
+            var item = _items[_head + _count];
+            CollectionHelpers.SetDefaultValueIfReferenceOrContainsReferences(ref _items[_head + _count]);
+
+            _count--;
+            _version++;
+            return item;
+        }
             {
                 true => item,
                 false => throw new InvalidOperationException(ThrowHelpers.M_CollectionIsEmpty)
@@ -775,12 +794,7 @@ namespace Yuh.Collections
             }
             else
             {
-                _count--;
-                _version++;
-
-                item = _items[_head + _count];
-                SetDefaultValueIfNeeded(ref _items[_head + _count]);
-
+                item = PopBackInternal();
                 return true;
             }
         }
