@@ -93,6 +93,10 @@ namespace Yuh.Collections
             }
         }
 
+        internal T First => _items[_head];
+
+        internal T Last => _items[_head + _count - 1];
+
         /// <summary>
         /// Gets the number of elements that can be added at the beginning of the <see cref="Deque{T}"/> without resizing the internal data structure.
         /// </summary>
@@ -476,11 +480,8 @@ namespace Yuh.Collections
         /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PeekFirst()
         {
-            return TryPeekFirst(out var item) switch
-            {
-                true => item,
-                false => throw new InvalidOperationException(ThrowHelpers.M_CollectionIsEmpty)
-            };
+            ThrowIfEmpty();
+            return First;
         }
 
         /// <summary>
@@ -490,11 +491,8 @@ namespace Yuh.Collections
         /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PeekLast()
         {
-            return TryPeekLast(out var item) switch
-            {
-                true => item,
-                false => throw new InvalidOperationException(ThrowHelpers.M_CollectionIsEmpty)
-            };
+            ThrowIfEmpty();
+            return Last;
         }
 
         /// <summary>
@@ -504,15 +502,8 @@ namespace Yuh.Collections
         /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PopBack()
         {
-            if (_count == 0)
-            {
-                ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
-                return default!;
-            }
-            else
-            {
-                return PopBackInternal();
-            }
+            ThrowIfEmpty();
+            return PopBackInternal();
         }
 
         private T PopBackInternal()
@@ -571,11 +562,19 @@ namespace Yuh.Collections
         /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PopFront()
         {
-            return TryPopFront(out var item) switch
-            {
-                true => item,
-                false => throw new InvalidOperationException(ThrowHelpers.M_CollectionIsEmpty)
-            };
+            ThrowIfEmpty();
+            return PopFrontInternal();
+        }
+
+        private T PopFrontInternal()
+        {
+            var item = _items[_head];
+            CollectionHelpers.SetDefaultValueIfReferenceOrContainsReferences(ref _items[_head]);
+
+            _count--;
+            _head++;
+            _version++;
+            return item;
         }
 
         /// <summary>
@@ -943,13 +942,7 @@ namespace Yuh.Collections
             }
             else
             {
-                _count--;
-                _head++;
-                _version++;
-
-                item = _items[_head];
-                SetDefaultValueIfNeeded(ref _items[_head]);
-
+                item = PopFrontInternal();
                 return true;
             }
         }
@@ -1158,6 +1151,18 @@ namespace Yuh.Collections
             if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
             {
                 value = default!;
+            }
+        }
+
+        /// <summary>
+        /// Throws an <see cref="InvalidOperationException"/> if the <see cref="Deque{T}"/> is empty.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
+        private void ThrowIfEmpty()
+        {
+            if (IsEmpty)
+            {
+                ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
             }
         }
 
