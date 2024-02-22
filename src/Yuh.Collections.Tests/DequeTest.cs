@@ -59,6 +59,32 @@ namespace Yuh.Collections.Tests
             OutputHelpers.OutputElements(deque, _out);
         }
 
+        [Fact]
+        public void PushAndPopTest()
+        {
+            Deque<int> buffer = new(4);
+
+            buffer.PushBack(1);
+            buffer.PushBack(2);
+            buffer.PushBack(3);
+            buffer.PushBack(4);
+            OutputHelpers.OutputElements(buffer, _out);
+
+            buffer.PushBack(5);
+            buffer.PushBack(6);
+            OutputHelpers.OutputElements(buffer, _out);
+
+            buffer.PushFront(7);
+            buffer.PushFront(8);
+            OutputHelpers.OutputElements(buffer, _out);
+
+            buffer.PopBack();
+            buffer.PopFront();
+            OutputHelpers.OutputElements(buffer, _out);
+
+            buffer.Clear();
+        }
+
         internal void OutputCapacityAndMargin(Deque<int> deque, [CallerArgumentExpression(nameof(deque))] string? argName = null)
         {
             _out.WriteLine($"{argName}: {deque.Capacity}, {deque.FrontMargin}, {deque.BackMargin}");
