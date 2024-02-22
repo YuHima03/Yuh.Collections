@@ -41,6 +41,24 @@ namespace Yuh.Collections.Tests
             OutputCapacityAndMargin(deque3);
         }
 
+        [Fact]
+        public void PushAndPopRangeTest()
+        {
+            Deque<int> deque = new([0, 1, 2, 3]);
+
+            deque.PushBackRange([4, 5, 6]);
+            OutputHelpers.OutputElements(deque, _out);
+
+            OutputHelpers.OutputElements(deque.PopFrontRange(2), _out);
+            OutputHelpers.OutputElements(deque, _out);
+
+            deque.PushFrontRange([7, 8, 9, 10, 11, 12]);
+            OutputHelpers.OutputElements(deque, _out);
+
+            OutputHelpers.OutputElements(deque.PopBackRange(4), _out);
+            OutputHelpers.OutputElements(deque, _out);
+        }
+
         internal void OutputCapacityAndMargin(Deque<int> deque, [CallerArgumentExpression(nameof(deque))] string? argName = null)
         {
             _out.WriteLine($"{argName}: {deque.Capacity}, {deque.FrontMargin}, {deque.BackMargin}");
