@@ -8,7 +8,7 @@ namespace Yuh.Collections
     /// Represents a buffer that supports addition of elements to the front or back, or removal from the front or back.
     /// </summary>
     /// <remarks>
-    /// This can be substituted for <see cref="Deque{T}"/> or <see cref="DequeSlim{T}"/>, and this may perform better than these.
+    /// This can be substituted for <see cref="Deque{T}"/> or <see cref="DequeSlim{T}"/>, but this may perform better than these.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
     public class CircularBuffer<T> : ICollection, ICollection<T>, IEnumerable, IEnumerable<T>, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>
@@ -38,7 +38,8 @@ namespace Yuh.Collections
                 }
                 else
                 {
-                    throw new IndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
+                    ThrowHelpers.ThrowIndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
+                    return default!;
                 }
             }
 
@@ -51,7 +52,7 @@ namespace Yuh.Collections
                 }
                 else
                 {
-                    throw new IndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
+                    ThrowHelpers.ThrowIndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
                 }
             }
         }
@@ -101,7 +102,7 @@ namespace Yuh.Collections
         {
             if (capacity > Array.MaxLength)
             {
-                throw new ArgumentOutOfRangeException(nameof(capacity), "`capacity` must be less than the maximum number of elements that may be contained in an array.");
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(capacity), "`capacity` must be less than the maximum number of elements that may be contained in an array.");
             }
             ThrowHelpers.ThrowIfArgumentIsNotPowerOfTwo(capacity);
 
@@ -174,7 +175,7 @@ namespace Yuh.Collections
             ThrowHelpers.ThrowIfArgumentIsNegative(arrayIndex);
             if (array.Length - arrayIndex < _count)
             {
-                throw new ArgumentException("The number of the elements in the source buffer is greater than the available space from the specified index to the end of the destination array.");
+                ThrowHelpers.ThrowArgumentException("The number of the elements in the source buffer is greater than the available space from the specified index to the end of the destination array.");
             }
 
             if (_head + _count > _capacity)
@@ -193,7 +194,7 @@ namespace Yuh.Collections
             ThrowHelpers.ThrowIfArgumentIsNegative(index);
             if (array.Length - index < _count)
             {
-                throw new ArgumentException("The number of the elements in the source buffer is greater than the available space from the specified index to the end of the destination array.");
+                ThrowHelpers.ThrowArgumentException("The number of the elements in the source buffer is greater than the available space from the specified index to the end of the destination array.");
             }
 
             if (_head + _count > _capacity)
@@ -268,11 +269,11 @@ namespace Yuh.Collections
             }
             else if (index < 0 || _count < index)
             {
-                throw new ArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
             }
             else
             {
-                throw new NotSupportedException("The insertion of an object to any position other than the front or back is not supported.");
+                ThrowHelpers.ThrowNotSupportedException("The insertion of an object to any position other than the front or back is not supported.");
             }
         }
 
@@ -289,7 +290,8 @@ namespace Yuh.Collections
             }
             else
             {
-                throw new InvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
+                ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
+                return default;
             }
         }
 
@@ -306,7 +308,8 @@ namespace Yuh.Collections
             }
             else
             {
-                throw new InvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
+                ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
+                return default;
             }
         }
 
@@ -323,7 +326,8 @@ namespace Yuh.Collections
             }
             else
             {
-                throw new InvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
+                ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
+                return default;
             }
         }
 
@@ -340,7 +344,8 @@ namespace Yuh.Collections
             }
             else
             {
-                throw new InvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
+                ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
+                return default;
             }
         }
 
@@ -422,11 +427,11 @@ namespace Yuh.Collections
             }
             else if (index < 0 || _count <= index)
             {
-                throw new ArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
             }
             else
             {
-                throw new NotSupportedException("The removal of an element at any position other than the front of back is not supported.");
+                ThrowHelpers.ThrowNotSupportedException("The removal of an element at any position other than the front of back is not supported.");
             }
         }
 
@@ -575,7 +580,7 @@ namespace Yuh.Collections
         {
             if (capacity < _count)
             {
-                throw new ArgumentOutOfRangeException(nameof(capacity), "`capacity` must be greater or equal to the number of the elements contained in this buffer.");
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(capacity), "`capacity` must be greater or equal to the number of the elements contained in this buffer.");
             }
 
             CircularBuffer<T> newBuffer = new(capacity)
