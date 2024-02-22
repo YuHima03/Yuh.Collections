@@ -340,7 +340,7 @@ namespace Yuh.Collections
             else
             {
                 int capacityDiff = doubledCapacity - neededCapacity; // this is always positive.
-                int marginDiff = Math.Clamp(-capacityDiff, (backMargin - frontMargin), capacityDiff);
+                int marginDiff = Math.Clamp((backMargin - frontMargin), -capacityDiff, capacityDiff);
                 ResizeInternal(doubledCapacity, frontMargin + ((capacityDiff + marginDiff) >> 1));
             }
         }
