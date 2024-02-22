@@ -51,7 +51,8 @@ namespace Yuh.Collections
                 }
                 else
                 {
-                    throw new IndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
+                    ThrowHelpers.ThrowIndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
+                    return default;
                 }
             }
 
@@ -64,7 +65,7 @@ namespace Yuh.Collections
                 }
                 else
                 {
-                    throw new IndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
+                    ThrowHelpers.ThrowIndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
                 }
             }
         }
@@ -84,7 +85,7 @@ namespace Yuh.Collections
                 }
                 else
                 {
-                    throw new ArgumentException(ThrowHelpers.M_TypeOfValueNotSupported, nameof(value));
+                    ThrowHelpers.ThrowArgumentException(ThrowHelpers.M_TypeOfValueNotSupported, nameof(value));
                 }
             }
         }
@@ -208,7 +209,7 @@ namespace Yuh.Collections
         {
             if (array.Length - arrayIndex < _count)
             {
-                throw new ArgumentException("The number of the elements in the source collection is greater than the available space from the specified index to the end of the destination array.", nameof(arrayIndex));
+                ThrowHelpers.ThrowArgumentException("The number of the elements in the source collection is greater than the available space from the specified index to the end of the destination array.", nameof(arrayIndex));
             }
             CopyToInternal(array, arrayIndex);
         }
@@ -217,7 +218,7 @@ namespace Yuh.Collections
         {
             if (array.Length - index < _count)
             {
-                throw new ArgumentException("The number of the elements in the source collection is greater than the available space from the specified index to the end of the destination array.", nameof(index));
+                ThrowHelpers.ThrowArgumentException("The number of the elements in the source collection is greater than the available space from the specified index to the end of the destination array.", nameof(index));
             }
 
             if (_head + _count > _capacity)
@@ -494,7 +495,7 @@ namespace Yuh.Collections
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
             if (capacity < _count)
             {
-                throw new ArgumentOutOfRangeException(nameof(capacity), "The capacity is less than the number of the elements contained in the collection.");
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(capacity), "The capacity is less than the number of the elements contained in the collection.");
             }
 
             ResizeInternal(capacity);
@@ -534,7 +535,7 @@ namespace Yuh.Collections
 
             if (capacity < _count + 2)
             {
-                throw new Exception(ThrowHelpers.M_CapacityReachedUpperLimit);
+                ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
 
             ResizeInternal(capacity);
@@ -545,7 +546,7 @@ namespace Yuh.Collections
         {
             if (_count == 0)
             {
-                throw new InvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
+                ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
             }
         }
 
@@ -600,7 +601,7 @@ namespace Yuh.Collections
             {
                 if (_version != _deque._version)
                 {
-                    throw new InvalidOperationException(ThrowHelpers.M_CollectionModifiedAfterEnumeratorCreated);
+                    ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionModifiedAfterEnumeratorCreated);
                 }
             }
         }

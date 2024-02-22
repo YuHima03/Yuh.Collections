@@ -39,7 +39,7 @@ namespace Yuh.Collections
                 else
                 {
                     ThrowHelpers.ThrowIndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
-                    return default!;
+                    return default;
                 }
             }
 
@@ -668,7 +668,7 @@ namespace Yuh.Collections
             {
                 if (_version != _collection._version)
                 {
-                    throw new InvalidOperationException("The deque was modified after the enumerator was created.");
+                    ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionModifiedAfterEnumeratorCreated);
                 }
             }
         }

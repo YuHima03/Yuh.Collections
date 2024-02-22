@@ -1214,7 +1214,7 @@ namespace Yuh.Collections
             {
                 if (_version != _deque._version)
                 {
-                    throw new InvalidOperationException(ThrowHelpers.M_CollectionModifiedAfterEnumeratorCreated);
+                    ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionModifiedAfterEnumeratorCreated);
                 }
             }
         }
