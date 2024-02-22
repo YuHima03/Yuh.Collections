@@ -517,8 +517,9 @@ namespace Yuh.Collections
 
         private T PopBackInternal()
         {
-            var item = _items[_head + _count];
-            CollectionHelpers.SetDefaultValueIfReferenceOrContainsReferences(ref _items[_head + _count]);
+            var index = _head + _count - 1;
+            var item = _items[index];
+            CollectionHelpers.SetDefaultValueIfReferenceOrContainsReferences(ref _items[index]);
 
             _count--;
             _version++;
