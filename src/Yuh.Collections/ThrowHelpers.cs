@@ -17,42 +17,49 @@ namespace Yuh.Collections
 
         internal const string M_ValueIsNegative = "The value is negative.";
 
+        /// <exception cref="Exception"></exception>
         [DoesNotReturn]
         internal static void ThrowException(string? message = null, Exception? innerException = null)
         {
             throw new Exception(message, innerException);
         }
 
+        /// <exception cref="ArgumentException"></exception>
         [DoesNotReturn]
         internal static void ThrowArgumentException(string? message = null, string? argName = null, Exception? innerException = null)
         {
             throw new ArgumentException(message, argName, innerException);
         }
 
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         [DoesNotReturn]
         internal static void ThrowArgumentOutOfRangeException(string? argName = null, string? message = null)
         {
             throw new ArgumentOutOfRangeException(argName, message);
         }
 
+        /// <inheritdoc cref="ThrowArgumentOutOfRangeException(string?, string?)"/>
         [DoesNotReturn]
         internal static void ThrowArgumentOutOfRangeException(string? argName = null, object? actualValue = null, string? message = null)
         {
             throw new ArgumentOutOfRangeException(argName, actualValue, message);
         }
 
+        /// <exception cref="IndexOutOfRangeException"></exception>
         [DoesNotReturn]
         internal static void ThrowIndexOutOfRangeException(string? message = null, Exception? innerException = null)
         {
             throw new IndexOutOfRangeException(message, innerException);
         }
 
+        /// <exception cref="InvalidOperationException"></exception>
         [DoesNotReturn]
         internal static void ThrowInvalidOperationException(string? message = null, Exception? innerException = null)
         {
             throw new InvalidOperationException(message, innerException);
         }
 
+        /// <exception cref="NotSupportedException"></exception>
         [DoesNotReturn]
         internal static void ThrowNotSupportedException(string? message = null, Exception? innerException = null)
         {
