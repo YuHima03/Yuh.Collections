@@ -763,7 +763,7 @@ namespace Yuh.Collections
             {
                 EnsureCapacityInternal(count, 0);
                 _head -= count;
-                items.CopyTo(AsSpan()[..count]);
+                items.CopyTo(_items.AsSpan()[_head..]);
                 _count += count;
                 _version++;
             }
