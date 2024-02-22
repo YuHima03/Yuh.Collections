@@ -546,7 +546,7 @@ namespace Yuh.Collections
         {
             if (count > _count)
             {
-                ThrowHelpers.ThrowArgumentException("The value is greater than the number of elements contained in the deque.", nameof(count));
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(count), "The value is greater than the number of elements contained in the deque.");
             }
             else
             {
