@@ -578,6 +578,45 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Removes and returns the specified number of objects at the front of the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <param name="count">The number of elements to remove at the front of the <see cref="Deque{T}"/>.</param>
+        /// <returns>An array that contains the objects removed at the front of the <see cref="Deque{T}"/>.</returns>
+        public T[] PopFrontRange(int count)
+        {
+            var destinationArray = new T[count];
+            PopFrontRange(count, destinationArray.AsSpan());
+            return destinationArray;
+        }
+
+        /// <summary>
+        /// Removes the specified number of objects at the front of the <see cref="Deque{T}"/> and copies them to the specified span.
+        /// </summary>
+        /// <param name="count">The number of elements to remove at the front of the <see cref="Deque{T}"/>.</param>
+        /// <param name="destination">The span to copy the removed objects to.</param>
+        public void PopFrontRange(int count, Span<T> destination)
+        {
+            if (count > _count)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(count), "The value is greater than the number of elements contained in the deque.");
+            }
+            else
+            {
+                var source = AsSpan()[..count];
+                source.CopyTo(destination);
+
+                _count -= count;
+                _head += count;
+                _version++;
+
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    source.Clear();
+                }
+            }
+        }
+
+        /// <summary>
         /// Adds an object to the end of the <see cref="Deque{T}"/>.
         /// </summary>
         /// <param name="item">
@@ -671,6 +710,63 @@ namespace Yuh.Collections
             _items[--_head] = item;
             _count++;
             _version++;
+        }
+
+        /// <summary>
+        /// Adds the elements of the specified collection to the front of the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <param name="items">The collection whose elements should be added to the front of the <see cref="Deque{T}"/>.</param>
+        public void PushFrontRange(IEnumerable<T> items)
+        {
+            ArgumentNullException.ThrowIfNull(items);
+
+            if (items is ICollection<T> collection)
+            {
+                int count = collection.Count;
+                int requiredCapacity = _count + count;
+
+                if (requiredCapacity > Array.MaxLength)
+                {
+                    ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+                }
+                else
+                {
+                    EnsureCapacityInternal(count, 0);
+                    _head -= count;
+                    collection.CopyTo(_items, _head);
+                    _count += count;
+                    _version++;
+                }
+            }
+            else
+            {
+                foreach (var v in items.Reverse())
+                {
+                    PushFront(v);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds the elements of the specified memory region to the front of the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <param name="items">The read-only span whose elements should be added to the front of the <see cref="Deque{T}"/>.</param>
+        public void PushFrontRange(ReadOnlySpan<T> items)
+        {
+            int count = items.Length;
+
+            if (_count + count > Array.MaxLength)
+            {
+                ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+            }
+            else
+            {
+                EnsureCapacityInternal(count, 0);
+                _head -= count;
+                items.CopyTo(AsSpan()[..count]);
+                _count += count;
+                _version++;
+            }
         }
 
         void IList.Remove(object? value)
