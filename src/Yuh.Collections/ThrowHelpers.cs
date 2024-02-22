@@ -53,6 +53,12 @@ namespace Yuh.Collections
             throw new InvalidOperationException(message, innerException);
         }
 
+        [DoesNotReturn]
+        internal static void ThrowNotSupportedException(string? message = null, Exception? innerException = null)
+        {
+            throw new NotSupportedException(message, innerException);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ThrowIfArgumentIsGreaterThanMaxArrayLength(int num, [CallerArgumentExpression(nameof(num))] string? argName = null)
         {
