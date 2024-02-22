@@ -246,6 +246,30 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        ///     Ensures that the capacity of this <see cref="DequeSlim{T}"/> is at least the specified one.
+        ///     If the current capacity is less than the specified one, resizes the internal array so that the <see cref="DequeSlim{T}"/> can accommodate the specified number of elements without resizing.
+        /// </summary>
+        /// <param name="capacity">The number of elements that the <see cref="DequeSlim{T}"/> can hold without resizing.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is negative or greater than <see cref="Array.MaxLength"/>.</exception>
+        public void EnsureCapacity(int capacity)
+        {
+            ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
+            ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
+            EnsureCapacityInternal(capacity);
+        }
+
+        private void EnsureCapacityInternal(int capacity)
+        {
+            if (capacity <= _items.Length)
+            {
+                return;
+            }
+
+            int newCapacity = Math.Min(Math.Max((_items.Length << 1), capacity), Array.MaxLength);
+            ResizeInternal(newCapacity);
+        }
+
+        /// <summary>
         /// Returns an enumerator that iterates through the <see cref="DequeSlim{T}"/>.
         /// </summary>
         /// <returns>An enumerator that can be used to iterate through the <see cref="DequeSlim{T}"/>.</returns>
