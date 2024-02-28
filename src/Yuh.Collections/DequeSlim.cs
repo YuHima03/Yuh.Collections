@@ -14,9 +14,6 @@ namespace Yuh.Collections
     public class DequeSlim<T> : ICollection, ICollection<T>, IEnumerable, IEnumerable<T>, IList, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>
     {
         private const int _defaultCapacity = 8;
-#pragma warning disable IDE0301
-        private static readonly T[] _s_emptyArray = Array.Empty<T>();
-#pragma warning restore IDE0301
 
         private T[] _items;
         private int _capacity;
@@ -365,7 +362,7 @@ namespace Yuh.Collections
                 return (idx >= 0) ? (idx - _head) : -1;
             }
         }
-        
+
         void IList.Insert(int index, object? value)
         {
             if (value is T tValue)
@@ -529,7 +526,7 @@ namespace Yuh.Collections
         {
             if (capacity == 0)
             {
-                _items = _s_emptyArray;
+                _items = [];
                 _capacity = 0;
                 _head = 0;
             }
