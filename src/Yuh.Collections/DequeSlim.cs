@@ -108,6 +108,12 @@ namespace Yuh.Collections
             }
         }
 
+        /// <summary>
+        /// Gets the value that indicates whether the <see cref="DequeSlim{T}"/> is empty.
+        /// </summary>
+        /// <returns><see langword="true"/> if the <see cref="DequeSlim{T}"/> is empty; <see langword="false"/> if not.</returns>
+        public bool IsEmpty => _count == 0;
+
         internal T First => _items[_head];
 
         internal T Last => _items[(_head + _count - 1) % _capacity];
