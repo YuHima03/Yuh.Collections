@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Yuh.Collections
@@ -136,8 +137,8 @@ namespace Yuh.Collections
             }
             else
             {
-            ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
-            ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
+                ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
+                ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
                 _items = new T[capacity];
             }
 
@@ -160,9 +161,9 @@ namespace Yuh.Collections
 
                 if (capacity > _defaultCapacity)
                 {
-            _items = new T[capacity];
+                    _items = new T[capacity];
                     _capacity = capacity;
-        }
+                }
 
                 collection.CopyTo(_items, 0);
                 _count = collection.Count;
@@ -603,6 +604,84 @@ namespace Yuh.Collections
                 _items = items;
             }
             _version++;
+        }
+
+        /// <summary>
+        /// Returns a value that indicates whether there is an object at the beginning of the <see cref="DequeSlim{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter.
+        /// The object is not removed from the <see cref="DequeSlim{T}"/>.
+        /// </summary>
+        /// <param name="item">If present, the object at the beginning of the <see cref="DequeSlim{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if there is an object at the beginning of the <see cref="DequeSlim{T}"/>; <see langword="false"/> if the <see cref="DequeSlim{T}"/> is empty.</returns>
+        public bool TryPeekFirst([MaybeNullWhen(false)] out T item)
+        {
+            if (_count == 0)
+            {
+                item = default;
+                return false;
+            }
+            else
+            {
+                item = First;
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Returns a value that indicates whether there is an object at the end of the <see cref="DequeSlim{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter.
+        /// The object is not removed from the <see cref="DequeSlim{T}"/>.
+        /// </summary>
+        /// <param name="item">If present, the object at the end of the <see cref="DequeSlim{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if there is an object at the end of the <see cref="DequeSlim{T}"/>; <see langword="false"/> if the <see cref="DequeSlim{T}"/> is empty.</returns>
+        public bool TryPeekLast([MaybeNullWhen(false)] out T item)
+        {
+            if (_count == 0)
+            {
+                item = default;
+                return false;
+            }
+            else
+            {
+                item = Last;
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Returns a value that indicates whether there is an object at the end of the <see cref="DequeSlim{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter and removes it from the <see cref="DequeSlim{T}"/>.
+        /// </summary>
+        /// <param name="item">If present, the object at the end of the <see cref="DequeSlim{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if there is an object at the end of the <see cref="DequeSlim{T}"/>; <see langword="false"/> if the <see cref="DequeSlim{T}"/> is empty.</returns>
+        public bool TryPopBack([MaybeNullWhen(false)] out T item)
+        {
+            if (_count == 0)
+            {
+                item = default;
+                return false;
+            }
+            else
+            {
+                item = PopBackInternal();
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Returns a value that indicates whether there is an object at the beginning of the <see cref="DequeSlim{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter and removes it from the <see cref="DequeSlim{T}"/>.
+        /// </summary>
+        /// <param name="item">If present, the object at the beginning of the <see cref="DequeSlim{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if there is an object at the beginning of the <see cref="DequeSlim{T}"/>; <see langword="false"/> if the <see cref="DequeSlim{T}"/> is empty.</returns>
+        public bool TryPopFront([MaybeNullWhen(false)] out T item)
+        {
+            if (_count == 0)
+            {
+                item = default;
+                return false;
+            }
+            else
+            {
+                item = PopFrontInternal();
+                return true;
+            }
         }
 
         /// <summary>
