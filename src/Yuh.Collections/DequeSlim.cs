@@ -595,12 +595,11 @@ namespace Yuh.Collections
             }
             else
             {
-                int head = (capacity - _count) >> 1;
                 T[] items = new T[capacity];
+                CopyToInternal(items, 0);
 
-                CopyToInternal(items, head);
                 _capacity = capacity;
-                _head = head;
+                _head = 0;
                 _items = items;
             }
             _version++;
