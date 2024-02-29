@@ -130,10 +130,21 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> must be positive or zero, and less than or equal to the maximum length of an array.</exception>
         public DequeSlim(int capacity)
         {
+            if (capacity == 0)
+            {
+                _items = [];
+            }
+            else
+            {
             ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
+                _items = new T[capacity];
+            }
 
             _capacity = capacity;
+            _head = 0;
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DequeSlim{T}"/> class that contains elements copied from the specified collection and has sufficient capacity to accommodate the number of elements copied. 
         /// </summary>
