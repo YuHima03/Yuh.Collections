@@ -134,8 +134,54 @@ namespace Yuh.Collections
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
 
             _capacity = capacity;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DequeSlim{T}"/> class that contains elements copied from the specified collection and has sufficient capacity to accommodate the number of elements copied. 
+        /// </summary>
+        /// <param name="enumerable">The collection whose elements are copied to the new deque.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="enumerable"/> is <see langword="null"/>.</exception>
+        public DequeSlim(IEnumerable<T> enumerable) : this(_defaultCapacity)
+        {
+            ArgumentNullException.ThrowIfNull(enumerable);
+
+            if (enumerable is ICollection<T> collection)
+            {
+                int capacity = Math.Min(collection.Count << 1, Array.MaxLength);
+
+                if (capacity > _defaultCapacity)
+                {
             _items = new T[capacity];
-            _head = capacity >> 1;
+                    _capacity = capacity;
+        }
+
+                collection.CopyTo(_items, 0);
+                _count = collection.Count;
+                _head = 0;
+            }
+            else
+            {
+                foreach (T item in enumerable)
+                {
+                    PushBack(item);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DequeSlim{T}"/> class that contains elements copied from the specified span and has sufficient capacity to accommodate the number of the elements copied.
+        /// </summary>
+        /// <param name="span">The span whose elements are copied to the new deque.</param>
+        public DequeSlim(ReadOnlySpan<T> span) : this(_defaultCapacity)
+        {
+            int capacity = Math.Min(span.Length << 1, Array.MaxLength);
+
+            if (capacity > _defaultCapacity)
+            {
+                _items = new T[capacity];
+            }
+
+            span.CopyTo(_items.AsSpan());
+            _count = span.Length;
+            _head = 0;
         }
 
         void ICollection<T>.Add(T item)
