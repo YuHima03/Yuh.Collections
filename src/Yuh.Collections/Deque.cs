@@ -524,8 +524,14 @@ namespace Yuh.Collections
         /// <returns>An array that contains the objects removed at the end of the <see cref="Deque{T}"/>.</returns>
         public T[] PopBackRange(int count)
         {
+            ThrowHelpers.ThrowIfArgumentIsNegative(count);
+            if (count > _count)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(count), ThrowHelpers.M_ValueIsGreaterThanCount);
+            }
+
             var destinationArray = new T[count];
-            PopBackRange(count, destinationArray.AsSpan());
+            PopBackRange(destinationArray.AsSpan());
             return destinationArray;
         }
 
@@ -536,12 +542,17 @@ namespace Yuh.Collections
         /// <param name="destination">The span to copy the removed objects to.</param>
         public void PopBackRange(int count, Span<T> destination)
         {
-            if (count > _count)
+            if (destination.Length > _count)
             {
-                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(count), "The value is greater than the number of elements contained in the deque.");
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(destination.Length), ThrowHelpers.M_ValueIsGreaterThanCount);
             }
-            else
+
+            PopBackRangeInternal(destination);
+        }
+
+        private void PopBackRangeInternal(Span<T> destination)
             {
+            int count = destination.Length;
                 var source = AsSpan()[(^count)..];
                 source.CopyTo(destination);
 
@@ -553,7 +564,6 @@ namespace Yuh.Collections
                     source.Clear();
                 }
             }
-        }
 
         /// <summary>
         /// Removes and returns the object at the beginning of the <see cref="Deque{T}"/>.
@@ -584,8 +594,14 @@ namespace Yuh.Collections
         /// <returns>An array that contains the objects removed at the front of the <see cref="Deque{T}"/>.</returns>
         public T[] PopFrontRange(int count)
         {
+            ThrowHelpers.ThrowIfArgumentIsNegative(count);
+            if (count > _count)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(count), ThrowHelpers.M_ValueIsGreaterThanCount);
+            }
+
             var destinationArray = new T[count];
-            PopFrontRange(count, destinationArray.AsSpan());
+            PopFrontRangeInternal(destinationArray.AsSpan());
             return destinationArray;
         }
 
@@ -596,12 +612,17 @@ namespace Yuh.Collections
         /// <param name="destination">The span to copy the removed objects to.</param>
         public void PopFrontRange(int count, Span<T> destination)
         {
-            if (count > _count)
+            if (destination.Length > _count)
             {
-                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(count), "The value is greater than the number of elements contained in the deque.");
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(destination.Length), ThrowHelpers.M_ValueIsGreaterThanCount);
             }
-            else
+
+            PopFrontRangeInternal(destination);
+            }
+
+        private void PopFrontRangeInternal(Span<T> destination)
             {
+            int count = destination.Length;
                 var source = AsSpan()[..count];
                 source.CopyTo(destination);
 
@@ -614,7 +635,6 @@ namespace Yuh.Collections
                     source.Clear();
                 }
             }
-        }
 
         /// <summary>
         /// Adds an object to the end of the <see cref="Deque{T}"/>.
