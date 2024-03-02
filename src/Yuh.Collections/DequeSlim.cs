@@ -480,6 +480,75 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Removes and returns the specified number of objects at the end of the <see cref="DequeSlim{T}"/>.
+        /// </summary>
+        /// <param name="count">The number of elements to remove at the end of the <see cref="DequeSlim{T}"/>.</param>
+        /// <returns>An array that contains the objects removed at the end of the <see cref="DequeSlim{T}"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is invalid.</exception>
+        public T[] PopBackRange(int count)
+        {
+            ThrowHelpers.ThrowIfArgumentIsNegative(count);
+            if (count > _count)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(count), ThrowHelpers.M_ValueIsGreaterThanCount);
+            }
+
+            var destinationArray = new T[count];
+            PopBackRangeInternal(destinationArray.AsSpan());
+            return destinationArray;
+        }
+
+        /// <summary>
+        /// Removes the specified number of objects at the end of the <see cref="DequeSlim{T}"/> and copies them to the specified span.
+        /// </summary>
+        /// <param name="destination">The span to copy the removed objects to.</param>
+        /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="destination"/> is invalid.</exception>
+        public void PopBackRange(Span<T> destination)
+        {
+            if (destination.Length > _count)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(destination.Length), ThrowHelpers.M_ValueIsGreaterThanCount);
+            }
+
+            PopBackRangeInternal(destination);
+        }
+
+        private void PopBackRangeInternal(Span<T> destination)
+        {
+            int count = destination.Length;
+            int lastIdx = (_head + _count - 1) % _capacity;
+            int rangeBeginsAt = lastIdx - count + 1;
+
+            if (rangeBeginsAt >= 0)
+            {
+                var source = _items.AsSpan().Slice(rangeBeginsAt, count);
+                source.CopyTo(destination);
+
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    source.Clear();
+                }
+            }
+            else
+            {
+                var source_1 = _items.AsSpan()[^(-rangeBeginsAt)..];
+                var source_2 = _items.AsSpan()[..(lastIdx + 1)];
+
+                source_1.CopyTo(destination);
+                source_2.CopyTo(destination[(-rangeBeginsAt)..]);
+
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    source_1.Clear();
+                    source_2.Clear();
+                }
+            }
+
+            _count -= count;
+            _version++;
+        }
+
+        /// <summary>
         /// Removes and returns the object at the beginning of the <see cref="DequeSlim{T}"/>.
         /// </summary>
         /// <returns>The object at the beginning of the <see cref="DequeSlim{T}"/>.</returns>
@@ -500,6 +569,75 @@ namespace Yuh.Collections
             _version++;
 
             return res;
+        }
+
+        /// <summary>
+        /// Removes and returns the specified number of objects at the front of the <see cref="DequeSlim{T}"/>.
+        /// </summary>
+        /// <param name="count">The number of elements to remove at the front of the <see cref="DequeSlim{T}"/>.</param>
+        /// <returns>An array that contains the objects removed at the front of the <see cref="DequeSlim{T}"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is invalid.</exception>
+        public T[] PopFrontRange(int count)
+        {
+            ThrowHelpers.ThrowIfArgumentIsNegative(count);
+            if (count > _count)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(count), ThrowHelpers.M_ValueIsGreaterThanCount);
+            }
+
+            var destinationArray = new T[count];
+            PopFrontRangeInternal(destinationArray.AsSpan());
+            return destinationArray;
+        }
+
+        /// <summary>
+        /// Removes the specified number of objects at the front of the <see cref="DequeSlim{T}"/> and copies them to the specified span.
+        /// </summary>
+        /// <param name="destination">The span to copy the removed objects to.</param>
+        /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="destination"/> is invalid.</exception>
+        public void PopFrontRange(Span<T> destination)
+        {
+            if (destination.Length > _count)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(destination.Length), ThrowHelpers.M_ValueIsGreaterThanCount);
+            }
+
+            PopFrontRangeInternal(destination);
+        }
+
+        private void PopFrontRangeInternal(Span<T> destination)
+        {
+            int count = destination.Length;
+            int rangeEndsAt = _head + count - 1;
+
+            if (rangeEndsAt < _capacity)
+            {
+                var source = _items.AsSpan().Slice(_head, count);
+                source.CopyTo(destination);
+
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    source.Clear();
+                }
+            }
+            else
+            {
+                var source_1 = _items.AsSpan()[_head..];
+                var source_2 = _items.AsSpan()[..((rangeEndsAt - _capacity) + 1)];  // (rangeEndsAt % _capacity) = (rangeEndsAt - _capacity)
+
+                source_1.CopyTo(destination);
+                source_2.CopyTo(destination[(_capacity - _head)..]);
+
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    source_1.Clear();
+                    source_2.Clear();
+                }
+            }
+
+            _head = (rangeEndsAt + 1) % _capacity;
+            _count -= count;
+            _version++;
         }
 
         /// <summary>
