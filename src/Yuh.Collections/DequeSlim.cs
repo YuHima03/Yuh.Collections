@@ -729,18 +729,15 @@ namespace Yuh.Collections
             if (capacity == 0)
             {
                 _items = [];
-                _capacity = 0;
-                _head = 0;
             }
             else
             {
                 T[] items = new T[capacity];
                 CopyToInternal(items, 0);
-
-                _capacity = capacity;
-                _head = 0;
                 _items = items;
             }
+                _capacity = capacity;
+                _head = 0;
             _version++;
         }
 
