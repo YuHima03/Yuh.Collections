@@ -660,6 +660,66 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Adds the elements of the specified collection to the end of the <see cref="DequeSlim{T}"/>.
+        /// </summary>
+        /// <remarks>
+        /// Please note that, if the specified collection has many objects, this method may take a long time or temporarily occupy large memory region to copy the objects.
+        /// To avoid this, please set a <see cref="ReadOnlySpan{T}"/> to the <paramref name="items"/> parameter instead.
+        /// </remarks>
+        /// <param name="items">The collection whose elements should be added to the end of the <see cref="DequeSlim{T}"/>.</param>
+        public void PushBackRange(IEnumerable<T> items)
+        {
+            ArgumentNullException.ThrowIfNull(items);
+
+            if (items is ICollection<T> collection)
+            {
+                var src = new T[collection.Count];
+                collection.CopyTo(src, 0);
+                PushBackRange(src.AsSpan());
+            }
+            else
+            {
+                foreach (var v in items)
+                {
+                    PushBack(v);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds the elements of the specified memory region to the end of the <see cref="DequeSlim{T}"/>.
+        /// </summary>
+        /// <param name="items">The read-only span whose elements should be added to the end of the <see cref="DequeSlim{T}"/>.</param>
+        public void PushBackRange(ReadOnlySpan<T> items)
+        {
+            int count = items.Length;
+            int requiredCapacity = _count + count;
+            if (requiredCapacity > Array.MaxLength)
+            {
+                ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+            }
+
+            EnsureCapacityInternal(requiredCapacity);
+
+            int rangeBeginsAt = (_head + _count) % _capacity;
+            var dest = _items.AsSpan();
+            int sliceAt = _capacity - rangeBeginsAt;
+
+            if (sliceAt >= count)
+            {
+                items.CopyTo(dest[rangeBeginsAt..]);
+            }
+            else
+            {
+                items[..sliceAt].CopyTo(dest[rangeBeginsAt..]);
+                items[sliceAt..].CopyTo(dest);
+            }
+
+            _count += count;
+            _version++;
+        }
+
+        /// <summary>
         /// Adds an object to the beginning of the <see cref="DequeSlim{T}"/>.
         /// </summary>
         /// <param name="item">
@@ -676,6 +736,67 @@ namespace Yuh.Collections
             _head = (_head - 1 + _capacity) % _capacity;
             _items[_head] = item;
             _count++;
+            _version++;
+        }
+
+        /// <summary>
+        /// Adds the elements of the specified collection to the front of the <see cref="DequeSlim{T}"/>.
+        /// </summary>
+        /// <remarks>
+        /// Please note that, this method may take a long time or temporarily occupy large memory region to copy the objects.
+        /// To avoid this, please set a <see cref="ReadOnlySpan{T}"/> to the <paramref name="items"/> parameter instead.
+        /// </remarks>
+        /// <param name="items">The collection whose elements should be added to the front of the <see cref="DequeSlim{T}"/>.</param>
+        public void PushFrontRange(IEnumerable<T> items)
+        {
+            ArgumentNullException.ThrowIfNull(items);
+
+            if (items is ICollection<T> collection)
+            {
+                var src = new T[collection.Count];
+                collection.CopyTo(src, 0);
+                PushFrontRange(src.AsSpan());
+            }
+            else
+            {
+                foreach (var v in items.Reverse())
+                {
+                    PushFront(v);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds the elements of the specified memory region to the front of the <see cref="DequeSlim{T}"/>.
+        /// </summary>
+        /// <param name="items">The read-only span whose elements should be added to the front of the <see cref="DequeSlim{T}"/>.</param>
+        public void PushFrontRange(ReadOnlySpan<T> items)
+        {
+            int count = items.Length;
+            int requiredCapacity = _count + count;
+            if (requiredCapacity > Array.MaxLength)
+            {
+                ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+            }
+
+            EnsureCapacityInternal(requiredCapacity);
+
+            var src = _items.AsSpan();
+            int rangeBeginsAt = _head - count;
+
+            if (rangeBeginsAt >= 0)
+            {
+                items.CopyTo(src[rangeBeginsAt..]);
+                _head = rangeBeginsAt;
+            }
+            else
+            {
+                items[..(-rangeBeginsAt)].CopyTo(src[^(-rangeBeginsAt)..]);
+                items[(-rangeBeginsAt)..].CopyTo(src);
+                _head = _capacity + rangeBeginsAt;
+            }
+
+            _count += count;
             _version++;
         }
 
@@ -736,8 +857,8 @@ namespace Yuh.Collections
                 CopyToInternal(items, 0);
                 _items = items;
             }
-                _capacity = capacity;
-                _head = 0;
+            _capacity = capacity;
+            _head = 0;
             _version++;
         }
 
