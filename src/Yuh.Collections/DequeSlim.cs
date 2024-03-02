@@ -499,10 +499,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes the specified number of objects at the end of the <see cref="DequeSlim{T}"/> and copies them to the specified span.
+        /// Removes the certain number of objects at the end of the <see cref="DequeSlim{T}"/> and copies them to the specified span to fill up it.
         /// </summary>
         /// <param name="destination">The span to copy the removed objects to.</param>
-        /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="destination"/> is invalid.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="destination"/> is greater than the number of elements contained in the collection.</exception>
         public void PopBackRange(Span<T> destination)
         {
             if (destination.Length > _count)
@@ -591,10 +591,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes the specified number of objects at the front of the <see cref="DequeSlim{T}"/> and copies them to the specified span.
+        /// Removes the certain number of objects at the front of the <see cref="DequeSlim{T}"/> and copies them to the specified span to fill up it.
         /// </summary>
         /// <param name="destination">The span to copy the removed objects to.</param>
-        /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="destination"/> is invalid.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="destination"/> is greater than the number of elements contained in the collection.</exception>
         public void PopFrontRange(Span<T> destination)
         {
             if (destination.Length > _count)
