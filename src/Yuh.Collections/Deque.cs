@@ -522,6 +522,7 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="count">The number of elements to remove at the end of the <see cref="Deque{T}"/>.</param>
         /// <returns>An array that contains the objects removed at the end of the <see cref="Deque{T}"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is invalid.</exception>
         public T[] PopBackRange(int count)
         {
             ThrowHelpers.ThrowIfArgumentIsNegative(count);
@@ -536,11 +537,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes the specified number of objects at the end of the <see cref="Deque{T}"/> and copies them to the specified span.
+        /// Removes the certain number of objects at the end of the <see cref="Deque{T}"/> and copies them to the specified span to fill up it.
         /// </summary>
-        /// <param name="count">The number of elements to remove at the end of the <see cref="Deque{T}"/>.</param>
         /// <param name="destination">The span to copy the removed objects to.</param>
-        public void PopBackRange(int count, Span<T> destination)
+        /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="destination"/> is greater than the number of elements contained in the collection.</exception>
         public void PopBackRange(Span<T> destination)
         {
             if (destination.Length > _count)
@@ -552,19 +552,19 @@ namespace Yuh.Collections
         }
 
         private void PopBackRangeInternal(Span<T> destination)
-            {
+        {
             int count = destination.Length;
-                var source = AsSpan()[(^count)..];
-                source.CopyTo(destination);
+            var source = AsSpan()[(^count)..];
+            source.CopyTo(destination);
 
-                _count -= count;
-                _version++;
+            _count -= count;
+            _version++;
 
-                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-                {
-                    source.Clear();
-                }
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            {
+                source.Clear();
             }
+        }
 
         /// <summary>
         /// Removes and returns the object at the beginning of the <see cref="Deque{T}"/>.
@@ -593,6 +593,7 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="count">The number of elements to remove at the front of the <see cref="Deque{T}"/>.</param>
         /// <returns>An array that contains the objects removed at the front of the <see cref="Deque{T}"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is invalid.</exception>
         public T[] PopFrontRange(int count)
         {
             ThrowHelpers.ThrowIfArgumentIsNegative(count);
@@ -607,11 +608,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes the specified number of objects at the front of the <see cref="Deque{T}"/> and copies them to the specified span.
+        /// Removes the certain number of objects at the front of the <see cref="Deque{T}"/> and copies them to the specified span to fill up it.
         /// </summary>
-        /// <param name="count">The number of elements to remove at the front of the <see cref="Deque{T}"/>.</param>
         /// <param name="destination">The span to copy the removed objects to.</param>
-        public void PopFrontRange(int count, Span<T> destination)
+        /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="destination"/> is greater than the number of elements contained in the collection.</exception>
         public void PopFrontRange(Span<T> destination)
         {
             if (destination.Length > _count)
@@ -620,23 +620,23 @@ namespace Yuh.Collections
             }
 
             PopFrontRangeInternal(destination);
-            }
+        }
 
         private void PopFrontRangeInternal(Span<T> destination)
-            {
+        {
             int count = destination.Length;
-                var source = AsSpan()[..count];
-                source.CopyTo(destination);
+            var source = AsSpan()[..count];
+            source.CopyTo(destination);
 
-                _count -= count;
-                _head += count;
-                _version++;
+            _count -= count;
+            _head += count;
+            _version++;
 
-                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-                {
-                    source.Clear();
-                }
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            {
+                source.Clear();
             }
+        }
 
         /// <summary>
         /// Adds an object to the end of the <see cref="Deque{T}"/>.
