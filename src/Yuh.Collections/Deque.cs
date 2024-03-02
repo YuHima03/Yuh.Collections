@@ -541,6 +541,7 @@ namespace Yuh.Collections
         /// <param name="count">The number of elements to remove at the end of the <see cref="Deque{T}"/>.</param>
         /// <param name="destination">The span to copy the removed objects to.</param>
         public void PopBackRange(int count, Span<T> destination)
+        public void PopBackRange(Span<T> destination)
         {
             if (destination.Length > _count)
             {
@@ -611,6 +612,7 @@ namespace Yuh.Collections
         /// <param name="count">The number of elements to remove at the front of the <see cref="Deque{T}"/>.</param>
         /// <param name="destination">The span to copy the removed objects to.</param>
         public void PopFrontRange(int count, Span<T> destination)
+        public void PopFrontRange(Span<T> destination)
         {
             if (destination.Length > _count)
             {
