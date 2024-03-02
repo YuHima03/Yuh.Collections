@@ -15,6 +15,8 @@ namespace Yuh.Collections
 
         internal const string M_TypeOfValueNotSupported = "The type of the value is not supported.";
 
+        internal const string M_ValueIsGreaterThanCount = "The value is greater than the number of elements contained in the collection.";
+
         internal const string M_ValueIsNegative = "The value is negative.";
 
         /// <exception cref="Exception"></exception>
