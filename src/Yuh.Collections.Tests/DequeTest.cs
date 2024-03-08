@@ -85,6 +85,15 @@ namespace Yuh.Collections.Tests
             buffer.Clear();
         }
 
+        [Fact]
+        public void InsertTest()
+        {
+            Deque<int> deque = new([0, 1, 2, 3, 4, 5, 6, 7]);
+
+            deque.InsertRange(6, [8, 9, 10, 11]);
+            OutputHelpers.OutputElements(deque, _out);
+        }
+
         internal void OutputCapacityAndMargin(Deque<int> deque, [CallerArgumentExpression(nameof(deque))] string? argName = null)
         {
             _out.WriteLine($"{argName}: {deque.Capacity}, {deque.FrontMargin}, {deque.BackMargin}");
