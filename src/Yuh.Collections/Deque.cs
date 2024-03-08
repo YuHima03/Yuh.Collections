@@ -445,11 +445,11 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Insert an item to the <see cref="Deque{T}"/> at the specified index.
+        /// Inserts an item to the <see cref="Deque{T}"/> at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
         /// <param name="item">An object to insert. The value can be <see langword="null"/> for reference types.</param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="Deque{T}"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is invalid (less than 0 or greater than <see cref="Count"/>.)</exception>
         public void Insert(int index, T item)
         {
             InsertRange(index, [item]);
@@ -463,7 +463,7 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentNullException"><paramref name="items"/> is null.</exception>
         /// <exception cref="ArgumentOutOfRangeException">The <paramref name="index"/> is invalid (less than 0 or greater than <see cref="Count"/>.)</exception>
         public void InsertRange(int index, IEnumerable<T> items)
-            {
+        {
             ArgumentNullException.ThrowIfNull(items);
 
             if ((uint)index > (uint)_count)
@@ -530,7 +530,7 @@ namespace Yuh.Collections
 
                     collection.CopyTo(_items, newHead + index);
                     _head = newHead;
-        }
+                }
                 else
                 {
                     EnsureCapacityInternal(0, collection.Count);
@@ -1138,57 +1138,6 @@ namespace Yuh.Collections
         {
             int diff = BackMargin - FrontMargin;
             ResizeInternal(capacity, ((capacity - _count + diff) >> 1));
-        }
-
-        private void InsertInternal(int index, T item)
-        {
-            if (index == 0)
-            {
-                PushFront(item);
-            }
-            else if (index == _count)
-            {
-                PushBack(item);
-            }
-            else
-            {
-                // make it costs lower to move the elements.
-                if (index <= (_count >> 1))
-                {
-                    // shift the elements in [0, index) of the deque.
-                    if (_head == 0)
-                    {
-                        Grow();
-                    }
-
-                    var span = MemoryMarshal.CreateSpan(ref _items[_head - 1], index + 1);
-                    for (int i = 0; i < index; i++)
-                    {
-                        span[i] = span[i + 1];
-                    }
-                    span[index] = item; // _items[_head + index - 1] = item;
-
-                    _head--;
-                }
-                else
-                {
-                    // shifts the elements in [index, _count) of the deque.
-                    if (_items.Length - _head - _count == 0) // _head + _count == _items.Length
-                    {
-                        Grow();
-                    }
-
-                    var span = MemoryMarshal.CreateSpan(ref _items[_head + index], _count - index + 1);
-                    for (int i = _count - index; i > 0; i--)
-                    {
-                        span[i] = span[i - 1];
-                    }
-                    span[0] = item;
-                }
-
-                _count++;
-                _version++;
-            }
         }
 
         private T RemoveAtInternal(int index)
