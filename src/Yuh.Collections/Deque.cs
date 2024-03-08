@@ -453,10 +453,151 @@ namespace Yuh.Collections
         public void Insert(int index, T item)
         {
             if (index < 0 || _count < index)
+        /// <summary>
+        /// Inserts the elements of the specified collection into the <see cref="Deque{T}"/> at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index at which the new elements should be inserted.</param>
+        /// <param name="items">The collection whose elements should be inserted into the <see cref="Deque{T}"/>.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="items"/> is null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">The <paramref name="index"/> is invalid (less than 0 or greater than <see cref="Count"/>.)</exception>
+        public void InsertRange(int index, IEnumerable<T> items)
+            {
+            ArgumentNullException.ThrowIfNull(items);
+
+            if ((uint)index > (uint)_count)
             {
                 ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
             }
-            InsertInternal(index, item);
+
+            if (items is ICollection<T> collection)
+            {
+                InsertRangeInternal(index, collection);
+            }
+            else
+            {
+                InsertRangeInternal(index, System.Runtime.InteropServices.CollectionsMarshal.AsSpan(items.ToList()));
+            }
+        }
+
+        /// <summary>
+        /// Inserts the elements of the specified span into the <see cref="Deque{T}"/> at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index at which the new elements should be inserted.</param>
+        /// <param name="items">The span whose elements should be inserted into the <see cref="Deque{T}"/>.</param>
+        /// <exception cref="ArgumentOutOfRangeException">The <paramref name="index"/> is invalid (less than 0 or greater than <see cref="Count"/>.)</exception>
+        public void InsertRange(int index, ReadOnlySpan<T> items)
+        {
+            if ((uint)index > (uint)_count)  // same as (index < 0 || _count < index)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
+            }
+            InsertRangeInternal(index, items);
+        }
+
+        private void InsertRangeInternal(int index, ICollection<T> collection)
+        {
+            if (collection.Count == 0)
+            {
+                return;
+            }
+
+            if (index == 0)
+            {
+                PushFrontRange(collection);
+            }
+            else if (index == _count)
+            {
+                PushBackRange(collection);
+            }
+            else
+            {
+                int requiredCapacity = checked(_count + collection.Count);
+                if (requiredCapacity > Array.MaxLength)
+                {
+                    ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+                }
+
+                if (index < (_count >> 1))
+                {
+                    EnsureCapacityInternal(collection.Count, 0);
+
+                    int newHead = _head - collection.Count;
+                    var src = MemoryMarshal.CreateSpan(ref _items[_head], index);
+                    var dst = MemoryMarshal.CreateSpan(ref _items[newHead], index);
+                    src.CopyTo(dst);
+
+                    collection.CopyTo(_items, newHead + index);
+                    _head = newHead;
+        }
+                else
+                {
+                    EnsureCapacityInternal(0, collection.Count);
+
+                    int cpyItemsCount = _count - index;
+                    int cpyHead = _head + index;
+                    var src = MemoryMarshal.CreateSpan(ref _items[cpyHead], cpyItemsCount);
+                    var dst = MemoryMarshal.CreateSpan(ref _items[cpyHead + collection.Count], cpyItemsCount);
+                    src.CopyTo(dst);
+
+                    collection.CopyTo(_items, cpyHead);
+                }
+
+                _count += collection.Count;
+                _version++;
+            }
+        }
+
+        private void InsertRangeInternal(int index, ReadOnlySpan<T> items)
+        {
+            if (items.Length == 0)
+            {
+                return;
+            }
+
+            if (index == 0)
+            {
+                PushFrontRange(items);
+            }
+            else if (index == _count)
+            {
+                PushBackRange(items);
+            }
+            else
+            {
+                int requiredCapacity = checked(_count + items.Length);
+                if (requiredCapacity > Array.MaxLength)
+                {
+                    ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+                }
+
+                if (index < (_count >> 1))
+                {
+                    EnsureCapacityInternal(items.Length, 0);
+
+                    int newHead = _head - items.Length;
+                    var src = MemoryMarshal.CreateSpan(ref _items[_head], index);
+                    var dst = MemoryMarshal.CreateSpan(ref _items[newHead], index);
+                    src.CopyTo(dst);
+
+                    items.CopyTo(MemoryMarshal.CreateSpan(ref _items[newHead + index], items.Length));
+                    _head = newHead;
+                }
+                else
+                {
+                    EnsureCapacityInternal(0, items.Length);
+
+                    int cpyItemsCount = _count - index;
+                    int cpyHead = _head + index;
+                    var src = MemoryMarshal.CreateSpan(ref _items[cpyHead], cpyItemsCount);
+                    var dst = MemoryMarshal.CreateSpan(ref _items[cpyHead + items.Length], cpyItemsCount);
+                    src.CopyTo(dst);
+
+                    items.CopyTo(MemoryMarshal.CreateSpan(ref _items[cpyHead], items.Length));
+                }
+
+                _count += items.Length;
+                _version++;
+            }
         }
 
         /// <summary>
