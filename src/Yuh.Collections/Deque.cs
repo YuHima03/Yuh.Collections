@@ -452,7 +452,9 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="Deque{T}"/>.</exception>
         public void Insert(int index, T item)
         {
-            if (index < 0 || _count < index)
+            InsertRange(index, [item]);
+        }
+
         /// <summary>
         /// Inserts the elements of the specified collection into the <see cref="Deque{T}"/> at the specified index.
         /// </summary>
