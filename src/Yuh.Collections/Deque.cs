@@ -440,7 +440,7 @@ namespace Yuh.Collections
             }
             else
             {
-                throw new ArgumentException(ThrowHelpers.M_TypeOfValueNotSupported, nameof(value));
+                ThrowHelpers.ThrowArgumentException(ThrowHelpers.M_TypeOfValueNotSupported, nameof(value));
             }
         }
 
