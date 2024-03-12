@@ -971,7 +971,7 @@ namespace Yuh.Collections
         {
             if (index < 0 || _count <= index)
             {
-                throw new ArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
             }
             RemoveAtInternal(index);
         }
@@ -1051,7 +1051,7 @@ namespace Yuh.Collections
             }
             else if (capacity < _count)
             {
-                throw new ArgumentOutOfRangeException(nameof(capacity), "The specified capacity is less than the number of the elements contained in the deque.");
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(capacity), "The specified capacity is less than the number of the elements contained in the deque.");
             }
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
             ResizeInternal(capacity);
@@ -1082,7 +1082,7 @@ namespace Yuh.Collections
 
             if (capacity > Array.MaxLength)
             {
-                throw new ArgumentException("The total required capacity is greater than the maximum size of an array.");
+                ThrowHelpers.ThrowArgumentException("The total required capacity is greater than the maximum size of an array.");
             }
 
             ResizeInternal(capacity, frontMargin);
