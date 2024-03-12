@@ -12,5 +12,14 @@ namespace Yuh.Collections
                 value = default!;
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void ClearIfReferenceOrContainsReferences<T>(Span<T> span)
+        {
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            {
+                span.Clear();
+            }
+        }
     }
 }
