@@ -977,6 +977,68 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Removes a range of elements from the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <param name="index">The zero-based starting index of the range of elements to remove.</param>
+        /// <param name="count">The number of elements to remove.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is negative.</exception>
+        /// <exception cref="ArgumentException"><paramref name="index"/> and <paramref name="count"/> do not denote a valid range of elements in the <see cref="Deque{T}"/>.</exception>
+        public void RemoveRange(int index, int count)
+        {
+            ThrowHelpers.ThrowIfArgumentIsNegative(index);
+            ThrowHelpers.ThrowIfArgumentIsNegative(count);
+
+            if (checked(index + count) >= _count)
+            {
+                ThrowHelpers.ThrowArgumentException("The number of elements to remove is greater than the available space from the specified index to the end of the deque.", "[index, count]");
+            }
+
+            RemoveRangeInternal(index, index + count);
+        }
+
+        private void RemoveRangeInternal(int beginIndex, int endIndex)
+        {
+            var count = endIndex - beginIndex;
+            var itemsSpan = _items.AsSpan();
+
+            if (beginIndex == 0)
+            {
+                if (endIndex == _count)
+                {
+                    Clear();
+                }
+                else
+                {
+                    _head += count;
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(itemsSpan.Slice(_head, count));
+                }
+            }
+            else if (endIndex == _count)
+            {
+                CollectionHelpers.ClearIfReferenceOrContainsReferences(itemsSpan.Slice(_head + _count - count, count));
+            }
+            else
+            {
+                if (beginIndex < _count - endIndex)
+                {
+                    itemsSpan.Slice(_head, beginIndex).CopyTo(itemsSpan.Slice(_head + count, beginIndex));
+
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(itemsSpan.Slice(_head, count));
+                }
+                else
+                {
+                    var movedItemsCount = _head + _count - endIndex;
+                    itemsSpan.Slice(endIndex, movedItemsCount).CopyTo(itemsSpan.Slice(endIndex - count, movedItemsCount));
+
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(itemsSpan.Slice(_head + _count - count, count));
+                }
+            }
+
+            _count -= count;
+            _version++;
+        }
+
+        /// <summary>
         /// Resizes the internal array to the specified size.
         /// </summary>
         /// <param name="capacity"></param>
