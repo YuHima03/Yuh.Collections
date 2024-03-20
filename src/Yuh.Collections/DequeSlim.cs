@@ -828,6 +828,47 @@ namespace Yuh.Collections
             throw new NotImplementedException();
         }
 
+        public void RemoveRange(int index, int count)
+        {
+            ThrowHelpers.ThrowIfArgumentIsNegative(index);
+            ThrowHelpers.ThrowIfArgumentIsNegative(count);
+
+            int endIndex = checked(index + count);
+            if (endIndex > _count)
+            {
+                ThrowHelpers.ThrowArgumentException("The number of elements to remove is greater than the available space from the specified index to the end of the deque.", "[index, count]");
+            }
+
+            RemoveRangeInternal(index, endIndex);
+        }
+
+        private void RemoveRangeInternal(int beginIndex, int endIndex)
+        {
+            var count = endIndex - beginIndex;
+
+            if (beginIndex == 0)
+            {
+                if (endIndex == _count)
+                {
+                    Clear();
+                }
+                else
+                {
+                    int newHead = checked(_head + count);
+
+                    if (newHead < _count)
+                    {
+                        
+                        _head = newHead;
+                    }
+                    else
+                    {
+
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Resizes the internal array to the specified size.
         /// </summary>
