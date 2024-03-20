@@ -988,7 +988,7 @@ namespace Yuh.Collections
             ThrowHelpers.ThrowIfArgumentIsNegative(index);
             ThrowHelpers.ThrowIfArgumentIsNegative(count);
 
-            if (checked(index + count) >= _count)
+            if (checked(index + count) > _count)
             {
                 ThrowHelpers.ThrowArgumentException("The number of elements to remove is greater than the available space from the specified index to the end of the deque.", "[index, count]");
             }
