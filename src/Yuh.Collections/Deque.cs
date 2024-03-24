@@ -31,7 +31,7 @@ namespace Yuh.Collections
         object ICollection.SyncRoot => this;
 
         /// <summary>
-        /// Gets of sets the element at the specified index.
+        /// Gets or sets the element at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index of the element to get or set.</param>
         /// <value>The element at the specified index.</value>
