@@ -5,6 +5,23 @@ using System.Runtime.CompilerServices;
 namespace Yuh.Collections
 {
     /// <summary>
+    /// Provides static methods to create a new instance of the <see cref="DequeSlim{T}"/> class.
+    /// </summary>
+    public static class DequeSlim
+    {
+        /// <summary>
+        /// Creates a new instance of the <see cref="DequeSlim{T}"/> class that contains elements copied from the specified <see cref="DequeSlim{T}"/> and returns it.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in the <see cref="DequeSlim{T}"/>.</typeparam>
+        /// <param name="deque">The deque whose elements are copied to the new one.</param>
+        /// <returns>A new instance of the <see cref="DequeSlim{T}"/> class that contains elements copied from <paramref name="deque"/> and has sufficient capacity to accommodate the number of elements copied.</returns>
+        public static DequeSlim<T> CreateClone<T>(DequeSlim<T> deque)
+        {
+            return new(deque);
+        }
+    }
+
+    /// <summary>
     /// Represents a double-ended queue for which elements can be added to or removed from the front or back.
     /// </summary>
     /// <remarks>
