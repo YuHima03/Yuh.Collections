@@ -825,7 +825,153 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index of the <see cref="DequeSlim{T}"/>.</exception>
         public void RemoveAt(int index)
         {
-            throw new NotImplementedException();
+            if ((uint)index >= _count)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
+            }
+
+            RemoveRangeInternal(index, checked(index + 1));
+        }
+
+        /// <summary>
+        /// Remove a range of elements from the <see cref="DequeSlim{T}"/>.
+        /// </summary>
+        /// <param name="index">The zero-based starting index of the range of elements to remove.</param>
+        /// <param name="count">The number of elements to remove.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is negative.</exception>
+        /// <exception cref="ArgumentException"><paramref name="index"/> and <paramref name="count"/> do not denote a valid range of elements in the <see cref="DequeSlim{T}"/>.</exception>
+        public void RemoveRange(int index, int count)
+        {
+            ThrowHelpers.ThrowIfArgumentIsNegative(index);
+            ThrowHelpers.ThrowIfArgumentIsNegative(count);
+
+            int endIndex = checked(index + count);
+            if (endIndex > _count)
+            {
+                ThrowHelpers.ThrowArgumentException("The number of elements to remove is greater than the available space from the specified index to the end of the deque.", "[index, count]");
+            }
+
+            RemoveRangeInternal(index, endIndex);
+        }
+
+        private void RemoveRangeInternal(int beginIndex, int endIndex)
+        {
+            var count = endIndex - beginIndex;
+
+            if (count == 0)
+            {
+                return;
+            }
+
+            if (beginIndex == 0)
+            {
+                //
+                // The following process is almost the same as that of the PopFrontRange method.
+                //
+
+                if (endIndex == _count) // #00
+                {
+                    Clear();
+                    return;
+                }
+                else
+                {
+                    int newHead = checked(_head + count);
+                    var items = _items.AsSpan();
+
+                    if (newHead <= _capacity) // #01
+                    {
+                        CollectionHelpers.ClearIfReferenceOrContainsReferences(items.Slice(_head, count));
+                    }
+                    else // #02
+                    {
+                        newHead -= _capacity;
+                        CollectionHelpers.ClearIfReferenceOrContainsReferences(items[_head..], items[..newHead]);
+                    }
+
+                    _head = newHead;
+                }
+            }
+            else if (endIndex == _count)
+            {
+                //
+                // The following process is almost the same as that of the PopBackRange method.
+                //
+
+                int _end = checked(_head + _count);
+                if (_end > _capacity)
+                {
+                    _end -= _capacity;
+                }
+
+                int newEnd = _end - count;
+                var items = _items.AsSpan();
+
+                if (newEnd >= 0) // #03
+                {
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(items.Slice(newEnd, count));
+                }
+                else // #04
+                {
+                    newEnd += _capacity;
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(items[newEnd..], items[.._end]);
+                }
+            }
+            else
+            {
+                if (beginIndex < _count - endIndex)
+                {
+                    var items = _items.AsSpan();
+
+                    for (int i = _head + beginIndex - 1; i >= _head; i--)
+                    {
+                        items[checked(i + count) % _capacity] = items[i % _capacity];
+                    }
+
+                    int newHead = checked(_head + count);
+
+                    if (newHead < _capacity) // #05
+                    {
+                        CollectionHelpers.ClearIfReferenceOrContainsReferences(items.Slice(_head, count));
+                    }
+                    else // #06
+                    {
+                        newHead -= _capacity;
+                        CollectionHelpers.ClearIfReferenceOrContainsReferences(items[_head..], items[..newHead]);
+                    }
+
+                    _head = newHead;
+                }
+                else
+                {
+                    int _end = _head + _count;
+                    var items = _items.AsSpan();
+
+                    for (int i = _head + endIndex; i < _end; i++)
+                    {
+                        items[checked(i - count + _count) % _count] = items[i % _count];
+                    }
+
+                    if (_end >= _capacity)
+                    {
+                        _end -= _capacity;
+                    }
+                    int newEnd = _end - count;
+
+                    if (newEnd > 0) // #07
+                    {
+                        CollectionHelpers.ClearIfReferenceOrContainsReferences(items.Slice(newEnd, count));
+                    }
+                    else // #08
+                    {
+                        newEnd += _capacity;
+                        CollectionHelpers.ClearIfReferenceOrContainsReferences(items[newEnd..], items[..(_end % _capacity)]);
+                    }
+                }
+            }
+
+            _count -= count;
+            _version++;
         }
 
         /// <summary>
