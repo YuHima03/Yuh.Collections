@@ -1006,6 +1006,7 @@ namespace Yuh.Collections
                 if (endIndex == _count)
                 {
                     Clear();
+                    return;
                 }
                 else
                 {
