@@ -21,5 +21,15 @@ namespace Yuh.Collections
                 span.Clear();
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void ClearIfReferenceOrContainsReferences<T>(Span<T> span1,  Span<T> span2)
+        {
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            {
+                span1.Clear();
+                span2.Clear();
+            }
+        }
     }
 }
