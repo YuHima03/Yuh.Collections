@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Yuh.Collections.Views\Yuh.Collections.Views.csproj" />
     <ProjectReference Include="..\Yuh.Collections\Yuh.Collections.csproj" />
   </ItemGroup>
 
