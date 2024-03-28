@@ -125,6 +125,20 @@ namespace Yuh.Collections
         public DequeSlim() : this(_defaultCapacity) { }
 
         /// <summary>
+        /// Initializes an new instance of the <see cref="DequeSlim{T}"/> class that contains elements copied from the specified <see cref="DequeSlim{T}"/> and has sufficient capacity to accommodate the number of elements copied.
+        /// </summary>
+        /// <param name="deque">The deque whose elements are copied to the new one.</param>
+        internal DequeSlim(DequeSlim<T> deque)
+        {
+            _capacity = deque.Capacity;
+            _count = deque._count;
+            _head = deque._head;
+            _items = new T[deque._capacity];
+
+            deque._items.AsSpan().CopyTo(_items.AsSpan());
+        }
+
+        /// <summary>
         /// Initializes an new instance of the <see cref="DequeSlim{T}"/> class that is empty and has the specified initial capacity.
         /// </summary>
         /// <param name="capacity">The number of elements that the new <see cref="DequeSlim{T}"/> can initially store.</param>
