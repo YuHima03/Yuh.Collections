@@ -65,7 +65,7 @@ namespace Yuh.Collections.Tests
                 Version = 0
             };
 
-            var deque = view.ToDequeSlim();
+            var deque = view.Encapsulate();
 
             var dq00 = DequeSlim.CreateClone(deque);
             dq00.RemoveRange(0, 12);

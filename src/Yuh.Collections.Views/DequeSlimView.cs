@@ -11,7 +11,7 @@ namespace Yuh.Collections.Views
         public int Head;
         public int Version;
 
-        public DequeSlim<T> ToDequeSlim()
+        public DequeSlim<T> Encapsulate()
         {
             return Unsafe.As<DequeSlim<T>>(this);
         }
