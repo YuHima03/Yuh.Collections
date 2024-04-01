@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -12,6 +13,8 @@ namespace Yuh.Collections
     /// <para>This supports random-access to the elements contained in the collection and addition of elements to the front or back, or removal from the front or back.</para>
     /// </remarks>
     /// <typeparam name="T">The type of elements in the <see cref="Deque{T}"/>.</typeparam>
+    [DebuggerDisplay("Count = {_count}, Capacity = {_items.Length}")]
+    [DebuggerTypeProxy(typeof(Deque<>.DebugView))]
     public class Deque<T> : ICollection<T>, IDeque<T>, IList, IList<T>, IReadOnlyDeque<T>, IReadOnlyList<T>
     {
         private const int _defaultCapacity = 8;
@@ -1406,6 +1409,16 @@ namespace Yuh.Collections
                     ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionModifiedAfterEnumeratorCreated);
                 }
             }
+        }
+
+        [DebuggerNonUserCode]
+        private sealed class DebugView(Deque<T> deque)
+        {
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+            private readonly Deque<T> _deque = deque;
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public T[] Items => _deque.ToArray();
         }
     }
 }
