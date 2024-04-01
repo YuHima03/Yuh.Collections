@@ -227,10 +227,7 @@ namespace Yuh.Collections
         /// </summary>
         public void Clear()
         {
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
-                Array.Clear(_items, _head, _count);
-            }
+            CollectionHelpers.ClearIfReferenceOrContainsReferences(AsSpan());
             _count = 0;
             _head = _items.Length >> 1;
             _version++;
@@ -268,7 +265,7 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentException">The number of the elements in the source <see cref="Deque{T}"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
         public void CopyTo(T[] array, int arrayIndex)
         {
-            Array.Copy(_items, _head, array, arrayIndex, _count);
+            AsReadOnlySpan().CopyTo(array.AsSpan()[arrayIndex..]);
         }
 
         void ICollection.CopyTo(Array array, int index)
