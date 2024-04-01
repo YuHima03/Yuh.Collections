@@ -1095,6 +1095,15 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Copies the elements of the <see cref="Deque{T}"/> into a new array.
+        /// </summary>
+        /// <returns>An array containing copies of the elements of the <see cref="Deque{T}"/>.</returns>
+        public T[] ToArray()
+        {
+            return AsReadOnlySpan().ToArray();
+        }
+
+        /// <summary>
         /// Returns a value that indicates whether there is an object at the beginning of the <see cref="Deque{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter.
         /// The object is not removed from the <see cref="Deque{T}"/>.
         /// </summary>
