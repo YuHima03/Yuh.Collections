@@ -1,6 +1,8 @@
 ﻿using System.Collections;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Yuh.Collections.Debugging;
 
 namespace Yuh.Collections
 {
@@ -29,6 +31,8 @@ namespace Yuh.Collections
     ///     However, this performs slightly worse than <see cref="Deque{T}"/> in some respects.
     /// </remarks>
     /// <typeparam name="T">The type of elements in the <see cref="DequeSlim{T}"/>.</typeparam>
+    [DebuggerDisplay("Count = {_count}, Capacity = {_capacity}")]
+    [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
     public class DequeSlim<T> : ICollection, ICollection<T>, IEnumerable, IEnumerable<T>, IList, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>
     {
         private const int _defaultCapacity = 8;
