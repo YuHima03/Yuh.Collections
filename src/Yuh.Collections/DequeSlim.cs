@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System.Buffers;
+using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -956,13 +957,9 @@ namespace Yuh.Collections
             {
                 if (beginIndex < _count - endIndex)
                 {
+                    ShiftRangeInternal(_head, beginIndex, count);
+
                     var items = _items.AsSpan();
-
-                    for (int i = _head + beginIndex - 1; i >= _head; i--)
-                    {
-                        items[checked(i + count) % _capacity] = items[i % _capacity];
-                    }
-
                     int newHead = checked(_head + count);
 
                     if (newHead < _capacity) // #05
@@ -979,13 +976,10 @@ namespace Yuh.Collections
                 }
                 else
                 {
+                    ShiftRangeInternal((_head + endIndex) % _capacity, _count - endIndex, -count);
+
                     int _end = _head + _count;
                     var items = _items.AsSpan();
-
-                    for (int i = _head + endIndex; i < _end; i++)
-                    {
-                        items[checked(i - count + _count) % _count] = items[i % _count];
-                    }
 
                     if (_end >= _capacity)
                     {
