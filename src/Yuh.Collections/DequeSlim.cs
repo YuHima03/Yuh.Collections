@@ -1058,7 +1058,7 @@ namespace Yuh.Collections
 
             int srcEnd = begin + count;
             var buffer = ArrayPool<T>.Shared.Rent(count);
-            var bufferSpan = buffer.AsSpan();
+            var bufferSpan = buffer.AsSpan()[..count];
             var itemsSpan = _items.AsSpan();
 
             if (srcEnd <= _capacity)
