@@ -117,7 +117,7 @@ namespace Yuh.Collections.Tests
             DequeSlimView<int> view = new()
             {
                 Capacity = 1 << 24,
-                Count = 1 << 16,
+                Count = 1 << 23,
                 Head = 3 * (1 << 22),
                 Items = buffer,
                 Version = 0
