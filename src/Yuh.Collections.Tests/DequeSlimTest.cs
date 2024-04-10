@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Diagnostics;
 using Xunit.Abstractions;
 using Yuh.Collections.Views;
 
@@ -106,6 +107,7 @@ namespace Yuh.Collections.Tests
         }
 
         [Fact]
+        [DebuggerNonUserCode]
         public void RemoveRangeTest_Heavy()
         {
             var buffer = ArrayPool<int>.Shared.Rent(1 << 24);
@@ -134,7 +136,7 @@ namespace Yuh.Collections.Tests
             run();
             var elapse = (DateTime.Now - startTime).TotalMicroseconds;
 
-            _out.WriteLine($"Elapsed time: {elapse} [μs]");
+            _out.WriteLine($"Elapsed time (approx.): {elapse} [μs]");
         }
     }
 }
