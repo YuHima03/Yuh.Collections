@@ -1,4 +1,5 @@
-﻿using Xunit.Abstractions;
+﻿using System.Buffers;
+using Xunit.Abstractions;
 using Yuh.Collections.Views;
 
 namespace Yuh.Collections.Tests
@@ -102,6 +103,38 @@ namespace Yuh.Collections.Tests
             var dq08 = DequeSlim.CreateClone(deque);
             dq08.RemoveRange(4, 6);
             Assert.Equal((IEnumerable<int>)dq08, [0, 1, 2, 3, 10, 11]);
+        }
+
+        [Fact]
+        public void RemoveRangeTest_Heavy()
+        {
+            var buffer = ArrayPool<int>.Shared.Rent(1 << 24);
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                buffer[i] = i;
+            }
+
+            DequeSlimView<int> view = new()
+            {
+                Capacity = 1 << 24,
+                Count = 1 << 16,
+                Head = 3 * (1 << 22),
+                Items = buffer,
+                Version = 0
+            };
+
+            var deque = view.Encapsulate();
+
+            void run()
+            {
+                deque.RemoveRange(1 << 20, 1 << 21);
+            }
+
+            var startTime = DateTime.Now;
+            run();
+            var elapse = (DateTime.Now - startTime).TotalMicroseconds;
+
+            _out.WriteLine($"Elapsed time: {elapse} [μs]");
         }
     }
 }
