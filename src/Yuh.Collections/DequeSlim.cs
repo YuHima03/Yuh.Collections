@@ -1061,39 +1061,44 @@ namespace Yuh.Collections
             var bufferSpan = buffer.AsSpan()[..count];
             var itemsSpan = _items.AsSpan();
 
-            if (srcEnd <= _capacity)
+            try
             {
-                var src = itemsSpan[begin..srcEnd];
-                src.CopyTo(bufferSpan);
+                if (srcEnd <= _capacity)
+                {
+                    var src = itemsSpan[begin..srcEnd];
+                    src.CopyTo(bufferSpan);
 
-                CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
+                }
+                else
+                {
+                    var src1 = itemsSpan[begin..];
+                    var src2 = itemsSpan[..(srcEnd - _capacity)];
+                    src1.CopyTo(bufferSpan);
+                    src2.CopyTo(bufferSpan[src1.Length..]);
+
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(src1, src2);
+                }
+
+                int destBegin = checked(begin + diff) % _capacity;
+                int destEnd = destBegin + count;
+
+                if (destEnd <= _capacity)
+                {
+                    bufferSpan.CopyTo(itemsSpan[destBegin..destEnd]);
+                }
+                else
+                {
+                    var dest1 = itemsSpan[destBegin..];
+                    var dest2 = itemsSpan[..(destEnd - _capacity)];
+                    bufferSpan[..dest1.Length].CopyTo(dest1);
+                    bufferSpan[dest1.Length..].CopyTo(dest2);
+                }
             }
-            else
+            finally
             {
-                var src1 = itemsSpan[begin..];
-                var src2 = itemsSpan[..(srcEnd - _capacity)];
-                src1.CopyTo(bufferSpan);
-                src2.CopyTo(bufferSpan[src1.Length..]);
-
-                CollectionHelpers.ClearIfReferenceOrContainsReferences(src1, src2);
+                ArrayPool<T>.Shared.Return(buffer);
             }
-
-            int destBegin = checked(begin + diff) % _capacity;
-            int destEnd = destBegin + count;
-
-            if (destEnd <= _capacity)
-            {
-                bufferSpan.CopyTo(itemsSpan[destBegin..destEnd]);
-            }
-            else
-            {
-                var dest1 = itemsSpan[destBegin..];
-                var dest2 = itemsSpan[..(destEnd - _capacity)];
-                bufferSpan[..dest1.Length].CopyTo(dest1);
-                bufferSpan[dest1.Length..].CopyTo(dest2);
-            }
-
-            ArrayPool<T>.Shared.Return(buffer);
         }
 
         /// <summary>
