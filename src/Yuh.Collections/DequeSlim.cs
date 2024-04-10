@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System.Buffers;
+using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -956,13 +957,9 @@ namespace Yuh.Collections
             {
                 if (beginIndex < _count - endIndex)
                 {
+                    ShiftRangeInternal(_head, beginIndex, count);
+
                     var items = _items.AsSpan();
-
-                    for (int i = _head + beginIndex - 1; i >= _head; i--)
-                    {
-                        items[checked(i + count) % _capacity] = items[i % _capacity];
-                    }
-
                     int newHead = checked(_head + count);
 
                     if (newHead < _capacity) // #05
@@ -979,13 +976,10 @@ namespace Yuh.Collections
                 }
                 else
                 {
+                    ShiftRangeInternal((_head + endIndex) % _capacity, _count - endIndex, -count);
+
                     int _end = _head + _count;
                     var items = _items.AsSpan();
-
-                    for (int i = _head + endIndex; i < _end; i++)
-                    {
-                        items[checked(i - count + _count) % _count] = items[i % _count];
-                    }
 
                     if (_end >= _capacity)
                     {
@@ -1041,6 +1035,70 @@ namespace Yuh.Collections
             _capacity = capacity;
             _head = 0;
             _version++;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="begin">
+        /// The zero-based index of the first element of the range in the internal array.
+        /// This value must be positive and less than the length of the internal array.
+        /// </param>
+        /// <param name="count"></param>
+        /// <param name="diff"></param>
+        private void ShiftRangeInternal(int begin, int count, int diff)
+        {
+            if (diff == 0)
+            {
+                return;
+            }
+            else if (diff < 0)
+            {
+                diff += _capacity;
+            }
+
+            int srcEnd = begin + count;
+            var buffer = ArrayPool<T>.Shared.Rent(count);
+            var bufferSpan = buffer.AsSpan()[..count];
+            var itemsSpan = _items.AsSpan();
+
+            try
+            {
+                if (srcEnd <= _capacity)
+                {
+                    var src = itemsSpan[begin..srcEnd];
+                    src.CopyTo(bufferSpan);
+
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
+                }
+                else
+                {
+                    var src1 = itemsSpan[begin..];
+                    var src2 = itemsSpan[..(srcEnd - _capacity)];
+                    src1.CopyTo(bufferSpan);
+                    src2.CopyTo(bufferSpan[src1.Length..]);
+
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(src1, src2);
+                }
+
+                int destBegin = checked(begin + diff) % _capacity;
+                int destEnd = destBegin + count;
+
+                if (destEnd <= _capacity)
+                {
+                    bufferSpan.CopyTo(itemsSpan[destBegin..destEnd]);
+                }
+                else
+                {
+                    var dest1 = itemsSpan[destBegin..];
+                    var dest2 = itemsSpan[..(destEnd - _capacity)];
+                    bufferSpan[..dest1.Length].CopyTo(dest1);
+                    bufferSpan[dest1.Length..].CopyTo(dest2);
+                }
+            }
+            finally
+            {
+                ArrayPool<T>.Shared.Return(buffer);
+            }
         }
 
         /// <summary>

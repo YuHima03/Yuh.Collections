@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Diagnostics;
 using Xunit.Abstractions;
 using Yuh.Collections.Views;
@@ -105,7 +105,7 @@ namespace Yuh.Collections.Tests
             dq08.RemoveRange(4, 6);
             Assert.Equal((IEnumerable<int>)dq08, [0, 1, 2, 3, 10, 11]);
         }
-
+      
         [Fact]
         [DebuggerNonUserCode]
         public void RemoveRangeTest_Heavy()
