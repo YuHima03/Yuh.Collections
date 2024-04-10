@@ -1044,6 +1044,65 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// </summary>
+        /// <param name="begin">
+        /// The zero-based index of the first element of the range in the internal array.
+        /// This value must be positive and less than the length of the internal array.
+        /// </param>
+        /// <param name="count"></param>
+        /// <param name="diff"></param>
+        private void ShiftRangeInternal(int begin, int count, int diff)
+        {
+            if (diff == 0)
+            {
+                return;
+            }
+            else if (diff < 0)
+            {
+                diff += _capacity;
+            }
+
+            int srcEnd = begin + count;
+            var buffer = ArrayPool<T>.Shared.Rent(count);
+            var bufferSpan = buffer.AsSpan();
+            var itemsSpan = _items.AsSpan();
+
+            if (srcEnd <= _capacity)
+            {
+                var src = itemsSpan[begin..srcEnd];
+                src.CopyTo(bufferSpan);
+
+                CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
+            }
+            else
+            {
+                var src1 = itemsSpan[begin..];
+                var src2 = itemsSpan[..(srcEnd - _capacity)];
+                src1.CopyTo(bufferSpan);
+                src2.CopyTo(bufferSpan[src1.Length..]);
+
+                CollectionHelpers.ClearIfReferenceOrContainsReferences(src1, src2);
+            }
+
+            int destBegin = checked(begin + diff) % _capacity;
+            int destEnd = destBegin + count;
+
+            if (destEnd <= _capacity)
+            {
+                bufferSpan.CopyTo(itemsSpan[destBegin..destEnd]);
+            }
+            else
+            {
+                var dest1 = itemsSpan[destBegin..];
+                var dest2 = itemsSpan[..(destEnd - _capacity)];
+                bufferSpan[..dest1.Length].CopyTo(dest1);
+                bufferSpan[dest1.Length..].CopyTo(dest2);
+            }
+
+            ArrayPool<T>.Shared.Return(buffer);
+        }
+
+        /// <summary>
         /// Returns a value that indicates whether there is an object at the beginning of the <see cref="DequeSlim{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter.
         /// The object is not removed from the <see cref="DequeSlim{T}"/>.
         /// </summary>
