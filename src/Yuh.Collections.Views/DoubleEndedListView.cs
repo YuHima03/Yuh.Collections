@@ -2,18 +2,16 @@
 
 namespace Yuh.Collections.Views
 {
-    public class DequeSlimView<T>
+    public class DoubleEndedListView<T>
     {
-        // Do NOT change the order of the following fields.
         public T[] Items = [];
-        public int Capacity;
         public int Count;
         public int Head;
         public int Version;
 
-        public DequeSlim<T> Encapsulate()
+        public DoubleEndedList<T> Encapsulate()
         {
-            return Unsafe.As<DequeSlim<T>>(this);
+            return Unsafe.As<DoubleEndedList<T>>(this);
         }
     }
 }

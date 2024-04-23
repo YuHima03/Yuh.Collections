@@ -1,5 +1,5 @@
-﻿using System.Runtime.CompilerServices;
-using Xunit.Abstractions;
+﻿using Xunit.Abstractions;
+using Yuh.Collections.Views;
 
 namespace Yuh.Collections.Tests
 {
@@ -8,43 +8,9 @@ namespace Yuh.Collections.Tests
         private readonly ITestOutputHelper _out = @out;
 
         [Fact]
-        public void GrowTest()
-        {
-            Deque<int> deque = new(6);
-
-            deque.PushBack(0);
-            deque.PushBack(1);
-            deque.PushBack(2);
-            OutputCapacityAndMargin(deque);
-
-            deque.PushBack(3);
-            OutputCapacityAndMargin(deque);
-
-            deque.PushFront(4);
-            OutputCapacityAndMargin(deque);
-
-            deque.PushFront(5);
-            OutputCapacityAndMargin(deque);
-
-            deque.PushFront(6);
-            OutputCapacityAndMargin(deque);
-
-            deque.PushFront(7);
-            OutputCapacityAndMargin(deque);
-
-            Deque<int> deque2 = new([0, 1, 2, 3]);
-            deque2.EnsureCapacity(8);
-            OutputCapacityAndMargin(deque2);
-
-            Deque<int> deque3 = new([0, 1, 2, 3]);
-            deque3.EnsureCapacity(1, 2);
-            OutputCapacityAndMargin(deque3);
-        }
-
-        [Fact]
         public void PushAndPopRangeTest()
         {
-            Deque<int> deque = new([0, 1, 2, 3]);
+            DoubleEndedList<int> deque = new([0, 1, 2, 3]);
 
             deque.PushBackRange([4, 5, 6]);
             OutputHelpers.OutputElements(deque, _out);
@@ -62,7 +28,7 @@ namespace Yuh.Collections.Tests
         [Fact]
         public void PushAndPopTest()
         {
-            Deque<int> buffer = new(4);
+            DoubleEndedList<int> buffer = new(4);
 
             buffer.PushBack(1);
             buffer.PushBack(2);
@@ -86,17 +52,56 @@ namespace Yuh.Collections.Tests
         }
 
         [Fact]
-        public void InsertTest()
+        public void RemoveRangeTest()
         {
-            Deque<int> deque = new([0, 1, 2, 3, 4, 5, 6, 7]);
+            DequeView<int> view = new()
+            {
+                Capacity = 12,
+                Count = 12,
+                Head = 6,
+                Items = [6, 7, 8, 9, 10, 11, 0, 1, 2, 3, 4, 5],
+                //                           ^
+                //                           head
+                Version = 0
+            };
 
-            deque.InsertRange(6, [8, 9, 10, 11]);
-            OutputHelpers.OutputElements(deque, _out);
-        }
+            var deque = view.Encapsulate();
 
-        internal void OutputCapacityAndMargin(Deque<int> deque, [CallerArgumentExpression(nameof(deque))] string? argName = null)
-        {
-            _out.WriteLine($"{argName}: {deque.Capacity}, {deque.FrontMargin}, {deque.BackMargin}");
+            var dq00 = Deque.CreateClone(deque);
+            dq00.RemoveRange(0, 12);
+            Assert.Empty(dq00);
+
+            var dq01 = Deque.CreateClone(deque);
+            dq01.RemoveRange(0, 4);
+            Assert.Equal(dq01, Enumerable.Range(4, 8));
+
+            var dq02 = Deque.CreateClone(deque);
+            dq02.RemoveRange(0, 8);
+            Assert.Equal(dq02, Enumerable.Range(8, 4));
+
+            var dq03 = Deque.CreateClone(deque);
+            dq03.RemoveRange(8, 4);
+            Assert.Equal(dq03, Enumerable.Range(0, 8));
+
+            var dq04 = Deque.CreateClone(deque);
+            dq04.RemoveRange(4, 8);
+            Assert.Equal(dq04, Enumerable.Range(0, 4));
+
+            var dq05 = Deque.CreateClone(deque);
+            dq05.RemoveRange(2, 2);
+            Assert.Equal((IEnumerable<int>)dq05, [0, 1, .. Enumerable.Range(4, 8)]);
+
+            var dq06 = Deque.CreateClone(deque);
+            dq06.RemoveRange(2, 6);
+            Assert.Equal((IEnumerable<int>)dq06, [0, 1, 8, 9, 10, 11]);
+
+            var dq07 = Deque.CreateClone(deque);
+            dq07.RemoveRange(8, 2);
+            Assert.Equal((IEnumerable<int>)dq07, [.. Enumerable.Range(0, 8), 10, 11]);
+
+            var dq08 = Deque.CreateClone(deque);
+            dq08.RemoveRange(4, 6);
+            Assert.Equal((IEnumerable<int>)dq08, [0, 1, 2, 3, 10, 11]);
         }
     }
 }

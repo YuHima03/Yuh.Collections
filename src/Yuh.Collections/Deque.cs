@@ -1,32 +1,47 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Yuh.Collections.Debugging;
 
 namespace Yuh.Collections
 {
     /// <summary>
+    /// Provides static methods to create a new instance of the <see cref="Deque{T}"/> class.
+    /// </summary>
+    public static class Deque
+    {
+        /// <summary>
+        /// Creates a new instance of the <see cref="Deque{T}"/> class that contains elements copied from the specified <see cref="Deque{T}"/> and returns it.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in the <see cref="Deque{T}"/>.</typeparam>
+        /// <param name="deque">The deque whose elements are copied to the new one.</param>
+        /// <returns>A new instance of the <see cref="Deque{T}"/> class that contains elements copied from <paramref name="deque"/> and has sufficient capacity to accommodate the number of elements copied.</returns>
+        public static Deque<T> CreateClone<T>(Deque<T> deque)
+        {
+            return new(deque);
+        }
+    }
+
+    /// <summary>
     /// Represents a double-ended queue for which elements can be added to or removed from the front or back.
     /// </summary>
     /// <remarks>
-    /// <para>This supports random-access to the elements contained in the collection and addition of elements to the front or back, or removal from the front or back.</para>
+    ///     This provides most of the functions <see cref="DoubleEndedList{T}"/> has, and may require smaller memory-region than <see cref="DoubleEndedList{T}"/>.
+    ///     However, this performs slightly worse than <see cref="DoubleEndedList{T}"/> in some respects.
     /// </remarks>
     /// <typeparam name="T">The type of elements in the <see cref="Deque{T}"/>.</typeparam>
-    [DebuggerDisplay("Count = {_count}, Capacity = {_items.Length}")]
+    [DebuggerDisplay("Count = {_count}, Capacity = {_capacity}")]
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
-    public class Deque<T> : ICollection<T>, IDeque<T>, IList, IList<T>, IReadOnlyDeque<T>, IReadOnlyList<T>
+    public class Deque<T> : ICollection, ICollection<T>, IEnumerable, IEnumerable<T>, IList, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>
     {
         private const int _defaultCapacity = 8;
-#pragma warning disable IDE0301
-        private static readonly T[] _s_emptyArray = Array.Empty<T>();
-#pragma warning restore IDE0301
 
         private T[] _items;
-        private int _count = 0;
-        private int _head = 0;
-        private int _version = 0;
+        private int _capacity;
+        private int _count;
+        private int _head;
+        private int _version;
 
         bool IList.IsFixedSize => false;
         bool ICollection<T>.IsReadOnly => false;
@@ -34,31 +49,43 @@ namespace Yuh.Collections
         bool ICollection.IsSynchronized => false;
         object ICollection.SyncRoot => this;
 
+#pragma warning disable IDE1006
+        private ref T _firstRef => ref _items[_head];
+        private ref T _lastRef => ref _items[(_head + _count - 1) % _capacity];
+#pragma warning restore IDE1006
+
         /// <summary>
-        /// Gets or sets the element at the specified index.
+        /// Gets of sets the element at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index of the element to get or set.</param>
         /// <value>The element at the specified index.</value>
-        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="Deque{T}"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="Deque{T}"/>.</exception>
         public T this[int index]
         {
             get
             {
-                if ((uint)index >= (uint)_count)
+                if ((uint)index < (uint)_count)
+                {
+                    return _items[(_head + index) % _capacity];
+                }
+                else
                 {
                     ThrowHelpers.ThrowIndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
+                    return default;
                 }
-                return _items[_head + index];
             }
 
             set
             {
-                if ((uint)index >= (uint)_count)
+                if ((uint)index < (uint)_count)
+                {
+                    _items[(_head + index) % _capacity] = value;
+                    _version++;
+                }
+                else
                 {
                     ThrowHelpers.ThrowIndexOutOfRangeException(ThrowHelpers.M_IndexOutOfRange);
                 }
-                _items[_head + index] = value;
-                _version++;
             }
         }
 
@@ -77,16 +104,22 @@ namespace Yuh.Collections
                 }
                 else
                 {
-                    ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_TypeOfValueNotSupported);
+                    ThrowHelpers.ThrowArgumentException(ThrowHelpers.M_TypeOfValueNotSupported, nameof(value));
                 }
             }
         }
 
         /// <summary>
+        /// Gets the number of the elements contained in the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <returns>The number of the elements contained in the <see cref="Deque{T}"/>.</returns>
+        public int Count => _count;
+
+        /// <summary>
         /// Gets the number of total elements the <see cref="Deque{T}"/> can hold without resizing.
         /// </summary>
         /// <remarks>
-        /// To sets the capacity, please use <see cref="Resize(int)"/> or <see cref="Resize(int, int)"/>.
+        /// To sets the capacity, please use <see cref="Resize(int)"/>.
         /// </remarks>
         /// <returns>The number of elements that the <see cref="Deque{T}"/> can contain before resizing is required.</returns>
         public int Capacity
@@ -97,80 +130,85 @@ namespace Yuh.Collections
             }
         }
 
-        internal T First => _items[_head];
-
-        internal T Last => _items[_head + _count - 1];
-
-        /// <summary>
-        /// Gets the number of elements that can be added at the beginning of the <see cref="Deque{T}"/> without resizing the internal data structure.
-        /// </summary>
-        /// <returns>The number of elements that can be added at the beginning of the <see cref="Deque{T}"/> without resizing the internal data structure.</returns>
-        public int FrontMargin => _head;
-
-        /// <summary>
-        /// Gets the number of elements that can be added at the end of the <see cref="Deque{T}"/> without resizing the internal data structure.
-        /// </summary>
-        /// <returns>The number of elements that can be added at the end of the <see cref="Deque{T}"/> without resizing the internal data structure.</returns>
-        public int BackMargin => _items.Length - _head - _count;
-
-        /// <summary>
-        /// Gets the number of the elements contained in the <see cref="Deque{T}"/>.
-        /// </summary>
-        /// <returns>The number of the elements contained in the <see cref="Deque{T}"/>.</returns>
-        public int Count => _count;
-
         /// <summary>
         /// Gets the value that indicates whether the <see cref="Deque{T}"/> is empty.
         /// </summary>
         /// <returns><see langword="true"/> if the <see cref="Deque{T}"/> is empty; <see langword="false"/> if not.</returns>
         public bool IsEmpty => _count == 0;
 
+        internal T First => _items[_head];
+
+        internal T Last => _items[(_head + _count - 1) % _capacity];
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="Deque{T}"/> class.
+        /// Initializes an new instance of the <see cref="Deque{T}"/> class.
         /// </summary>
         public Deque() : this(_defaultCapacity) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Deque{T}"/> class that is empty and has the specified initial capacity.
+        /// Initializes an new instance of the <see cref="Deque{T}"/> class that contains elements copied from the specified <see cref="Deque{T}"/> and has sufficient capacity to accommodate the number of elements copied.
+        /// </summary>
+        /// <param name="deque">The deque whose elements are copied to the new one.</param>
+        internal Deque(Deque<T> deque)
+        {
+            _capacity = deque.Capacity;
+            _count = deque._count;
+            _head = deque._head;
+            _items = new T[deque._capacity];
+
+            deque._items.AsSpan().CopyTo(_items.AsSpan());
+        }
+
+        /// <summary>
+        /// Initializes an new instance of the <see cref="Deque{T}"/> class that is empty and has the specified initial capacity.
         /// </summary>
         /// <param name="capacity">The number of elements that the new <see cref="Deque{T}"/> can initially store.</param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than zero.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> must be positive or zero, and less than or equal to the maximum length of an array.</exception>
         public Deque(int capacity)
         {
-            ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
-
             if (capacity == 0)
             {
-                _items = _s_emptyArray;
+                _items = [];
             }
             else
             {
-                capacity = Math.Min(capacity, Array.MaxLength);
+                ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
+                ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
                 _items = new T[capacity];
-                _head = _items.Length >> 1;
             }
+
+            _capacity = capacity;
+            _head = 0;
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Deque{T}"/> class that contains elements copied from the specified collection and has sufficient capacity to accommodate the number of elements copied. 
         /// </summary>
-        /// <param name="collection">The collection whose elements are copied to the new deque.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="collection"/> is <see langword="null"/>.</exception>
-        public Deque(IEnumerable<T> collection) : this(0)
+        /// <param name="enumerable">The collection whose elements are copied to the new deque.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="enumerable"/> is <see langword="null"/>.</exception>
+        public Deque(IEnumerable<T> enumerable) : this(_defaultCapacity)
         {
-            ArgumentNullException.ThrowIfNull(collection);
+            ArgumentNullException.ThrowIfNull(enumerable);
 
-            if (collection is ICollection<T> c)
+            if (enumerable is ICollection<T> collection)
             {
-                Resize(0, c.Count);
-                c.CopyTo(_items, 0);
+                int capacity = Math.Min(collection.Count << 1, Array.MaxLength);
+
+                if (capacity > _defaultCapacity)
+                {
+                    _items = new T[capacity];
+                    _capacity = capacity;
+                }
+
+                collection.CopyTo(_items, 0);
+                _count = collection.Count;
+                _head = 0;
             }
             else
             {
-                ResizeInternal(_defaultCapacity);
-                foreach (var v in collection)
+                foreach (T item in enumerable)
                 {
-                    PushBack(v);
+                    PushBack(item);
                 }
             }
         }
@@ -179,25 +217,18 @@ namespace Yuh.Collections
         /// Initializes a new instance of the <see cref="Deque{T}"/> class that contains elements copied from the specified span and has sufficient capacity to accommodate the number of the elements copied.
         /// </summary>
         /// <param name="span">The span whose elements are copied to the new deque.</param>
-        public Deque(ReadOnlySpan<T> span) : this(span.Length)
+        public Deque(ReadOnlySpan<T> span) : this(_defaultCapacity)
         {
-            span.CopyTo(_items.AsSpan());
-            _head = 0;
-            _count = span.Length;
-            _version++;
-        }
+            int capacity = Math.Min(span.Length << 1, Array.MaxLength);
 
-        int IList.Add(object? value)
-        {
-            if (value is T tValue)
+            if (capacity > _defaultCapacity)
             {
-                PushBack(tValue);
-                return _head + _count - 1;
+                _items = new T[capacity];
             }
-            else
-            {
-                return -1;
-            }
+
+            span.CopyTo(_items.AsSpan());
+            _count = span.Length;
+            _head = 0;
         }
 
         void ICollection<T>.Add(T item)
@@ -205,25 +236,17 @@ namespace Yuh.Collections
             PushBack(item);
         }
 
-        /// <summary>
-        /// Creates a new read-only span over the <see cref="Deque{T}"/>.
-        /// </summary>
-        /// <remarks>
-        /// Items should not be added or removed from the <see cref="Deque{T}"/> while the returned <see cref="ReadOnlySpan{T}"/> is in use.
-        /// </remarks>
-        /// <returns>The read-only span representation of the <see cref="Deque{T}"/>.</returns>
-        public ReadOnlySpan<T> AsReadOnlySpan()
+        int IList.Add(object? value)
         {
-            return MemoryMarshal.CreateReadOnlySpan(ref _items[_head], _count);
-        }
-
-        /// <summary>
-        /// Creates a new span over the <see cref="Deque{T}"/>.
-        /// </summary>
-        /// <returns>The span representation of the <see cref="Deque{T}"/>.</returns>
-        internal Span<T> AsSpan()
-        {
-            return MemoryMarshal.CreateSpan(ref _items[_head], _count);
+            if (value is T tValue)
+            {
+                PushBack(tValue);
+                return _count - 1;
+            }
+            else
+            {
+                return -1;
+            }
         }
 
         /// <summary>
@@ -231,22 +254,21 @@ namespace Yuh.Collections
         /// </summary>
         public void Clear()
         {
-            CollectionHelpers.ClearIfReferenceOrContainsReferences(AsSpan());
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            {
+                if (_head + _count > _capacity)
+                {
+                    Array.Clear(_items, _head, _capacity - _head);
+                    Array.Clear(_items, 0, _head + _count - _capacity);
+                }
+                else
+                {
+                    Array.Clear(_items, _head, _count);
+                }
+            }
             _count = 0;
-            _head = _items.Length >> 1;
+            _head = _capacity >> 1;
             _version++;
-        }
-
-        bool IList.Contains(object? value)
-        {
-            if (value is T tValue)
-            {
-                return Contains(tValue);
-            }
-            else
-            {
-                return false;
-            }
         }
 
         /// <summary>
@@ -256,7 +278,19 @@ namespace Yuh.Collections
         /// <returns><see langword="true"/> if <paramref name="item"/> is found in the <see cref="Deque{T}"/>; otherwise, <see langword="false"/>.</returns>
         public bool Contains(T item)
         {
-            return IndexOf(item) != -1;
+            if (_head + _count > _capacity)
+            {
+                return (Array.IndexOf(_items, item, _head, _capacity - _head) != -1) || (Array.IndexOf(_items, item, 0, _head + _count - _capacity) != -1);
+            }
+            else
+            {
+                return Array.IndexOf(_items, item, _head, _count) != -1;
+            }
+        }
+
+        bool IList.Contains(object? value)
+        {
+            return (value is T tValue) && Contains(tValue);
         }
 
         /// <summary>
@@ -269,12 +303,42 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentException">The number of the elements in the source <see cref="Deque{T}"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
         public void CopyTo(T[] array, int arrayIndex)
         {
-            AsReadOnlySpan().CopyTo(array.AsSpan()[arrayIndex..]);
+            if (array.Length - arrayIndex < _count)
+            {
+                ThrowHelpers.ThrowArgumentException("The number of the elements in the source collection is greater than the available space from the specified index to the end of the destination array.", nameof(arrayIndex));
+            }
+            CopyToInternal(array, arrayIndex);
         }
 
         void ICollection.CopyTo(Array array, int index)
         {
-            Array.Copy(_items, _head, array, index, _count);
+            if (array.Length - index < _count)
+            {
+                ThrowHelpers.ThrowArgumentException("The number of the elements in the source collection is greater than the available space from the specified index to the end of the destination array.", nameof(index));
+            }
+
+            if (_head + _count > _capacity)
+            {
+                Array.Copy(_items, _head, array, index, _capacity - _head);
+                Array.Copy(_items, 0, array, index + _capacity - _head, _head + _count - _capacity);
+            }
+            else
+            {
+                Array.Copy(_items, _head, array, index, _count);
+            }
+        }
+
+        private void CopyToInternal(T[] array, int arrayIndex)
+        {
+            if (_head + _count > _capacity)
+            {
+                Array.Copy(_items, _head, array, arrayIndex, _capacity - _head);
+                Array.Copy(_items, 0, array, arrayIndex + _capacity - _head, _head + _count - _capacity);
+            }
+            else
+            {
+                Array.Copy(_items, _head, array, arrayIndex, _count);
+            }
         }
 
         /// <summary>
@@ -282,7 +346,6 @@ namespace Yuh.Collections
         ///     If the current capacity is less than the specified one, resizes the internal array so that the <see cref="Deque{T}"/> can accommodate the specified number of elements without resizing.
         /// </summary>
         /// <param name="capacity">The number of elements that the <see cref="Deque{T}"/> can hold without resizing.</param>
-        /// <returns></returns>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is negative or greater than <see cref="Array.MaxLength"/>.</exception>
         public void EnsureCapacity(int capacity)
         {
@@ -291,28 +354,6 @@ namespace Yuh.Collections
             EnsureCapacityInternal(capacity);
         }
 
-        /// <summary>
-        /// Ensures that the margins at the beginning and back of the <see cref="Deque{T}"/> are respectively at least those specified.
-        /// </summary>
-        /// <param name="frontMargin">The number of elements that can be added at the beginning of the <see cref="Deque{T}"/> without resizing the internal data structure.</param>
-        /// <param name="backMargin">The number of elements that can be added at the end of the <see cref="Deque{T}"/> without resizing the internal data structure.</param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="frontMargin"/> or <paramref name="backMargin"/> is 0.</exception>
-        public void EnsureCapacity(int frontMargin, int backMargin)
-        {
-            ThrowHelpers.ThrowIfArgumentIsNegative(frontMargin);
-            ThrowHelpers.ThrowIfArgumentIsNegative(backMargin);
-
-            if (frontMargin + backMargin + _count > Array.MaxLength)
-            {
-                ThrowHelpers.ThrowArgumentException("The total needed capacity is greater than `Array.MaxLength`.", "{ frontMargin, backMargin }");
-            }
-
-            EnsureCapacityInternal(frontMargin, backMargin);
-        }
-
-        /// <remarks>
-        /// If <paramref name="capacity"/> is greater than <see cref="Array.MaxLength"/>, this does NOT throw any exceptions and treats <paramref name="capacity"/> as equal to <see cref="Array.MaxLength"/>.
-        /// </remarks>
         private void EnsureCapacityInternal(int capacity)
         {
             if (capacity <= _items.Length)
@@ -320,72 +361,8 @@ namespace Yuh.Collections
                 return;
             }
 
-            int newCapacity = Math.Min(Math.Max(_items.Length << 1, capacity), Array.MaxLength);
-
-            Grow(newCapacity);
-        }
-
-        /// <remarks>
-        /// This does NOT examine whether the total required capacity is valid (between 0 and <see cref="Array.MaxLength"/>.)
-        /// </remarks>
-        private void EnsureCapacityInternal(int frontMargin, int backMargin)
-        {
-            if (frontMargin <= this.FrontMargin && backMargin <= this.BackMargin)
-            {
-                return;
-            }
-
-            int neededCapacity = frontMargin + backMargin + _count;
-            int doubledCapacity = Math.Min(_items.Length << 1, Array.MaxLength);
-
-            if (neededCapacity >= doubledCapacity)
-            {
-                ResizeInternal(neededCapacity, frontMargin);
-            }
-            else
-            {
-                int capacityDiff = doubledCapacity - neededCapacity; // this is always positive.
-                int marginDiff = Math.Clamp((backMargin - frontMargin), -capacityDiff, capacityDiff);
-                ResizeInternal(doubledCapacity, frontMargin + ((capacityDiff + marginDiff) >> 1));
-            }
-        }
-
-        /// <summary>
-        /// Searches for the first element that matches the conditions defined by the specified <see cref="Predicate{T}"/>.
-        /// </summary>
-        /// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the element to search for.</param>
-        /// <returns>The zero-based index of the first element that matches the specified conditions, if found; otherwise, <c>-1</c>.</returns>
-        public int Find(Predicate<T> match)
-        {
-            var span = AsReadOnlySpan();
-            for (int i = 0; i < _count; i++)
-            {
-                if (match(span[i]))
-                {
-                    return i;
-                }
-            }
-
-            return -1;
-        }
-
-        /// <summary>
-        /// Searches for the last element that matches the conditions defined by the specified <see cref="Predicate{T}"/>.
-        /// </summary>
-        /// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the element to search for.</param>
-        /// <returns>The zero-based index of the last element that matches the specified conditions, if found; otherwise, <c>-1</c>.</returns>
-        public int FindLast(Predicate<T> match)
-        {
-            var span = AsReadOnlySpan();
-            for (int i = _count - 1; i >= 0; i--)
-            {
-                if (match(span[i]))
-                {
-                    return i;
-                }
-            }
-
-            return -1;
+            int newCapacity = Math.Min(Math.Max((_items.Length << 1), capacity), Array.MaxLength);
+            ResizeInternal(newCapacity);
         }
 
         /// <summary>
@@ -397,26 +374,14 @@ namespace Yuh.Collections
             return new(this);
         }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
 
-        int IList.IndexOf(object? value)
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
-            if (value is T tValue)
-            {
-                return IndexOf(tValue);
-            }
-            else
-            {
-                return -1;
-            }
+            return GetEnumerator();
         }
 
         /// <summary>
@@ -426,181 +391,44 @@ namespace Yuh.Collections
         ///     The object to locate in the <see cref="Deque{T}"/>.
         ///     The value can be <see langword="null"/> for reference types.
         /// </param>
-        /// <returns>The zero-based index of the first occurrence of <paramref name="item"/>, if found; otherwise, <c>-1</c>.</returns>
+        /// <returns>The zero-based index of the first occurrence of <paramref name="item"/>, if found; otherwise, -1.</returns>
         public int IndexOf(T item)
         {
-            var idx = Array.IndexOf(_items, item, _head, _count);
-            return (idx >= 0) ? (idx - _head) : -1;
-        }
-
-        void IList.Insert(int index, object? value)
-        {
-            if (value is T tValue)
+            if (_head + _count > _capacity)
             {
-                Insert(index, tValue);
+                int idx = Array.IndexOf(_items, item, _head, _capacity - _head);
+
+                if (idx >= 0)
+                {
+                    return idx - _head;
+                }
+                else
+                {
+                    idx = Array.IndexOf(_items, item, 0, _head + _count - _capacity);
+                    return (idx >= 0) ? (_capacity - _head + idx) : -1;
+                }
             }
             else
             {
-                ThrowHelpers.ThrowArgumentException(ThrowHelpers.M_TypeOfValueNotSupported, nameof(value));
+                int idx = Array.IndexOf(_items, item, _head, _count);
+                return (idx >= 0) ? (idx - _head) : -1;
             }
         }
 
+        int IList.IndexOf(object? value)
+        {
+            return (value is T tValue) ? IndexOf(tValue) : -1;
+        }
+
         /// <summary>
-        /// Inserts an item to the <see cref="Deque{T}"/> at the specified index.
+        /// Insert an item to the <see cref="Deque{T}"/> at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
         /// <param name="item">An object to insert. The value can be <see langword="null"/> for reference types.</param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is invalid (less than 0 or greater than <see cref="Count"/>.)</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="Deque{T}"/>.</exception>
         public void Insert(int index, T item)
         {
-            InsertRange(index, [item]);
-        }
-
-        /// <summary>
-        /// Inserts the elements of the specified collection into the <see cref="Deque{T}"/> at the specified index.
-        /// </summary>
-        /// <param name="index">The zero-based index at which the new elements should be inserted.</param>
-        /// <param name="items">The collection whose elements should be inserted into the <see cref="Deque{T}"/>.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="items"/> is null.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">The <paramref name="index"/> is invalid (less than 0 or greater than <see cref="Count"/>.)</exception>
-        public void InsertRange(int index, IEnumerable<T> items)
-        {
-            ArgumentNullException.ThrowIfNull(items);
-
-            if ((uint)index > (uint)_count)
-            {
-                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
-            }
-
-            if (items is ICollection<T> collection)
-            {
-                InsertRangeInternal(index, collection);
-            }
-            else
-            {
-                InsertRangeInternal(index, System.Runtime.InteropServices.CollectionsMarshal.AsSpan(items.ToList()));
-            }
-        }
-
-        /// <summary>
-        /// Inserts the elements of the specified span into the <see cref="Deque{T}"/> at the specified index.
-        /// </summary>
-        /// <param name="index">The zero-based index at which the new elements should be inserted.</param>
-        /// <param name="items">The span whose elements should be inserted into the <see cref="Deque{T}"/>.</param>
-        /// <exception cref="ArgumentOutOfRangeException">The <paramref name="index"/> is invalid (less than 0 or greater than <see cref="Count"/>.)</exception>
-        public void InsertRange(int index, ReadOnlySpan<T> items)
-        {
-            if ((uint)index > (uint)_count)  // same as (index < 0 || _count < index)
-            {
-                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
-            }
-            InsertRangeInternal(index, items);
-        }
-
-        private void InsertRangeInternal(int index, ICollection<T> collection)
-        {
-            if (collection.Count == 0)
-            {
-                return;
-            }
-
-            if (index == 0)
-            {
-                PushFrontRange(collection);
-            }
-            else if (index == _count)
-            {
-                PushBackRange(collection);
-            }
-            else
-            {
-                int requiredCapacity = checked(_count + collection.Count);
-                if (requiredCapacity > Array.MaxLength)
-                {
-                    ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
-                }
-
-                if (index < (_count >> 1))
-                {
-                    EnsureCapacityInternal(collection.Count, 0);
-
-                    int newHead = _head - collection.Count;
-                    var src = MemoryMarshal.CreateSpan(ref _items[_head], index);
-                    var dst = MemoryMarshal.CreateSpan(ref _items[newHead], index);
-                    src.CopyTo(dst);
-
-                    collection.CopyTo(_items, newHead + index);
-                    _head = newHead;
-                }
-                else
-                {
-                    EnsureCapacityInternal(0, collection.Count);
-
-                    int cpyItemsCount = _count - index;
-                    int cpyHead = _head + index;
-                    var src = MemoryMarshal.CreateSpan(ref _items[cpyHead], cpyItemsCount);
-                    var dst = MemoryMarshal.CreateSpan(ref _items[cpyHead + collection.Count], cpyItemsCount);
-                    src.CopyTo(dst);
-
-                    collection.CopyTo(_items, cpyHead);
-                }
-
-                _count += collection.Count;
-                _version++;
-            }
-        }
-
-        private void InsertRangeInternal(int index, ReadOnlySpan<T> items)
-        {
-            if (items.Length == 0)
-            {
-                return;
-            }
-
-            if (index == 0)
-            {
-                PushFrontRange(items);
-            }
-            else if (index == _count)
-            {
-                PushBackRange(items);
-            }
-            else
-            {
-                int requiredCapacity = checked(_count + items.Length);
-                if (requiredCapacity > Array.MaxLength)
-                {
-                    ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
-                }
-
-                if (index < (_count >> 1))
-                {
-                    EnsureCapacityInternal(items.Length, 0);
-
-                    int newHead = _head - items.Length;
-                    var src = MemoryMarshal.CreateSpan(ref _items[_head], index);
-                    var dst = MemoryMarshal.CreateSpan(ref _items[newHead], index);
-                    src.CopyTo(dst);
-
-                    items.CopyTo(MemoryMarshal.CreateSpan(ref _items[newHead + index], items.Length));
-                    _head = newHead;
-                }
-                else
-                {
-                    EnsureCapacityInternal(0, items.Length);
-
-                    int cpyItemsCount = _count - index;
-                    int cpyHead = _head + index;
-                    var src = MemoryMarshal.CreateSpan(ref _items[cpyHead], cpyItemsCount);
-                    var dst = MemoryMarshal.CreateSpan(ref _items[cpyHead + items.Length], cpyItemsCount);
-                    src.CopyTo(dst);
-
-                    items.CopyTo(MemoryMarshal.CreateSpan(ref _items[cpyHead], items.Length));
-                }
-
-                _count += items.Length;
-                _version++;
-            }
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -613,8 +441,33 @@ namespace Yuh.Collections
         /// <returns>The zero-based index of the last occurrence of <paramref name="item"/>, if found; otherwise, <c>-1</c>.</returns>
         public int LastIndexOf(T item)
         {
-            var idx = Array.LastIndexOf(_items, item, _head, _count);
-            return (idx >= 0) ? (idx - _head) : -1;
+            if (_head + _count > _capacity)
+            {
+                int idx = Array.LastIndexOf(_items, item, 0, _head + _count - _capacity);
+
+                if (idx >= 0)
+                {
+                    return idx - _head;
+                }
+                else
+                {
+                    idx = Array.LastIndexOf(_items, item, _head, _capacity - _head);
+                    return (idx >= 0) ? (_capacity - _head + idx) : -1;
+                }
+            }
+            else
+            {
+                int idx = Array.LastIndexOf(_items, item, _head, _count);
+                return (idx >= 0) ? (idx - _head) : -1;
+            }
+        }
+
+        void IList.Insert(int index, object? value)
+        {
+            if (value is T tValue)
+            {
+                Insert(index, tValue);
+            }
         }
 
         /// <summary>
@@ -624,7 +477,7 @@ namespace Yuh.Collections
         /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PeekFirst()
         {
-            ThrowIfEmpty();
+            ThrowIfCollectionIsEmpty();
             return First;
         }
 
@@ -635,7 +488,7 @@ namespace Yuh.Collections
         /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PeekLast()
         {
-            ThrowIfEmpty();
+            ThrowIfCollectionIsEmpty();
             return Last;
         }
 
@@ -646,19 +499,19 @@ namespace Yuh.Collections
         /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PopBack()
         {
-            ThrowIfEmpty();
+            ThrowIfCollectionIsEmpty();
             return PopBackInternal();
         }
 
         private T PopBackInternal()
         {
-            var index = _head + _count - 1;
-            var item = _items[index];
-            CollectionHelpers.SetDefaultValueIfReferenceOrContainsReferences(ref _items[index]);
+            var res = Last;
+            CollectionHelpers.SetDefaultValueIfReferenceOrContainsReferences(ref _lastRef);
 
             _count--;
             _version++;
-            return item;
+
+            return res;
         }
 
         /// <summary>
@@ -676,7 +529,7 @@ namespace Yuh.Collections
             }
 
             var destinationArray = new T[count];
-            PopBackRange(destinationArray.AsSpan());
+            PopBackRangeInternal(destinationArray.AsSpan());
             return destinationArray;
         }
 
@@ -698,16 +551,36 @@ namespace Yuh.Collections
         private void PopBackRangeInternal(Span<T> destination)
         {
             int count = destination.Length;
-            var source = AsSpan()[(^count)..];
-            source.CopyTo(destination);
+            int lastIdx = (_head + _count - 1) % _capacity;
+            int rangeBeginsAt = lastIdx - count + 1;
+
+            if (rangeBeginsAt >= 0)
+            {
+                var source = _items.AsSpan().Slice(rangeBeginsAt, count);
+                source.CopyTo(destination);
+
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    source.Clear();
+                }
+            }
+            else
+            {
+                var source_1 = _items.AsSpan()[^(-rangeBeginsAt)..];
+                var source_2 = _items.AsSpan()[..(lastIdx + 1)];
+
+                source_1.CopyTo(destination);
+                source_2.CopyTo(destination[(-rangeBeginsAt)..]);
+
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    source_1.Clear();
+                    source_2.Clear();
+                }
+            }
 
             _count -= count;
             _version++;
-
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
-                source.Clear();
-            }
         }
 
         /// <summary>
@@ -717,19 +590,20 @@ namespace Yuh.Collections
         /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PopFront()
         {
-            ThrowIfEmpty();
+            ThrowIfCollectionIsEmpty();
             return PopFrontInternal();
         }
 
         private T PopFrontInternal()
         {
-            var item = _items[_head];
-            CollectionHelpers.SetDefaultValueIfReferenceOrContainsReferences(ref _items[_head]);
+            var res = First;
+            CollectionHelpers.SetDefaultValueIfReferenceOrContainsReferences(ref _firstRef);
 
+            _head = (_head + 1) % _capacity;
             _count--;
-            _head++;
             _version++;
-            return item;
+
+            return res;
         }
 
         /// <summary>
@@ -769,17 +643,36 @@ namespace Yuh.Collections
         private void PopFrontRangeInternal(Span<T> destination)
         {
             int count = destination.Length;
-            var source = AsSpan()[..count];
-            source.CopyTo(destination);
+            int rangeEndsAt = _head + count - 1;
 
-            _count -= count;
-            _head += count;
-            _version++;
-
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            if (rangeEndsAt < _capacity)
             {
-                source.Clear();
+                var source = _items.AsSpan().Slice(_head, count);
+                source.CopyTo(destination);
+
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    source.Clear();
+                }
             }
+            else
+            {
+                var source_1 = _items.AsSpan()[_head..];
+                var source_2 = _items.AsSpan()[..((rangeEndsAt - _capacity) + 1)];  // (rangeEndsAt % _capacity) = (rangeEndsAt - _capacity)
+
+                source_1.CopyTo(destination);
+                source_2.CopyTo(destination[(_capacity - _head)..]);
+
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    source_1.Clear();
+                    source_2.Clear();
+                }
+            }
+
+            _head = (rangeEndsAt + 1) % _capacity;
+            _count -= count;
+            _version++;
         }
 
         /// <summary>
@@ -791,15 +684,12 @@ namespace Yuh.Collections
         /// </param>
         public void PushBack(T item)
         {
-            int index = _head + _count;
-
-            if (index == _items.Length)
+            if (_count == _capacity)
             {
                 Grow();
             }
 
-            index = _head + _count;
-            _items[index] = item;
+            _items[(_head + _count) % _capacity] = item;
             _count++;
             _version++;
         }
@@ -807,6 +697,10 @@ namespace Yuh.Collections
         /// <summary>
         /// Adds the elements of the specified collection to the end of the <see cref="Deque{T}"/>.
         /// </summary>
+        /// <remarks>
+        /// Please note that, if the specified collection has many objects, this method may take a long time or temporarily occupy large memory region to copy the objects.
+        /// To avoid this, please set a <see cref="ReadOnlySpan{T}"/> to the <paramref name="items"/> parameter instead.
+        /// </remarks>
         /// <param name="items">The collection whose elements should be added to the end of the <see cref="Deque{T}"/>.</param>
         public void PushBackRange(IEnumerable<T> items)
         {
@@ -814,20 +708,9 @@ namespace Yuh.Collections
 
             if (items is ICollection<T> collection)
             {
-                int count = collection.Count;
-                int requiredCapacity = _count + count;
-
-                if (requiredCapacity > Array.MaxLength)
-                {
-                    ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
-                }
-                else
-                {
-                    EnsureCapacityInternal(0, count);
-                    collection.CopyTo(_items, _head + _count);
-                    _count += count;
-                    _version++;
-                }
+                var src = new T[collection.Count];
+                collection.CopyTo(src, 0);
+                PushBackRange(src.AsSpan());
             }
             else
             {
@@ -844,19 +727,31 @@ namespace Yuh.Collections
         /// <param name="items">The read-only span whose elements should be added to the end of the <see cref="Deque{T}"/>.</param>
         public void PushBackRange(ReadOnlySpan<T> items)
         {
-            int requiredCapacity = _count + items.Length;
-
+            int count = items.Length;
+            int requiredCapacity = _count + count;
             if (requiredCapacity > Array.MaxLength)
             {
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
+
+            EnsureCapacityInternal(requiredCapacity);
+
+            int rangeBeginsAt = (_head + _count) % _capacity;
+            var dest = _items.AsSpan();
+            int sliceAt = _capacity - rangeBeginsAt;
+
+            if (sliceAt >= count)
+            {
+                items.CopyTo(dest[rangeBeginsAt..]);
+            }
             else
             {
-                EnsureCapacityInternal(0, items.Length);
-                items.CopyTo(_items.AsSpan()[(_head + _count)..]);
-                _count += items.Length;
-                _version++;
+                items[..sliceAt].CopyTo(dest[rangeBeginsAt..]);
+                items[sliceAt..].CopyTo(dest);
             }
+
+            _count += count;
+            _version++;
         }
 
         /// <summary>
@@ -868,12 +763,13 @@ namespace Yuh.Collections
         /// </param>
         public void PushFront(T item)
         {
-            if (_head == 0)
+            if (_count == _capacity)
             {
                 Grow();
             }
 
-            _items[--_head] = item;
+            _head = (_head - 1 + _capacity) % _capacity;
+            _items[_head] = item;
             _count++;
             _version++;
         }
@@ -881,6 +777,10 @@ namespace Yuh.Collections
         /// <summary>
         /// Adds the elements of the specified collection to the front of the <see cref="Deque{T}"/>.
         /// </summary>
+        /// <remarks>
+        /// Please note that, this method may take a long time or temporarily occupy large memory region to copy the objects.
+        /// To avoid this, please set a <see cref="ReadOnlySpan{T}"/> to the <paramref name="items"/> parameter instead.
+        /// </remarks>
         /// <param name="items">The collection whose elements should be added to the front of the <see cref="Deque{T}"/>.</param>
         public void PushFrontRange(IEnumerable<T> items)
         {
@@ -888,21 +788,9 @@ namespace Yuh.Collections
 
             if (items is ICollection<T> collection)
             {
-                int count = collection.Count;
-                int requiredCapacity = _count + count;
-
-                if (requiredCapacity > Array.MaxLength)
-                {
-                    ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
-                }
-                else
-                {
-                    EnsureCapacityInternal(count, 0);
-                    _head -= count;
-                    collection.CopyTo(_items, _head);
-                    _count += count;
-                    _version++;
-                }
+                var src = new T[collection.Count];
+                collection.CopyTo(src, 0);
+                PushFrontRange(src.AsSpan());
             }
             else
             {
@@ -920,19 +808,41 @@ namespace Yuh.Collections
         public void PushFrontRange(ReadOnlySpan<T> items)
         {
             int count = items.Length;
-
-            if (_count + count > Array.MaxLength)
+            int requiredCapacity = _count + count;
+            if (requiredCapacity > Array.MaxLength)
             {
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
+
+            EnsureCapacityInternal(requiredCapacity);
+
+            var src = _items.AsSpan();
+            int rangeBeginsAt = _head - count;
+
+            if (rangeBeginsAt >= 0)
+            {
+                items.CopyTo(src[rangeBeginsAt..]);
+                _head = rangeBeginsAt;
+            }
             else
             {
-                EnsureCapacityInternal(count, 0);
-                _head -= count;
-                items.CopyTo(_items.AsSpan()[_head..]);
-                _count += count;
-                _version++;
+                items[..(-rangeBeginsAt)].CopyTo(src[^(-rangeBeginsAt)..]);
+                items[(-rangeBeginsAt)..].CopyTo(src);
+                _head = _capacity + rangeBeginsAt;
             }
+
+            _count += count;
+            _version++;
+        }
+
+        /// <summary>
+        /// Removes the first occurrence of the specified object from the <see cref="Deque{T}"/>.
+        /// </summary>
+        /// <param name="item">The object to remove from the <see cref="Deque{T}"/>.</param>
+        /// <returns></returns>
+        public bool Remove(T item)
+        {
+            throw new NotImplementedException();
         }
 
         void IList.Remove(object? value)
@@ -944,41 +854,22 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes the first occurrence of the specified object from the <see cref="Deque{T}"/>.
-        /// </summary>
-        /// <param name="item">The object to remove from the <see cref="Deque{T}"/>.</param>
-        /// <returns></returns>
-        public bool Remove(T item)
-        {
-            int index = IndexOf(item);
-
-            if (index == -1)
-            {
-                return false;
-            }
-            else
-            {
-                _ = RemoveAtInternal(index);
-                return true;
-            }
-        }
-
-        /// <summary>
-        /// Removes the element at the specified index.
+        /// Removes the element at the specified index in the <see cref="Deque{T}"/>.
         /// </summary>
         /// <param name="index">The zero-based index of the item to remove.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index of the <see cref="Deque{T}"/>.</exception>
         public void RemoveAt(int index)
         {
-            if (index < 0 || _count <= index)
+            if ((uint)index >= _count)
             {
                 ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
             }
-            RemoveAtInternal(index);
+
+            RemoveRangeInternal(index, checked(index + 1));
         }
 
         /// <summary>
-        /// Removes a range of elements from the <see cref="Deque{T}"/>.
+        /// Remove a range of elements from the <see cref="Deque{T}"/>.
         /// </summary>
         /// <param name="index">The zero-based starting index of the range of elements to remove.</param>
         /// <param name="count">The number of elements to remove.</param>
@@ -989,50 +880,128 @@ namespace Yuh.Collections
             ThrowHelpers.ThrowIfArgumentIsNegative(index);
             ThrowHelpers.ThrowIfArgumentIsNegative(count);
 
-            if (checked(index + count) > _count)
+            int endIndex = checked(index + count);
+            if (endIndex > _count)
             {
                 ThrowHelpers.ThrowArgumentException("The number of elements to remove is greater than the available space from the specified index to the end of the deque.", "[index, count]");
             }
 
-            RemoveRangeInternal(index, index + count);
+            RemoveRangeInternal(index, endIndex);
         }
 
         private void RemoveRangeInternal(int beginIndex, int endIndex)
         {
             var count = endIndex - beginIndex;
-            var itemsSpan = _items.AsSpan();
+
+            if (count == 0)
+            {
+                return;
+            }
 
             if (beginIndex == 0)
             {
-                if (endIndex == _count)
+                //
+                // The following process is almost the same as that of the PopFrontRange method.
+                //
+
+                if (endIndex == _count) // #00
                 {
                     Clear();
                     return;
                 }
                 else
                 {
-                    _head += count;
-                    CollectionHelpers.ClearIfReferenceOrContainsReferences(itemsSpan.Slice(_head, count));
+                    int newHead = checked(_head + count);
+                    var items = _items.AsSpan();
+
+                    if (newHead <= _capacity) // #01
+                    {
+                        CollectionHelpers.ClearIfReferenceOrContainsReferences(items.Slice(_head, count));
+                    }
+                    else // #02
+                    {
+                        newHead -= _capacity;
+                        CollectionHelpers.ClearIfReferenceOrContainsReferences(items[_head..], items[..newHead]);
+                    }
+
+                    _head = newHead;
                 }
             }
             else if (endIndex == _count)
             {
-                CollectionHelpers.ClearIfReferenceOrContainsReferences(itemsSpan.Slice(_head + _count - count, count));
+                //
+                // The following process is almost the same as that of the PopBackRange method.
+                //
+
+                int _end = checked(_head + _count);
+                if (_end > _capacity)
+                {
+                    _end -= _capacity;
+                }
+
+                int newEnd = _end - count;
+                var items = _items.AsSpan();
+
+                if (newEnd >= 0) // #03
+                {
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(items.Slice(newEnd, count));
+                }
+                else // #04
+                {
+                    newEnd += _capacity;
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(items[newEnd..], items[.._end]);
+                }
             }
             else
             {
                 if (beginIndex < _count - endIndex)
                 {
-                    itemsSpan.Slice(_head, beginIndex).CopyTo(itemsSpan.Slice(_head + count, beginIndex));
+                    var items = _items.AsSpan();
 
-                    CollectionHelpers.ClearIfReferenceOrContainsReferences(itemsSpan.Slice(_head, count));
+                    for (int i = _head + beginIndex - 1; i >= _head; i--)
+                    {
+                        items[checked(i + count) % _capacity] = items[i % _capacity];
+                    }
+
+                    int newHead = checked(_head + count);
+
+                    if (newHead < _capacity) // #05
+                    {
+                        CollectionHelpers.ClearIfReferenceOrContainsReferences(items.Slice(_head, count));
+                    }
+                    else // #06
+                    {
+                        newHead -= _capacity;
+                        CollectionHelpers.ClearIfReferenceOrContainsReferences(items[_head..], items[..newHead]);
+                    }
+
+                    _head = newHead;
                 }
                 else
                 {
-                    var movedItemsCount = _head + _count - endIndex;
-                    itemsSpan.Slice(endIndex, movedItemsCount).CopyTo(itemsSpan.Slice(endIndex - count, movedItemsCount));
+                    int _end = _head + _count;
+                    var items = _items.AsSpan();
 
-                    CollectionHelpers.ClearIfReferenceOrContainsReferences(itemsSpan.Slice(_head + _count - count, count));
+                    for (int i = _head + endIndex; i < _end; i++)
+                    {
+                        items[checked(i - count + _count) % _count] = items[i % _count];
+                    }
+
+                    if (_end >= _capacity)
+                    {
+                        _end -= _capacity;
+                    }
+                    int newEnd = _end - count;
+
+                    if (newEnd > 0) // #07
+                    {
+                        CollectionHelpers.ClearIfReferenceOrContainsReferences(items.Slice(newEnd, count));
+                    }
+                    else // #08
+                    {
+                        newEnd += _capacity;
+                        CollectionHelpers.ClearIfReferenceOrContainsReferences(items[newEnd..], items[..(_end % _capacity)]);
+                    }
                 }
             }
 
@@ -1047,64 +1016,31 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than the number of elements contained in the <see cref="Deque{T}"/> or greater than <see cref="Array.MaxLength"/>.</exception>
         public void Resize(int capacity)
         {
-            if (capacity == _items.Length)
-            {
-                return;
-            }
-            else if (capacity < _count)
-            {
-                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(capacity), "The specified capacity is less than the number of the elements contained in the deque.");
-            }
+            ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
+            if (capacity < _count)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(capacity), "The capacity is less than the number of the elements contained in the collection.");
+            }
+
             ResizeInternal(capacity);
         }
 
-        /// <summary>
-        /// Resizes the internal array to have the specified margins at the beginning and end of the <see cref="Deque{T}"/>.
-        /// </summary>
-        /// <remarks>
-        /// This ensures that the specified number of elements can be added at the beginning or the end of the <see cref="Deque{T}"/> without resizing the internal data structure. 
-        /// </remarks>
-        /// <param name="frontMargin">The number of elements that can be added at the beginning of the <see cref="Deque{T}"/> without resizing the internal data structure.</param>
-        /// <param name="backMargin">The number of elements that can be added at the end of the <see cref="Deque{T}"/> without resizing the internal data structure.</param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="frontMargin"/> or <paramref name="backMargin"/> is negative.</exception>
-        /// <exception cref="ArgumentException">The total required capacity is greater than the maximum size of an array.</exception>
-        internal void Resize(int frontMargin, int backMargin)
+        private void ResizeInternal(int capacity)
         {
-            ThrowHelpers.ThrowIfArgumentIsNegative(frontMargin);
-            ThrowHelpers.ThrowIfArgumentIsNegative(backMargin);
-
-            var capacity = frontMargin + backMargin + _count;
-
-            if (capacity == _items.Length)
+            if (capacity == 0)
             {
-                Shift(frontMargin - _head);
-                return;
+                _items = [];
             }
-
-            if (capacity > Array.MaxLength)
+            else
             {
-                ThrowHelpers.ThrowArgumentException("The total required capacity is greater than the maximum size of an array.");
+                T[] items = new T[capacity];
+                CopyToInternal(items, 0);
+                _items = items;
             }
-
-            ResizeInternal(capacity, frontMargin);
-        }
-
-        /// <summary>
-        /// Shrink the internal data structure so that the <see cref="Deque{T}"/> doesn't have any margin at the beginning or end of it.
-        /// </summary>
-        public void ShrinkToFit()
-        {
-            ResizeInternal(_count, 0);
-        }
-
-        /// <summary>
-        /// Copies the elements of the <see cref="Deque{T}"/> into a new array.
-        /// </summary>
-        /// <returns>An array containing copies of the elements of the <see cref="Deque{T}"/>.</returns>
-        public T[] ToArray()
-        {
-            return AsReadOnlySpan().ToArray();
+            _capacity = capacity;
+            _head = 0;
+            _version++;
         }
 
         /// <summary>
@@ -1122,7 +1058,7 @@ namespace Yuh.Collections
             }
             else
             {
-                item = _items[_head];
+                item = First;
                 return true;
             }
         }
@@ -1142,7 +1078,7 @@ namespace Yuh.Collections
             }
             else
             {
-                item = _items[_head + _count - 1];
+                item = Last;
                 return true;
             }
         }
@@ -1188,166 +1124,26 @@ namespace Yuh.Collections
         /// <summary>
         /// Enlarge the internal array to twice its size.
         /// </summary>
-        /// <exception cref="Exception">The capacity of the <see cref="Deque{T}"/> has reached its upper limit.</exception>
+        /// <exception cref="Exception">The number of elements contained in the <see cref="Deque{T}"/> has reached its upper limit.</exception>
         private void Grow()
         {
-            int newCapacity = Math.Clamp(_items.Length << 1, _defaultCapacity, Array.MaxLength);
+            int capacity = Math.Min(
+                Math.Max(_capacity << 1, _defaultCapacity),
+                Array.MaxLength
+                );
 
-            if (newCapacity < _count + 2)
+            if (capacity < _count + 2)
             {
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
 
-            Grow(newCapacity);
+            ResizeInternal(capacity);
         }
 
-        /// <summary>
-        /// Enlarge the internal array to the specified size.
-        /// </summary>
-        /// <remarks>
-        /// This does NOT examine whether the <paramref name="capacity"/> is valid (between the number of elements and <see cref="Array.MaxLength"/>.)
-        /// </remarks>
-        private void Grow(int capacity)
-        {
-            int diff = BackMargin - FrontMargin;
-            ResizeInternal(capacity, ((capacity - _count + diff) >> 1));
-        }
-
-        private T RemoveAtInternal(int index)
-        {
-            if (index == 0)
-            {
-                return PopFront();
-            }
-            else if (index == _count - 1)
-            {
-                return PopBack();
-            }
-            else
-            {
-                T result = _items[_head + index];
-
-                // make it costs lower to move the elements.
-                if (index <= (_count >> 1))
-                {
-                    // shift the elements in [0,index) of the deque.
-                    var span = MemoryMarshal.CreateSpan(ref _items[_head], index + 1);
-                    for (int i = index; i > 0; i--)
-                    {
-                        span[i] = span[i - 1];
-                    }
-
-                    SetDefaultValueIfNeeded(ref span[0]);
-                    _head++;
-                }
-                else
-                {
-                    // shift the elements in (index, _count) of the deque.
-                    var span = MemoryMarshal.CreateSpan(ref _items[_head + index], _count - index);
-                    for (int i = 0; i < _count - index - 1; i++)
-                    {
-                        span[i] = span[i + 1];
-                    }
-
-                    SetDefaultValueIfNeeded(ref span[_count - index - 1]);
-                }
-
-                _count--;
-                _version++;
-                return result;
-            }
-        }
-
-        /// <summary>
-        /// Creates a new array as an internal array at the specified size, and copies to the array all the elements contained in the <see cref="Deque{T}"/>.
-        /// </summary>
-        /// <param name="capacity"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ResizeInternal(int capacity)
+        private void ThrowIfCollectionIsEmpty()
         {
-            int frontMargin = (capacity - _count) >> 1;
-            ResizeInternal(capacity, frontMargin);
-        }
-
-        /// <summary>
-        /// Creates a new array as an internal array at the specified size, and copies to the array starting at the specified index all the elements contained in the <see cref="Deque{T}"/>.
-        /// </summary>
-        /// <param name="capacity"></param>
-        /// <param name="frontMargin"></param>
-        private void ResizeInternal(int capacity, int frontMargin)
-        {
-            if (capacity == 0)
-            {
-                _items = _s_emptyArray;
-                _head = 0;
-            }
-            else
-            {
-                T[] newArray = new T[capacity];
-                Array.Copy(_items, _head, newArray, frontMargin, _count);
-
-                _items = newArray;
-                _head = frontMargin;
-            }
-
-            _version++;
-        }
-
-        /// <summary>
-        /// Shifts all the elements in the internal data structure at specified time(s).
-        /// </summary>
-        /// <remarks>
-        /// This doesn't check whether <paramref name="diff"/> is valid or not.
-        /// </remarks>
-        /// <param name="diff"></param>
-        private void Shift(int diff)
-        {
-            if (diff == 0)
-            {
-                return;
-            }
-
-            var src = MemoryMarshal.CreateSpan(ref _items[_head], _count);
-            var dst = MemoryMarshal.CreateSpan(ref _items[_head + diff], _count);
-
-            src.CopyTo(dst);
-
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
-                if (diff > 0)
-                {
-                    src[0..diff].Clear();
-                }
-                else
-                {
-                    src[^(-diff)..].Clear();
-                }
-            }
-
-            _head += diff;
-            _version++;
-        }
-
-        /// <summary>
-        /// If <typeparamref name="T"/> is reference or contains references, sets the default value of <typeparamref name="T"/> to the <paramref name="value"/> parameter; otherwise, do nothing.
-        /// </summary>
-        /// <param name="value"></param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void SetDefaultValueIfNeeded(ref T value)
-        {
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
-                value = default!;
-            }
-        }
-
-        /// <summary>
-        /// Throws an <see cref="InvalidOperationException"/> if the <see cref="Deque{T}"/> is empty.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
-        private void ThrowIfEmpty()
-        {
-            if (IsEmpty)
+            if (_count == 0)
             {
                 ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionIsEmpty);
             }
@@ -1356,24 +1152,21 @@ namespace Yuh.Collections
         /// <summary>
         /// Enumerates the elements of a <see cref="Deque{T}"/>.
         /// </summary>
-        public struct Enumerator : IEnumerator<T>, IEnumerator
+        public struct Enumerator : IEnumerator, IEnumerator<T>
         {
             private readonly Deque<T> _deque;
-            private int _index;
-            private readonly int _tail;
+            private int _index = -1;
             private readonly int _version;
 
             /// <summary>Gets the element in the <see cref="Deque{T}"/> at the current position of the enumerator.</summary>
             /// <returns>The element in the <see cref="Deque{T}"/> at the current position of the enumerator.</returns>
-            public readonly T Current => _deque._items[_index];
+            public readonly T Current => _deque._items[(_deque._head + _index) % _deque._capacity];
 
             readonly object? IEnumerator.Current => Current;
 
             internal Enumerator(Deque<T> deque)
             {
                 _deque = deque;
-                _index = deque._head - 1;
-                _tail = deque._head + deque._count - 1;
                 _version = deque._version;
             }
 
@@ -1388,7 +1181,7 @@ namespace Yuh.Collections
             public bool MoveNext()
             {
                 ThrowIfCollectionModified();
-                return ++_index <= _tail;
+                return ++_index < _deque._count;
             }
 
             /// <summary>Set the enumerator to its initial position, which is the before the first element in the <see cref="Deque{T}"/>.</summary>
@@ -1396,7 +1189,7 @@ namespace Yuh.Collections
             public void Reset()
             {
                 ThrowIfCollectionModified();
-                _index = _deque._head - 1;
+                _index = -1;
             }
 
             /// <summary>
