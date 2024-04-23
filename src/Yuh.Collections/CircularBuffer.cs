@@ -8,7 +8,7 @@ namespace Yuh.Collections
     /// Represents a buffer that supports addition of elements to the front or back, or removal from the front or back.
     /// </summary>
     /// <remarks>
-    /// This can be substituted for <see cref="DoubleEndedList{T}"/> or <see cref="DequeSlim{T}"/>, but this may perform better than these.
+    /// This can be substituted for <see cref="DoubleEndedList{T}"/> or <see cref="Deque{T}"/>, but this may perform better than these.
     /// </remarks>
     /// <typeparam name="T"></typeparam>
     public class CircularBuffer<T> : ICollection, ICollection<T>, IEnumerable, IEnumerable<T>, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>

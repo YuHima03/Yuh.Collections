@@ -7,17 +7,17 @@ using Yuh.Collections.Debugging;
 namespace Yuh.Collections
 {
     /// <summary>
-    /// Provides static methods to create a new instance of the <see cref="DequeSlim{T}"/> class.
+    /// Provides static methods to create a new instance of the <see cref="Deque{T}"/> class.
     /// </summary>
-    public static class DequeSlim
+    public static class Deque
     {
         /// <summary>
-        /// Creates a new instance of the <see cref="DequeSlim{T}"/> class that contains elements copied from the specified <see cref="DequeSlim{T}"/> and returns it.
+        /// Creates a new instance of the <see cref="Deque{T}"/> class that contains elements copied from the specified <see cref="Deque{T}"/> and returns it.
         /// </summary>
-        /// <typeparam name="T">The type of elements in the <see cref="DequeSlim{T}"/>.</typeparam>
+        /// <typeparam name="T">The type of elements in the <see cref="Deque{T}"/>.</typeparam>
         /// <param name="deque">The deque whose elements are copied to the new one.</param>
-        /// <returns>A new instance of the <see cref="DequeSlim{T}"/> class that contains elements copied from <paramref name="deque"/> and has sufficient capacity to accommodate the number of elements copied.</returns>
-        public static DequeSlim<T> CreateClone<T>(DequeSlim<T> deque)
+        /// <returns>A new instance of the <see cref="Deque{T}"/> class that contains elements copied from <paramref name="deque"/> and has sufficient capacity to accommodate the number of elements copied.</returns>
+        public static Deque<T> CreateClone<T>(Deque<T> deque)
         {
             return new(deque);
         }
@@ -30,10 +30,10 @@ namespace Yuh.Collections
     ///     This provides most of the functions <see cref="DoubleEndedList{T}"/> has, and may require smaller memory-region than <see cref="DoubleEndedList{T}"/>.
     ///     However, this performs slightly worse than <see cref="DoubleEndedList{T}"/> in some respects.
     /// </remarks>
-    /// <typeparam name="T">The type of elements in the <see cref="DequeSlim{T}"/>.</typeparam>
+    /// <typeparam name="T">The type of elements in the <see cref="Deque{T}"/>.</typeparam>
     [DebuggerDisplay("Count = {_count}, Capacity = {_capacity}")]
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
-    public class DequeSlim<T> : ICollection, ICollection<T>, IEnumerable, IEnumerable<T>, IList, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>
+    public class Deque<T> : ICollection, ICollection<T>, IEnumerable, IEnumerable<T>, IList, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>
     {
         private const int _defaultCapacity = 8;
 
@@ -59,7 +59,7 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="index">The zero-based index of the element to get or set.</param>
         /// <value>The element at the specified index.</value>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="DequeSlim{T}"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="Deque{T}"/>.</exception>
         public T this[int index]
         {
             get
@@ -110,18 +110,18 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Gets the number of the elements contained in the <see cref="DequeSlim{T}"/>.
+        /// Gets the number of the elements contained in the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <returns>The number of the elements contained in the <see cref="DequeSlim{T}"/>.</returns>
+        /// <returns>The number of the elements contained in the <see cref="Deque{T}"/>.</returns>
         public int Count => _count;
 
         /// <summary>
-        /// Gets the number of total elements the <see cref="DequeSlim{T}"/> can hold without resizing.
+        /// Gets the number of total elements the <see cref="Deque{T}"/> can hold without resizing.
         /// </summary>
         /// <remarks>
         /// To sets the capacity, please use <see cref="Resize(int)"/>.
         /// </remarks>
-        /// <returns>The number of elements that the <see cref="DequeSlim{T}"/> can contain before resizing is required.</returns>
+        /// <returns>The number of elements that the <see cref="Deque{T}"/> can contain before resizing is required.</returns>
         public int Capacity
         {
             get
@@ -131,9 +131,9 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Gets the value that indicates whether the <see cref="DequeSlim{T}"/> is empty.
+        /// Gets the value that indicates whether the <see cref="Deque{T}"/> is empty.
         /// </summary>
-        /// <returns><see langword="true"/> if the <see cref="DequeSlim{T}"/> is empty; <see langword="false"/> if not.</returns>
+        /// <returns><see langword="true"/> if the <see cref="Deque{T}"/> is empty; <see langword="false"/> if not.</returns>
         public bool IsEmpty => _count == 0;
 
         internal T First => _items[_head];
@@ -141,15 +141,15 @@ namespace Yuh.Collections
         internal T Last => _items[(_head + _count - 1) % _capacity];
 
         /// <summary>
-        /// Initializes an new instance of the <see cref="DequeSlim{T}"/> class.
+        /// Initializes an new instance of the <see cref="Deque{T}"/> class.
         /// </summary>
-        public DequeSlim() : this(_defaultCapacity) { }
+        public Deque() : this(_defaultCapacity) { }
 
         /// <summary>
-        /// Initializes an new instance of the <see cref="DequeSlim{T}"/> class that contains elements copied from the specified <see cref="DequeSlim{T}"/> and has sufficient capacity to accommodate the number of elements copied.
+        /// Initializes an new instance of the <see cref="Deque{T}"/> class that contains elements copied from the specified <see cref="Deque{T}"/> and has sufficient capacity to accommodate the number of elements copied.
         /// </summary>
         /// <param name="deque">The deque whose elements are copied to the new one.</param>
-        internal DequeSlim(DequeSlim<T> deque)
+        internal Deque(Deque<T> deque)
         {
             _capacity = deque.Capacity;
             _count = deque._count;
@@ -160,11 +160,11 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Initializes an new instance of the <see cref="DequeSlim{T}"/> class that is empty and has the specified initial capacity.
+        /// Initializes an new instance of the <see cref="Deque{T}"/> class that is empty and has the specified initial capacity.
         /// </summary>
-        /// <param name="capacity">The number of elements that the new <see cref="DequeSlim{T}"/> can initially store.</param>
+        /// <param name="capacity">The number of elements that the new <see cref="Deque{T}"/> can initially store.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> must be positive or zero, and less than or equal to the maximum length of an array.</exception>
-        public DequeSlim(int capacity)
+        public Deque(int capacity)
         {
             if (capacity == 0)
             {
@@ -182,11 +182,11 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DequeSlim{T}"/> class that contains elements copied from the specified collection and has sufficient capacity to accommodate the number of elements copied. 
+        /// Initializes a new instance of the <see cref="Deque{T}"/> class that contains elements copied from the specified collection and has sufficient capacity to accommodate the number of elements copied. 
         /// </summary>
         /// <param name="enumerable">The collection whose elements are copied to the new deque.</param>
         /// <exception cref="ArgumentNullException"><paramref name="enumerable"/> is <see langword="null"/>.</exception>
-        public DequeSlim(IEnumerable<T> enumerable) : this(_defaultCapacity)
+        public Deque(IEnumerable<T> enumerable) : this(_defaultCapacity)
         {
             ArgumentNullException.ThrowIfNull(enumerable);
 
@@ -214,10 +214,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DequeSlim{T}"/> class that contains elements copied from the specified span and has sufficient capacity to accommodate the number of the elements copied.
+        /// Initializes a new instance of the <see cref="Deque{T}"/> class that contains elements copied from the specified span and has sufficient capacity to accommodate the number of the elements copied.
         /// </summary>
         /// <param name="span">The span whose elements are copied to the new deque.</param>
-        public DequeSlim(ReadOnlySpan<T> span) : this(_defaultCapacity)
+        public Deque(ReadOnlySpan<T> span) : this(_defaultCapacity)
         {
             int capacity = Math.Min(span.Length << 1, Array.MaxLength);
 
@@ -250,7 +250,7 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes all of the elements from the <see cref="DequeSlim{T}"/>.
+        /// Removes all of the elements from the <see cref="Deque{T}"/>.
         /// </summary>
         public void Clear()
         {
@@ -272,10 +272,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Determines whether the <see cref="DequeSlim{T}"/> contains a specific value.
+        /// Determines whether the <see cref="Deque{T}"/> contains a specific value.
         /// </summary>
-        /// <param name="item">The object to locate in the <see cref="DequeSlim{T}"/>.</param>
-        /// <returns><see langword="true"/> if <paramref name="item"/> is found in the <see cref="DequeSlim{T}"/>; otherwise, <see langword="false"/>.</returns>
+        /// <param name="item">The object to locate in the <see cref="Deque{T}"/>.</param>
+        /// <returns><see langword="true"/> if <paramref name="item"/> is found in the <see cref="Deque{T}"/>; otherwise, <see langword="false"/>.</returns>
         public bool Contains(T item)
         {
             if (_head + _count > _capacity)
@@ -294,13 +294,13 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Copies the elements of the <see cref="DequeSlim{T}"/> to an <typeparamref name="T"/>[], starting at a particular index.
+        /// Copies the elements of the <see cref="Deque{T}"/> to an <typeparamref name="T"/>[], starting at a particular index.
         /// </summary>
-        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from <see cref="DequeSlim{T}"/>.</param>
+        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from <see cref="Deque{T}"/>.</param>
         /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
         /// <exception cref="ArgumentNullException"><paramref name="array"/> is null.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException">The number of the elements in the source <see cref="DequeSlim{T}"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
+        /// <exception cref="ArgumentException">The number of the elements in the source <see cref="Deque{T}"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
         public void CopyTo(T[] array, int arrayIndex)
         {
             if (array.Length - arrayIndex < _count)
@@ -342,10 +342,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        ///     Ensures that the capacity of this <see cref="DequeSlim{T}"/> is at least the specified one.
-        ///     If the current capacity is less than the specified one, resizes the internal array so that the <see cref="DequeSlim{T}"/> can accommodate the specified number of elements without resizing.
+        ///     Ensures that the capacity of this <see cref="Deque{T}"/> is at least the specified one.
+        ///     If the current capacity is less than the specified one, resizes the internal array so that the <see cref="Deque{T}"/> can accommodate the specified number of elements without resizing.
         /// </summary>
-        /// <param name="capacity">The number of elements that the <see cref="DequeSlim{T}"/> can hold without resizing.</param>
+        /// <param name="capacity">The number of elements that the <see cref="Deque{T}"/> can hold without resizing.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is negative or greater than <see cref="Array.MaxLength"/>.</exception>
         public void EnsureCapacity(int capacity)
         {
@@ -366,9 +366,9 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns an enumerator that iterates through the <see cref="DequeSlim{T}"/>.
+        /// Returns an enumerator that iterates through the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <returns>An enumerator that can be used to iterate through the <see cref="DequeSlim{T}"/>.</returns>
+        /// <returns>An enumerator that can be used to iterate through the <see cref="Deque{T}"/>.</returns>
         public Enumerator GetEnumerator()
         {
             return new(this);
@@ -385,10 +385,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Searches for the specified item and returns the zero-based index of the first occurrence within the entire <see cref="DequeSlim{T}"/>.
+        /// Searches for the specified item and returns the zero-based index of the first occurrence within the entire <see cref="Deque{T}"/>.
         /// </summary>
         /// <param name="item">
-        ///     The object to locate in the <see cref="DequeSlim{T}"/>.
+        ///     The object to locate in the <see cref="Deque{T}"/>.
         ///     The value can be <see langword="null"/> for reference types.
         /// </param>
         /// <returns>The zero-based index of the first occurrence of <paramref name="item"/>, if found; otherwise, -1.</returns>
@@ -421,21 +421,21 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Insert an item to the <see cref="DequeSlim{T}"/> at the specified index.
+        /// Insert an item to the <see cref="Deque{T}"/> at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
         /// <param name="item">An object to insert. The value can be <see langword="null"/> for reference types.</param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="DequeSlim{T}"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="Deque{T}"/>.</exception>
         public void Insert(int index, T item)
         {
             throw new NotImplementedException();
         }
 
         /// <summary>
-        /// Searches for the specified item and returns the zero-based index of the last occurrence within the entire <see cref="DequeSlim{T}"/>.
+        /// Searches for the specified item and returns the zero-based index of the last occurrence within the entire <see cref="Deque{T}"/>.
         /// </summary>
         /// <param name="item">
-        ///     The object to locate in the <see cref="DequeSlim{T}"/>.
+        ///     The object to locate in the <see cref="Deque{T}"/>.
         ///     The value can be <see langword="null"/> for reference types.
         /// </param>
         /// <returns>The zero-based index of the last occurrence of <paramref name="item"/>, if found; otherwise, <c>-1</c>.</returns>
@@ -471,10 +471,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns the object at the beginning of the <see cref="DequeSlim{T}"/> without removing it.
+        /// Returns the object at the beginning of the <see cref="Deque{T}"/> without removing it.
         /// </summary>
-        /// <returns>The object at the beginning of the <see cref="DequeSlim{T}"/>.</returns>
-        /// <exception cref="InvalidOperationException">The <see cref="DequeSlim{T}"/> is empty.</exception>
+        /// <returns>The object at the beginning of the <see cref="Deque{T}"/>.</returns>
+        /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PeekFirst()
         {
             ThrowIfCollectionIsEmpty();
@@ -482,10 +482,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns the object at the end of the <see cref="DequeSlim{T}"/> without removing it.
+        /// Returns the object at the end of the <see cref="Deque{T}"/> without removing it.
         /// </summary>
-        /// <returns>The object at the end of the <see cref="DequeSlim{T}"/>.</returns>
-        /// <exception cref="InvalidOperationException">The <see cref="DequeSlim{T}"/> is empty.</exception>
+        /// <returns>The object at the end of the <see cref="Deque{T}"/>.</returns>
+        /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PeekLast()
         {
             ThrowIfCollectionIsEmpty();
@@ -493,10 +493,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes and returns the object at the end of the <see cref="DequeSlim{T}"/>.
+        /// Removes and returns the object at the end of the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <returns>The object at the end of the <see cref="DequeSlim{T}"/>.</returns>
-        /// <exception cref="InvalidOperationException">The <see cref="DequeSlim{T}"/> is empty.</exception>
+        /// <returns>The object at the end of the <see cref="Deque{T}"/>.</returns>
+        /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PopBack()
         {
             ThrowIfCollectionIsEmpty();
@@ -515,10 +515,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes and returns the specified number of objects at the end of the <see cref="DequeSlim{T}"/>.
+        /// Removes and returns the specified number of objects at the end of the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <param name="count">The number of elements to remove at the end of the <see cref="DequeSlim{T}"/>.</param>
-        /// <returns>An array that contains the objects removed at the end of the <see cref="DequeSlim{T}"/>.</returns>
+        /// <param name="count">The number of elements to remove at the end of the <see cref="Deque{T}"/>.</param>
+        /// <returns>An array that contains the objects removed at the end of the <see cref="Deque{T}"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is invalid.</exception>
         public T[] PopBackRange(int count)
         {
@@ -534,7 +534,7 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes the certain number of objects at the end of the <see cref="DequeSlim{T}"/> and copies them to the specified span to fill up it.
+        /// Removes the certain number of objects at the end of the <see cref="Deque{T}"/> and copies them to the specified span to fill up it.
         /// </summary>
         /// <param name="destination">The span to copy the removed objects to.</param>
         /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="destination"/> is greater than the number of elements contained in the collection.</exception>
@@ -584,10 +584,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes and returns the object at the beginning of the <see cref="DequeSlim{T}"/>.
+        /// Removes and returns the object at the beginning of the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <returns>The object at the beginning of the <see cref="DequeSlim{T}"/>.</returns>
-        /// <exception cref="InvalidOperationException">The <see cref="DequeSlim{T}"/> is empty.</exception>
+        /// <returns>The object at the beginning of the <see cref="Deque{T}"/>.</returns>
+        /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
         public T PopFront()
         {
             ThrowIfCollectionIsEmpty();
@@ -607,10 +607,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes and returns the specified number of objects at the front of the <see cref="DequeSlim{T}"/>.
+        /// Removes and returns the specified number of objects at the front of the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <param name="count">The number of elements to remove at the front of the <see cref="DequeSlim{T}"/>.</param>
-        /// <returns>An array that contains the objects removed at the front of the <see cref="DequeSlim{T}"/>.</returns>
+        /// <param name="count">The number of elements to remove at the front of the <see cref="Deque{T}"/>.</param>
+        /// <returns>An array that contains the objects removed at the front of the <see cref="Deque{T}"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is invalid.</exception>
         public T[] PopFrontRange(int count)
         {
@@ -626,7 +626,7 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes the certain number of objects at the front of the <see cref="DequeSlim{T}"/> and copies them to the specified span to fill up it.
+        /// Removes the certain number of objects at the front of the <see cref="Deque{T}"/> and copies them to the specified span to fill up it.
         /// </summary>
         /// <param name="destination">The span to copy the removed objects to.</param>
         /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="destination"/> is greater than the number of elements contained in the collection.</exception>
@@ -676,10 +676,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds an object to the end of the <see cref="DequeSlim{T}"/>.
+        /// Adds an object to the end of the <see cref="Deque{T}"/>.
         /// </summary>
         /// <param name="item">
-        ///     The object to add to the end of the <see cref="DequeSlim{T}"/>.
+        ///     The object to add to the end of the <see cref="Deque{T}"/>.
         ///     The value can be <see langword="null"/> for reference types.
         /// </param>
         public void PushBack(T item)
@@ -695,13 +695,13 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds the elements of the specified collection to the end of the <see cref="DequeSlim{T}"/>.
+        /// Adds the elements of the specified collection to the end of the <see cref="Deque{T}"/>.
         /// </summary>
         /// <remarks>
         /// Please note that, if the specified collection has many objects, this method may take a long time or temporarily occupy large memory region to copy the objects.
         /// To avoid this, please set a <see cref="ReadOnlySpan{T}"/> to the <paramref name="items"/> parameter instead.
         /// </remarks>
-        /// <param name="items">The collection whose elements should be added to the end of the <see cref="DequeSlim{T}"/>.</param>
+        /// <param name="items">The collection whose elements should be added to the end of the <see cref="Deque{T}"/>.</param>
         public void PushBackRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
@@ -722,9 +722,9 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds the elements of the specified memory region to the end of the <see cref="DequeSlim{T}"/>.
+        /// Adds the elements of the specified memory region to the end of the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <param name="items">The read-only span whose elements should be added to the end of the <see cref="DequeSlim{T}"/>.</param>
+        /// <param name="items">The read-only span whose elements should be added to the end of the <see cref="Deque{T}"/>.</param>
         public void PushBackRange(ReadOnlySpan<T> items)
         {
             int count = items.Length;
@@ -755,10 +755,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds an object to the beginning of the <see cref="DequeSlim{T}"/>.
+        /// Adds an object to the beginning of the <see cref="Deque{T}"/>.
         /// </summary>
         /// <param name="item">
-        ///     The object to add to the beginning of the <see cref="DequeSlim{T}"/>.
+        ///     The object to add to the beginning of the <see cref="Deque{T}"/>.
         ///     The value can be <see langword="null"/> for reference types.
         /// </param>
         public void PushFront(T item)
@@ -775,13 +775,13 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds the elements of the specified collection to the front of the <see cref="DequeSlim{T}"/>.
+        /// Adds the elements of the specified collection to the front of the <see cref="Deque{T}"/>.
         /// </summary>
         /// <remarks>
         /// Please note that, this method may take a long time or temporarily occupy large memory region to copy the objects.
         /// To avoid this, please set a <see cref="ReadOnlySpan{T}"/> to the <paramref name="items"/> parameter instead.
         /// </remarks>
-        /// <param name="items">The collection whose elements should be added to the front of the <see cref="DequeSlim{T}"/>.</param>
+        /// <param name="items">The collection whose elements should be added to the front of the <see cref="Deque{T}"/>.</param>
         public void PushFrontRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
@@ -802,9 +802,9 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds the elements of the specified memory region to the front of the <see cref="DequeSlim{T}"/>.
+        /// Adds the elements of the specified memory region to the front of the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <param name="items">The read-only span whose elements should be added to the front of the <see cref="DequeSlim{T}"/>.</param>
+        /// <param name="items">The read-only span whose elements should be added to the front of the <see cref="Deque{T}"/>.</param>
         public void PushFrontRange(ReadOnlySpan<T> items)
         {
             int count = items.Length;
@@ -836,9 +836,9 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes the first occurrence of the specified object from the <see cref="DequeSlim{T}"/>.
+        /// Removes the first occurrence of the specified object from the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <param name="item">The object to remove from the <see cref="DequeSlim{T}"/>.</param>
+        /// <param name="item">The object to remove from the <see cref="Deque{T}"/>.</param>
         /// <returns></returns>
         public bool Remove(T item)
         {
@@ -854,10 +854,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes the element at the specified index in the <see cref="DequeSlim{T}"/>.
+        /// Removes the element at the specified index in the <see cref="Deque{T}"/>.
         /// </summary>
         /// <param name="index">The zero-based index of the item to remove.</param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index of the <see cref="DequeSlim{T}"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index of the <see cref="Deque{T}"/>.</exception>
         public void RemoveAt(int index)
         {
             if ((uint)index >= _count)
@@ -869,12 +869,12 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Remove a range of elements from the <see cref="DequeSlim{T}"/>.
+        /// Remove a range of elements from the <see cref="Deque{T}"/>.
         /// </summary>
         /// <param name="index">The zero-based starting index of the range of elements to remove.</param>
         /// <param name="count">The number of elements to remove.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is negative.</exception>
-        /// <exception cref="ArgumentException"><paramref name="index"/> and <paramref name="count"/> do not denote a valid range of elements in the <see cref="DequeSlim{T}"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="index"/> and <paramref name="count"/> do not denote a valid range of elements in the <see cref="Deque{T}"/>.</exception>
         public void RemoveRange(int index, int count)
         {
             ThrowHelpers.ThrowIfArgumentIsNegative(index);
@@ -1013,7 +1013,7 @@ namespace Yuh.Collections
         /// Resizes the internal array to the specified size.
         /// </summary>
         /// <param name="capacity"></param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than the number of elements contained in the <see cref="DequeSlim{T}"/> or greater than <see cref="Array.MaxLength"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than the number of elements contained in the <see cref="Deque{T}"/> or greater than <see cref="Array.MaxLength"/>.</exception>
         public void Resize(int capacity)
         {
             ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
@@ -1044,11 +1044,11 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns a value that indicates whether there is an object at the beginning of the <see cref="DequeSlim{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter.
-        /// The object is not removed from the <see cref="DequeSlim{T}"/>.
+        /// Returns a value that indicates whether there is an object at the beginning of the <see cref="Deque{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter.
+        /// The object is not removed from the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <param name="item">If present, the object at the beginning of the <see cref="DequeSlim{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
-        /// <returns><see langword="true"/> if there is an object at the beginning of the <see cref="DequeSlim{T}"/>; <see langword="false"/> if the <see cref="DequeSlim{T}"/> is empty.</returns>
+        /// <param name="item">If present, the object at the beginning of the <see cref="Deque{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if there is an object at the beginning of the <see cref="Deque{T}"/>; <see langword="false"/> if the <see cref="Deque{T}"/> is empty.</returns>
         public bool TryPeekFirst([MaybeNullWhen(false)] out T item)
         {
             if (_count == 0)
@@ -1064,11 +1064,11 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns a value that indicates whether there is an object at the end of the <see cref="DequeSlim{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter.
-        /// The object is not removed from the <see cref="DequeSlim{T}"/>.
+        /// Returns a value that indicates whether there is an object at the end of the <see cref="Deque{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter.
+        /// The object is not removed from the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <param name="item">If present, the object at the end of the <see cref="DequeSlim{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
-        /// <returns><see langword="true"/> if there is an object at the end of the <see cref="DequeSlim{T}"/>; <see langword="false"/> if the <see cref="DequeSlim{T}"/> is empty.</returns>
+        /// <param name="item">If present, the object at the end of the <see cref="Deque{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if there is an object at the end of the <see cref="Deque{T}"/>; <see langword="false"/> if the <see cref="Deque{T}"/> is empty.</returns>
         public bool TryPeekLast([MaybeNullWhen(false)] out T item)
         {
             if (_count == 0)
@@ -1084,10 +1084,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns a value that indicates whether there is an object at the end of the <see cref="DequeSlim{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter and removes it from the <see cref="DequeSlim{T}"/>.
+        /// Returns a value that indicates whether there is an object at the end of the <see cref="Deque{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter and removes it from the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <param name="item">If present, the object at the end of the <see cref="DequeSlim{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
-        /// <returns><see langword="true"/> if there is an object at the end of the <see cref="DequeSlim{T}"/>; <see langword="false"/> if the <see cref="DequeSlim{T}"/> is empty.</returns>
+        /// <param name="item">If present, the object at the end of the <see cref="Deque{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if there is an object at the end of the <see cref="Deque{T}"/>; <see langword="false"/> if the <see cref="Deque{T}"/> is empty.</returns>
         public bool TryPopBack([MaybeNullWhen(false)] out T item)
         {
             if (_count == 0)
@@ -1103,10 +1103,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns a value that indicates whether there is an object at the beginning of the <see cref="DequeSlim{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter and removes it from the <see cref="DequeSlim{T}"/>.
+        /// Returns a value that indicates whether there is an object at the beginning of the <see cref="Deque{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter and removes it from the <see cref="Deque{T}"/>.
         /// </summary>
-        /// <param name="item">If present, the object at the beginning of the <see cref="DequeSlim{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
-        /// <returns><see langword="true"/> if there is an object at the beginning of the <see cref="DequeSlim{T}"/>; <see langword="false"/> if the <see cref="DequeSlim{T}"/> is empty.</returns>
+        /// <param name="item">If present, the object at the beginning of the <see cref="Deque{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if there is an object at the beginning of the <see cref="Deque{T}"/>; <see langword="false"/> if the <see cref="Deque{T}"/> is empty.</returns>
         public bool TryPopFront([MaybeNullWhen(false)] out T item)
         {
             if (_count == 0)
@@ -1124,7 +1124,7 @@ namespace Yuh.Collections
         /// <summary>
         /// Enlarge the internal array to twice its size.
         /// </summary>
-        /// <exception cref="Exception">The number of elements contained in the <see cref="DequeSlim{T}"/> has reached its upper limit.</exception>
+        /// <exception cref="Exception">The number of elements contained in the <see cref="Deque{T}"/> has reached its upper limit.</exception>
         private void Grow()
         {
             int capacity = Math.Min(
@@ -1150,21 +1150,21 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Enumerates the elements of a <see cref="DequeSlim{T}"/>.
+        /// Enumerates the elements of a <see cref="Deque{T}"/>.
         /// </summary>
         public struct Enumerator : IEnumerator, IEnumerator<T>
         {
-            private readonly DequeSlim<T> _deque;
+            private readonly Deque<T> _deque;
             private int _index = -1;
             private readonly int _version;
 
-            /// <summary>Gets the element in the <see cref="DequeSlim{T}"/> at the current position of the enumerator.</summary>
-            /// <returns>The element in the <see cref="DequeSlim{T}"/> at the current position of the enumerator.</returns>
+            /// <summary>Gets the element in the <see cref="Deque{T}"/> at the current position of the enumerator.</summary>
+            /// <returns>The element in the <see cref="Deque{T}"/> at the current position of the enumerator.</returns>
             public readonly T Current => _deque._items[(_deque._head + _index) % _deque._capacity];
 
             readonly object? IEnumerator.Current => Current;
 
-            internal Enumerator(DequeSlim<T> deque)
+            internal Enumerator(Deque<T> deque)
             {
                 _deque = deque;
                 _version = deque._version;
@@ -1174,18 +1174,18 @@ namespace Yuh.Collections
             public readonly void Dispose() { }
 
             /// <summary>
-            /// Advances the enumerator to the next element of the <see cref="DequeSlim{T}"/>.
+            /// Advances the enumerator to the next element of the <see cref="Deque{T}"/>.
             /// </summary>
-            /// <returns><see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the <see cref="DequeSlim{T}"/>.</returns>
-            /// <exception cref="InvalidOperationException">The <see cref="DequeSlim{T}"/> was modified after the enumerator was created.</exception>
+            /// <returns><see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the <see cref="Deque{T}"/>.</returns>
+            /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> was modified after the enumerator was created.</exception>
             public bool MoveNext()
             {
                 ThrowIfCollectionModified();
                 return ++_index < _deque._count;
             }
 
-            /// <summary>Set the enumerator to its initial position, which is the before the first element in the <see cref="DequeSlim{T}"/>.</summary>
-            /// <exception cref="InvalidOperationException">The <see cref="DequeSlim{T}"/> was modified after the enumerator was created.</exception>
+            /// <summary>Set the enumerator to its initial position, which is the before the first element in the <see cref="Deque{T}"/>.</summary>
+            /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> was modified after the enumerator was created.</exception>
             public void Reset()
             {
                 ThrowIfCollectionModified();
@@ -1193,9 +1193,9 @@ namespace Yuh.Collections
             }
 
             /// <summary>
-            /// Throw an exception if the <see cref="DequeSlim{T}"/> was modified after the enumerator was created.
+            /// Throw an exception if the <see cref="Deque{T}"/> was modified after the enumerator was created.
             /// </summary>
-            /// <exception cref="InvalidOperationException">The <see cref="DequeSlim{T}"/> was modified after the enumerator was created.</exception>
+            /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> was modified after the enumerator was created.</exception>
             private readonly void ThrowIfCollectionModified()
             {
                 if (_version != _deque._version)

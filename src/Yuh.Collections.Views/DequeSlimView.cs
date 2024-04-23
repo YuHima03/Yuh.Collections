@@ -2,7 +2,7 @@
 
 namespace Yuh.Collections.Views
 {
-    public class DequeSlimView<T>
+    public class DequeView<T>
     {
         // Do NOT change the order of the following fields.
         public T[] Items = [];
@@ -11,9 +11,9 @@ namespace Yuh.Collections.Views
         public int Head;
         public int Version;
 
-        public DequeSlim<T> Encapsulate()
+        public Deque<T> Encapsulate()
         {
-            return Unsafe.As<DequeSlim<T>>(this);
+            return Unsafe.As<Deque<T>>(this);
         }
     }
 }
