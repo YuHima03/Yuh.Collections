@@ -8,15 +8,15 @@ using Yuh.Collections.Debugging;
 namespace Yuh.Collections
 {
     /// <summary>
-    /// Represents a double-ended queue for which elements can be added to or removed from the front or back.
+    /// Represents a list for which elements can be added to or removed from the front or back.
     /// </summary>
     /// <remarks>
     /// <para>This supports random-access to the elements contained in the collection and addition of elements to the front or back, or removal from the front or back.</para>
     /// </remarks>
-    /// <typeparam name="T">The type of elements in the <see cref="Deque{T}"/>.</typeparam>
+    /// <typeparam name="T">The type of elements in the <see cref="DoubleEndedList{T}"/>.</typeparam>
     [DebuggerDisplay("Count = {_count}, Capacity = {_items.Length}")]
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
-    public class Deque<T> : ICollection<T>, IDeque<T>, IList, IList<T>, IReadOnlyDeque<T>, IReadOnlyList<T>
+    public class DoubleEndedList<T> : ICollection<T>, IDeque<T>, IList, IList<T>, IReadOnlyDeque<T>, IReadOnlyList<T>
     {
         private const int _defaultCapacity = 8;
 #pragma warning disable IDE0301
@@ -39,7 +39,7 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="index">The zero-based index of the element to get or set.</param>
         /// <value>The element at the specified index.</value>
-        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="Deque{T}"/>.</exception>
+        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="DoubleEndedList{T}"/>.</exception>
         public T this[int index]
         {
             get
@@ -83,12 +83,12 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Gets the number of total elements the <see cref="Deque{T}"/> can hold without resizing.
+        /// Gets the number of total elements the <see cref="DoubleEndedList{T}"/> can hold without resizing.
         /// </summary>
         /// <remarks>
         /// To sets the capacity, please use <see cref="Resize(int)"/> or <see cref="Resize(int, int)"/>.
         /// </remarks>
-        /// <returns>The number of elements that the <see cref="Deque{T}"/> can contain before resizing is required.</returns>
+        /// <returns>The number of elements that the <see cref="DoubleEndedList{T}"/> can contain before resizing is required.</returns>
         public int Capacity
         {
             get
@@ -102,40 +102,40 @@ namespace Yuh.Collections
         internal T Last => _items[_head + _count - 1];
 
         /// <summary>
-        /// Gets the number of elements that can be added at the beginning of the <see cref="Deque{T}"/> without resizing the internal data structure.
+        /// Gets the number of elements that can be added at the beginning of the <see cref="DoubleEndedList{T}"/> without resizing the internal data structure.
         /// </summary>
-        /// <returns>The number of elements that can be added at the beginning of the <see cref="Deque{T}"/> without resizing the internal data structure.</returns>
+        /// <returns>The number of elements that can be added at the beginning of the <see cref="DoubleEndedList{T}"/> without resizing the internal data structure.</returns>
         public int FrontMargin => _head;
 
         /// <summary>
-        /// Gets the number of elements that can be added at the end of the <see cref="Deque{T}"/> without resizing the internal data structure.
+        /// Gets the number of elements that can be added at the end of the <see cref="DoubleEndedList{T}"/> without resizing the internal data structure.
         /// </summary>
-        /// <returns>The number of elements that can be added at the end of the <see cref="Deque{T}"/> without resizing the internal data structure.</returns>
+        /// <returns>The number of elements that can be added at the end of the <see cref="DoubleEndedList{T}"/> without resizing the internal data structure.</returns>
         public int BackMargin => _items.Length - _head - _count;
 
         /// <summary>
-        /// Gets the number of the elements contained in the <see cref="Deque{T}"/>.
+        /// Gets the number of the elements contained in the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <returns>The number of the elements contained in the <see cref="Deque{T}"/>.</returns>
+        /// <returns>The number of the elements contained in the <see cref="DoubleEndedList{T}"/>.</returns>
         public int Count => _count;
 
         /// <summary>
-        /// Gets the value that indicates whether the <see cref="Deque{T}"/> is empty.
+        /// Gets the value that indicates whether the <see cref="DoubleEndedList{T}"/> is empty.
         /// </summary>
-        /// <returns><see langword="true"/> if the <see cref="Deque{T}"/> is empty; <see langword="false"/> if not.</returns>
+        /// <returns><see langword="true"/> if the <see cref="DoubleEndedList{T}"/> is empty; <see langword="false"/> if not.</returns>
         public bool IsEmpty => _count == 0;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Deque{T}"/> class.
+        /// Initializes a new instance of the <see cref="DoubleEndedList{T}"/> class.
         /// </summary>
-        public Deque() : this(_defaultCapacity) { }
+        public DoubleEndedList() : this(_defaultCapacity) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Deque{T}"/> class that is empty and has the specified initial capacity.
+        /// Initializes a new instance of the <see cref="DoubleEndedList{T}"/> class that is empty and has the specified initial capacity.
         /// </summary>
-        /// <param name="capacity">The number of elements that the new <see cref="Deque{T}"/> can initially store.</param>
+        /// <param name="capacity">The number of elements that the new <see cref="DoubleEndedList{T}"/> can initially store.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than zero.</exception>
-        public Deque(int capacity)
+        public DoubleEndedList(int capacity)
         {
             ThrowHelpers.ThrowIfArgumentIsNegative(capacity);
 
@@ -152,11 +152,11 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Deque{T}"/> class that contains elements copied from the specified collection and has sufficient capacity to accommodate the number of elements copied. 
+        /// Initializes a new instance of the <see cref="DoubleEndedList{T}"/> class that contains elements copied from the specified collection and has sufficient capacity to accommodate the number of elements copied. 
         /// </summary>
-        /// <param name="collection">The collection whose elements are copied to the new deque.</param>
+        /// <param name="collection">The collection whose elements are copied to the new list.</param>
         /// <exception cref="ArgumentNullException"><paramref name="collection"/> is <see langword="null"/>.</exception>
-        public Deque(IEnumerable<T> collection) : this(0)
+        public DoubleEndedList(IEnumerable<T> collection) : this(0)
         {
             ArgumentNullException.ThrowIfNull(collection);
 
@@ -176,10 +176,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Deque{T}"/> class that contains elements copied from the specified span and has sufficient capacity to accommodate the number of the elements copied.
+        /// Initializes a new instance of the <see cref="DoubleEndedList{T}"/> class that contains elements copied from the specified span and has sufficient capacity to accommodate the number of the elements copied.
         /// </summary>
-        /// <param name="span">The span whose elements are copied to the new deque.</param>
-        public Deque(ReadOnlySpan<T> span) : this(span.Length)
+        /// <param name="span">The span whose elements are copied to the new list.</param>
+        public DoubleEndedList(ReadOnlySpan<T> span) : this(span.Length)
         {
             span.CopyTo(_items.AsSpan());
             _head = 0;
@@ -206,28 +206,28 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Creates a new read-only span over the <see cref="Deque{T}"/>.
+        /// Creates a new read-only span over the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <remarks>
-        /// Items should not be added or removed from the <see cref="Deque{T}"/> while the returned <see cref="ReadOnlySpan{T}"/> is in use.
+        /// Items should not be added or removed from the <see cref="DoubleEndedList{T}"/> while the returned <see cref="ReadOnlySpan{T}"/> is in use.
         /// </remarks>
-        /// <returns>The read-only span representation of the <see cref="Deque{T}"/>.</returns>
+        /// <returns>The read-only span representation of the <see cref="DoubleEndedList{T}"/>.</returns>
         public ReadOnlySpan<T> AsReadOnlySpan()
         {
             return MemoryMarshal.CreateReadOnlySpan(ref _items[_head], _count);
         }
 
         /// <summary>
-        /// Creates a new span over the <see cref="Deque{T}"/>.
+        /// Creates a new span over the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <returns>The span representation of the <see cref="Deque{T}"/>.</returns>
+        /// <returns>The span representation of the <see cref="DoubleEndedList{T}"/>.</returns>
         internal Span<T> AsSpan()
         {
             return MemoryMarshal.CreateSpan(ref _items[_head], _count);
         }
 
         /// <summary>
-        /// Removes all of the elements from the <see cref="Deque{T}"/>.
+        /// Removes all of the elements from the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         public void Clear()
         {
@@ -250,23 +250,23 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Determines whether the <see cref="Deque{T}"/> contains a specific value.
+        /// Determines whether the <see cref="DoubleEndedList{T}"/> contains a specific value.
         /// </summary>
-        /// <param name="item">The object to locate in the <see cref="Deque{T}"/>.</param>
-        /// <returns><see langword="true"/> if <paramref name="item"/> is found in the <see cref="Deque{T}"/>; otherwise, <see langword="false"/>.</returns>
+        /// <param name="item">The object to locate in the <see cref="DoubleEndedList{T}"/>.</param>
+        /// <returns><see langword="true"/> if <paramref name="item"/> is found in the <see cref="DoubleEndedList{T}"/>; otherwise, <see langword="false"/>.</returns>
         public bool Contains(T item)
         {
             return IndexOf(item) != -1;
         }
 
         /// <summary>
-        /// Copies the elements of the <see cref="Deque{T}"/> to an <typeparamref name="T"/>[], starting at a particular index.
+        /// Copies the elements of the <see cref="DoubleEndedList{T}"/> to an <typeparamref name="T"/>[], starting at a particular index.
         /// </summary>
-        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from <see cref="Deque{T}"/>.</param>
+        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from <see cref="DoubleEndedList{T}"/>.</param>
         /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
         /// <exception cref="ArgumentNullException"><paramref name="array"/> is null.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="arrayIndex"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException">The number of the elements in the source <see cref="Deque{T}"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
+        /// <exception cref="ArgumentException">The number of the elements in the source <see cref="DoubleEndedList{T}"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
         public void CopyTo(T[] array, int arrayIndex)
         {
             AsReadOnlySpan().CopyTo(array.AsSpan()[arrayIndex..]);
@@ -278,10 +278,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        ///     Ensures that the capacity of this <see cref="Deque{T}"/> is at least the specified one.
-        ///     If the current capacity is less than the specified one, resizes the internal array so that the <see cref="Deque{T}"/> can accommodate the specified number of elements without resizing.
+        ///     Ensures that the capacity of this <see cref="DoubleEndedList{T}"/> is at least the specified one.
+        ///     If the current capacity is less than the specified one, resizes the internal array so that the <see cref="DoubleEndedList{T}"/> can accommodate the specified number of elements without resizing.
         /// </summary>
-        /// <param name="capacity">The number of elements that the <see cref="Deque{T}"/> can hold without resizing.</param>
+        /// <param name="capacity">The number of elements that the <see cref="DoubleEndedList{T}"/> can hold without resizing.</param>
         /// <returns></returns>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is negative or greater than <see cref="Array.MaxLength"/>.</exception>
         public void EnsureCapacity(int capacity)
@@ -292,10 +292,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Ensures that the margins at the beginning and back of the <see cref="Deque{T}"/> are respectively at least those specified.
+        /// Ensures that the margins at the beginning and back of the <see cref="DoubleEndedList{T}"/> are respectively at least those specified.
         /// </summary>
-        /// <param name="frontMargin">The number of elements that can be added at the beginning of the <see cref="Deque{T}"/> without resizing the internal data structure.</param>
-        /// <param name="backMargin">The number of elements that can be added at the end of the <see cref="Deque{T}"/> without resizing the internal data structure.</param>
+        /// <param name="frontMargin">The number of elements that can be added at the beginning of the <see cref="DoubleEndedList{T}"/> without resizing the internal data structure.</param>
+        /// <param name="backMargin">The number of elements that can be added at the end of the <see cref="DoubleEndedList{T}"/> without resizing the internal data structure.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="frontMargin"/> or <paramref name="backMargin"/> is 0.</exception>
         public void EnsureCapacity(int frontMargin, int backMargin)
         {
@@ -389,9 +389,9 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns an enumerator that iterates through the <see cref="Deque{T}"/>.
+        /// Returns an enumerator that iterates through the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <returns>An enumerator that can be used to iterate through the <see cref="Deque{T}"/>.</returns>
+        /// <returns>An enumerator that can be used to iterate through the <see cref="DoubleEndedList{T}"/>.</returns>
         public Enumerator GetEnumerator()
         {
             return new(this);
@@ -420,10 +420,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Searches for the specified item and returns the zero-based index of the first occurrence within the entire <see cref="Deque{T}"/>.
+        /// Searches for the specified item and returns the zero-based index of the first occurrence within the entire <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <param name="item">
-        ///     The object to locate in the <see cref="Deque{T}"/>.
+        ///     The object to locate in the <see cref="DoubleEndedList{T}"/>.
         ///     The value can be <see langword="null"/> for reference types.
         /// </param>
         /// <returns>The zero-based index of the first occurrence of <paramref name="item"/>, if found; otherwise, <c>-1</c>.</returns>
@@ -446,7 +446,7 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Inserts an item to the <see cref="Deque{T}"/> at the specified index.
+        /// Inserts an item to the <see cref="DoubleEndedList{T}"/> at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
         /// <param name="item">An object to insert. The value can be <see langword="null"/> for reference types.</param>
@@ -457,10 +457,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Inserts the elements of the specified collection into the <see cref="Deque{T}"/> at the specified index.
+        /// Inserts the elements of the specified collection into the <see cref="DoubleEndedList{T}"/> at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index at which the new elements should be inserted.</param>
-        /// <param name="items">The collection whose elements should be inserted into the <see cref="Deque{T}"/>.</param>
+        /// <param name="items">The collection whose elements should be inserted into the <see cref="DoubleEndedList{T}"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="items"/> is null.</exception>
         /// <exception cref="ArgumentOutOfRangeException">The <paramref name="index"/> is invalid (less than 0 or greater than <see cref="Count"/>.)</exception>
         public void InsertRange(int index, IEnumerable<T> items)
@@ -483,10 +483,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Inserts the elements of the specified span into the <see cref="Deque{T}"/> at the specified index.
+        /// Inserts the elements of the specified span into the <see cref="DoubleEndedList{T}"/> at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index at which the new elements should be inserted.</param>
-        /// <param name="items">The span whose elements should be inserted into the <see cref="Deque{T}"/>.</param>
+        /// <param name="items">The span whose elements should be inserted into the <see cref="DoubleEndedList{T}"/>.</param>
         /// <exception cref="ArgumentOutOfRangeException">The <paramref name="index"/> is invalid (less than 0 or greater than <see cref="Count"/>.)</exception>
         public void InsertRange(int index, ReadOnlySpan<T> items)
         {
@@ -604,10 +604,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Searches for the specified item and returns the zero-based index of the last occurrence within the entire <see cref="Deque{T}"/>.
+        /// Searches for the specified item and returns the zero-based index of the last occurrence within the entire <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <param name="item">
-        ///     The object to locate in the <see cref="Deque{T}"/>.
+        ///     The object to locate in the <see cref="DoubleEndedList{T}"/>.
         ///     The value can be <see langword="null"/> for reference types.
         /// </param>
         /// <returns>The zero-based index of the last occurrence of <paramref name="item"/>, if found; otherwise, <c>-1</c>.</returns>
@@ -618,10 +618,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns the object at the beginning of the <see cref="Deque{T}"/> without removing it.
+        /// Returns the object at the beginning of the <see cref="DoubleEndedList{T}"/> without removing it.
         /// </summary>
-        /// <returns>The object at the beginning of the <see cref="Deque{T}"/>.</returns>
-        /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
+        /// <returns>The object at the beginning of the <see cref="DoubleEndedList{T}"/>.</returns>
+        /// <exception cref="InvalidOperationException">The <see cref="DoubleEndedList{T}"/> is empty.</exception>
         public T PeekFirst()
         {
             ThrowIfEmpty();
@@ -629,10 +629,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns the object at the end of the <see cref="Deque{T}"/> without removing it.
+        /// Returns the object at the end of the <see cref="DoubleEndedList{T}"/> without removing it.
         /// </summary>
-        /// <returns>The object at the end of the <see cref="Deque{T}"/>.</returns>
-        /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
+        /// <returns>The object at the end of the <see cref="DoubleEndedList{T}"/>.</returns>
+        /// <exception cref="InvalidOperationException">The <see cref="DoubleEndedList{T}"/> is empty.</exception>
         public T PeekLast()
         {
             ThrowIfEmpty();
@@ -640,10 +640,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes and returns the object at the end of the <see cref="Deque{T}"/>.
+        /// Removes and returns the object at the end of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <returns>The object at the end of the <see cref="Deque{T}"/>.</returns>
-        /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
+        /// <returns>The object at the end of the <see cref="DoubleEndedList{T}"/>.</returns>
+        /// <exception cref="InvalidOperationException">The <see cref="DoubleEndedList{T}"/> is empty.</exception>
         public T PopBack()
         {
             ThrowIfEmpty();
@@ -662,10 +662,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes and returns the specified number of objects at the end of the <see cref="Deque{T}"/>.
+        /// Removes and returns the specified number of objects at the end of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <param name="count">The number of elements to remove at the end of the <see cref="Deque{T}"/>.</param>
-        /// <returns>An array that contains the objects removed at the end of the <see cref="Deque{T}"/>.</returns>
+        /// <param name="count">The number of elements to remove at the end of the <see cref="DoubleEndedList{T}"/>.</param>
+        /// <returns>An array that contains the objects removed at the end of the <see cref="DoubleEndedList{T}"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is invalid.</exception>
         public T[] PopBackRange(int count)
         {
@@ -681,7 +681,7 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes the certain number of objects at the end of the <see cref="Deque{T}"/> and copies them to the specified span to fill up it.
+        /// Removes the certain number of objects at the end of the <see cref="DoubleEndedList{T}"/> and copies them to the specified span to fill up it.
         /// </summary>
         /// <param name="destination">The span to copy the removed objects to.</param>
         /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="destination"/> is greater than the number of elements contained in the collection.</exception>
@@ -711,10 +711,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes and returns the object at the beginning of the <see cref="Deque{T}"/>.
+        /// Removes and returns the object at the beginning of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <returns>The object at the beginning of the <see cref="Deque{T}"/>.</returns>
-        /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
+        /// <returns>The object at the beginning of the <see cref="DoubleEndedList{T}"/>.</returns>
+        /// <exception cref="InvalidOperationException">The <see cref="DoubleEndedList{T}"/> is empty.</exception>
         public T PopFront()
         {
             ThrowIfEmpty();
@@ -733,10 +733,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes and returns the specified number of objects at the front of the <see cref="Deque{T}"/>.
+        /// Removes and returns the specified number of objects at the front of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <param name="count">The number of elements to remove at the front of the <see cref="Deque{T}"/>.</param>
-        /// <returns>An array that contains the objects removed at the front of the <see cref="Deque{T}"/>.</returns>
+        /// <param name="count">The number of elements to remove at the front of the <see cref="DoubleEndedList{T}"/>.</param>
+        /// <returns>An array that contains the objects removed at the front of the <see cref="DoubleEndedList{T}"/>.</returns>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="count"/> is invalid.</exception>
         public T[] PopFrontRange(int count)
         {
@@ -752,7 +752,7 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes the certain number of objects at the front of the <see cref="Deque{T}"/> and copies them to the specified span to fill up it.
+        /// Removes the certain number of objects at the front of the <see cref="DoubleEndedList{T}"/> and copies them to the specified span to fill up it.
         /// </summary>
         /// <param name="destination">The span to copy the removed objects to.</param>
         /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="destination"/> is greater than the number of elements contained in the collection.</exception>
@@ -783,10 +783,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds an object to the end of the <see cref="Deque{T}"/>.
+        /// Adds an object to the end of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <param name="item">
-        ///     The object to add to the end of the <see cref="Deque{T}"/>.
+        ///     The object to add to the end of the <see cref="DoubleEndedList{T}"/>.
         ///     The value can be <see langword="null"/> for reference types.
         /// </param>
         public void PushBack(T item)
@@ -805,9 +805,9 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds the elements of the specified collection to the end of the <see cref="Deque{T}"/>.
+        /// Adds the elements of the specified collection to the end of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <param name="items">The collection whose elements should be added to the end of the <see cref="Deque{T}"/>.</param>
+        /// <param name="items">The collection whose elements should be added to the end of the <see cref="DoubleEndedList{T}"/>.</param>
         public void PushBackRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
@@ -839,9 +839,9 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds the elements of the specified memory region to the end of the <see cref="Deque{T}"/>.
+        /// Adds the elements of the specified memory region to the end of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <param name="items">The read-only span whose elements should be added to the end of the <see cref="Deque{T}"/>.</param>
+        /// <param name="items">The read-only span whose elements should be added to the end of the <see cref="DoubleEndedList{T}"/>.</param>
         public void PushBackRange(ReadOnlySpan<T> items)
         {
             int requiredCapacity = _count + items.Length;
@@ -860,10 +860,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds an object to the beginning of the <see cref="Deque{T}"/>.
+        /// Adds an object to the beginning of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <param name="item">
-        ///     The object to add to the beginning of the <see cref="Deque{T}"/>.
+        ///     The object to add to the beginning of the <see cref="DoubleEndedList{T}"/>.
         ///     The value can be <see langword="null"/> for reference types.
         /// </param>
         public void PushFront(T item)
@@ -879,9 +879,9 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds the elements of the specified collection to the front of the <see cref="Deque{T}"/>.
+        /// Adds the elements of the specified collection to the front of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <param name="items">The collection whose elements should be added to the front of the <see cref="Deque{T}"/>.</param>
+        /// <param name="items">The collection whose elements should be added to the front of the <see cref="DoubleEndedList{T}"/>.</param>
         public void PushFrontRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
@@ -914,9 +914,9 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds the elements of the specified memory region to the front of the <see cref="Deque{T}"/>.
+        /// Adds the elements of the specified memory region to the front of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <param name="items">The read-only span whose elements should be added to the front of the <see cref="Deque{T}"/>.</param>
+        /// <param name="items">The read-only span whose elements should be added to the front of the <see cref="DoubleEndedList{T}"/>.</param>
         public void PushFrontRange(ReadOnlySpan<T> items)
         {
             int count = items.Length;
@@ -944,9 +944,9 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes the first occurrence of the specified object from the <see cref="Deque{T}"/>.
+        /// Removes the first occurrence of the specified object from the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <param name="item">The object to remove from the <see cref="Deque{T}"/>.</param>
+        /// <param name="item">The object to remove from the <see cref="DoubleEndedList{T}"/>.</param>
         /// <returns></returns>
         public bool Remove(T item)
         {
@@ -967,7 +967,7 @@ namespace Yuh.Collections
         /// Removes the element at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index of the item to remove.</param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index of the <see cref="Deque{T}"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index of the <see cref="DoubleEndedList{T}"/>.</exception>
         public void RemoveAt(int index)
         {
             if (index < 0 || _count <= index)
@@ -978,12 +978,12 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Removes a range of elements from the <see cref="Deque{T}"/>.
+        /// Removes a range of elements from the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <param name="index">The zero-based starting index of the range of elements to remove.</param>
         /// <param name="count">The number of elements to remove.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is negative.</exception>
-        /// <exception cref="ArgumentException"><paramref name="index"/> and <paramref name="count"/> do not denote a valid range of elements in the <see cref="Deque{T}"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="index"/> and <paramref name="count"/> do not denote a valid range of elements in the <see cref="DoubleEndedList{T}"/>.</exception>
         public void RemoveRange(int index, int count)
         {
             ThrowHelpers.ThrowIfArgumentIsNegative(index);
@@ -991,7 +991,7 @@ namespace Yuh.Collections
 
             if (checked(index + count) > _count)
             {
-                ThrowHelpers.ThrowArgumentException("The number of elements to remove is greater than the available space from the specified index to the end of the deque.", "[index, count]");
+                ThrowHelpers.ThrowArgumentException("The number of elements to remove is greater than the available space from the specified index to the end of the list.", "[index, count]");
             }
 
             RemoveRangeInternal(index, index + count);
@@ -1044,7 +1044,7 @@ namespace Yuh.Collections
         /// Resizes the internal array to the specified size.
         /// </summary>
         /// <param name="capacity"></param>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than the number of elements contained in the <see cref="Deque{T}"/> or greater than <see cref="Array.MaxLength"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than the number of elements contained in the <see cref="DoubleEndedList{T}"/> or greater than <see cref="Array.MaxLength"/>.</exception>
         public void Resize(int capacity)
         {
             if (capacity == _items.Length)
@@ -1053,20 +1053,20 @@ namespace Yuh.Collections
             }
             else if (capacity < _count)
             {
-                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(capacity), "The specified capacity is less than the number of the elements contained in the deque.");
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(capacity), "The specified capacity is less than the number of the elements contained in the collection.");
             }
             ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
             ResizeInternal(capacity);
         }
 
         /// <summary>
-        /// Resizes the internal array to have the specified margins at the beginning and end of the <see cref="Deque{T}"/>.
+        /// Resizes the internal array to have the specified margins at the beginning and end of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <remarks>
-        /// This ensures that the specified number of elements can be added at the beginning or the end of the <see cref="Deque{T}"/> without resizing the internal data structure. 
+        /// This ensures that the specified number of elements can be added at the beginning or the end of the <see cref="DoubleEndedList{T}"/> without resizing the internal data structure. 
         /// </remarks>
-        /// <param name="frontMargin">The number of elements that can be added at the beginning of the <see cref="Deque{T}"/> without resizing the internal data structure.</param>
-        /// <param name="backMargin">The number of elements that can be added at the end of the <see cref="Deque{T}"/> without resizing the internal data structure.</param>
+        /// <param name="frontMargin">The number of elements that can be added at the beginning of the <see cref="DoubleEndedList{T}"/> without resizing the internal data structure.</param>
+        /// <param name="backMargin">The number of elements that can be added at the end of the <see cref="DoubleEndedList{T}"/> without resizing the internal data structure.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="frontMargin"/> or <paramref name="backMargin"/> is negative.</exception>
         /// <exception cref="ArgumentException">The total required capacity is greater than the maximum size of an array.</exception>
         internal void Resize(int frontMargin, int backMargin)
@@ -1091,7 +1091,7 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Shrink the internal data structure so that the <see cref="Deque{T}"/> doesn't have any margin at the beginning or end of it.
+        /// Shrink the internal data structure so that the <see cref="DoubleEndedList{T}"/> doesn't have any margin at the beginning or end of it.
         /// </summary>
         public void ShrinkToFit()
         {
@@ -1099,20 +1099,20 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Copies the elements of the <see cref="Deque{T}"/> into a new array.
+        /// Copies the elements of the <see cref="DoubleEndedList{T}"/> into a new array.
         /// </summary>
-        /// <returns>An array containing copies of the elements of the <see cref="Deque{T}"/>.</returns>
+        /// <returns>An array containing copies of the elements of the <see cref="DoubleEndedList{T}"/>.</returns>
         public T[] ToArray()
         {
             return AsReadOnlySpan().ToArray();
         }
 
         /// <summary>
-        /// Returns a value that indicates whether there is an object at the beginning of the <see cref="Deque{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter.
-        /// The object is not removed from the <see cref="Deque{T}"/>.
+        /// Returns a value that indicates whether there is an object at the beginning of the <see cref="DoubleEndedList{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter.
+        /// The object is not removed from the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <param name="item">If present, the object at the beginning of the <see cref="Deque{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
-        /// <returns><see langword="true"/> if there is an object at the beginning of the <see cref="Deque{T}"/>; <see langword="false"/> if the <see cref="Deque{T}"/> is empty.</returns>
+        /// <param name="item">If present, the object at the beginning of the <see cref="DoubleEndedList{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if there is an object at the beginning of the <see cref="DoubleEndedList{T}"/>; <see langword="false"/> if the <see cref="DoubleEndedList{T}"/> is empty.</returns>
         public bool TryPeekFirst([MaybeNullWhen(false)] out T item)
         {
             if (_count == 0)
@@ -1128,11 +1128,11 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns a value that indicates whether there is an object at the end of the <see cref="Deque{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter.
-        /// The object is not removed from the <see cref="Deque{T}"/>.
+        /// Returns a value that indicates whether there is an object at the end of the <see cref="DoubleEndedList{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter.
+        /// The object is not removed from the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <param name="item">If present, the object at the end of the <see cref="Deque{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
-        /// <returns><see langword="true"/> if there is an object at the end of the <see cref="Deque{T}"/>; <see langword="false"/> if the <see cref="Deque{T}"/> is empty.</returns>
+        /// <param name="item">If present, the object at the end of the <see cref="DoubleEndedList{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if there is an object at the end of the <see cref="DoubleEndedList{T}"/>; <see langword="false"/> if the <see cref="DoubleEndedList{T}"/> is empty.</returns>
         public bool TryPeekLast([MaybeNullWhen(false)] out T item)
         {
             if (_count == 0)
@@ -1148,10 +1148,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns a value that indicates whether there is an object at the end of the <see cref="Deque{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter and removes it from the <see cref="Deque{T}"/>.
+        /// Returns a value that indicates whether there is an object at the end of the <see cref="DoubleEndedList{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter and removes it from the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <param name="item">If present, the object at the end of the <see cref="Deque{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
-        /// <returns><see langword="true"/> if there is an object at the end of the <see cref="Deque{T}"/>; <see langword="false"/> if the <see cref="Deque{T}"/> is empty.</returns>
+        /// <param name="item">If present, the object at the end of the <see cref="DoubleEndedList{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if there is an object at the end of the <see cref="DoubleEndedList{T}"/>; <see langword="false"/> if the <see cref="DoubleEndedList{T}"/> is empty.</returns>
         public bool TryPopBack([MaybeNullWhen(false)] out T item)
         {
             if (_count == 0)
@@ -1167,10 +1167,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns a value that indicates whether there is an object at the beginning of the <see cref="Deque{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter and removes it from the <see cref="Deque{T}"/>.
+        /// Returns a value that indicates whether there is an object at the beginning of the <see cref="DoubleEndedList{T}"/>, and if one is present, copies it to the <paramref name="item"/> parameter and removes it from the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
-        /// <param name="item">If present, the object at the beginning of the <see cref="Deque{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
-        /// <returns><see langword="true"/> if there is an object at the beginning of the <see cref="Deque{T}"/>; <see langword="false"/> if the <see cref="Deque{T}"/> is empty.</returns>
+        /// <param name="item">If present, the object at the beginning of the <see cref="DoubleEndedList{T}"/>; otherwise the default value of <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if there is an object at the beginning of the <see cref="DoubleEndedList{T}"/>; <see langword="false"/> if the <see cref="DoubleEndedList{T}"/> is empty.</returns>
         public bool TryPopFront([MaybeNullWhen(false)] out T item)
         {
             if (_count == 0)
@@ -1188,7 +1188,7 @@ namespace Yuh.Collections
         /// <summary>
         /// Enlarge the internal array to twice its size.
         /// </summary>
-        /// <exception cref="Exception">The capacity of the <see cref="Deque{T}"/> has reached its upper limit.</exception>
+        /// <exception cref="Exception">The capacity of the <see cref="DoubleEndedList{T}"/> has reached its upper limit.</exception>
         private void Grow()
         {
             int newCapacity = Math.Clamp(_items.Length << 1, _defaultCapacity, Array.MaxLength);
@@ -1230,7 +1230,7 @@ namespace Yuh.Collections
                 // make it costs lower to move the elements.
                 if (index <= (_count >> 1))
                 {
-                    // shift the elements in [0,index) of the deque.
+                    // shift the elements in [0,index) of the list.
                     var span = MemoryMarshal.CreateSpan(ref _items[_head], index + 1);
                     for (int i = index; i > 0; i--)
                     {
@@ -1242,7 +1242,7 @@ namespace Yuh.Collections
                 }
                 else
                 {
-                    // shift the elements in (index, _count) of the deque.
+                    // shift the elements in (index, _count) of the list.
                     var span = MemoryMarshal.CreateSpan(ref _items[_head + index], _count - index);
                     for (int i = 0; i < _count - index - 1; i++)
                     {
@@ -1259,7 +1259,7 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Creates a new array as an internal array at the specified size, and copies to the array all the elements contained in the <see cref="Deque{T}"/>.
+        /// Creates a new array as an internal array at the specified size, and copies to the array all the elements contained in the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <param name="capacity"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1270,7 +1270,7 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Creates a new array as an internal array at the specified size, and copies to the array starting at the specified index all the elements contained in the <see cref="Deque{T}"/>.
+        /// Creates a new array as an internal array at the specified size, and copies to the array starting at the specified index all the elements contained in the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <param name="capacity"></param>
         /// <param name="frontMargin"></param>
@@ -1342,9 +1342,9 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Throws an <see cref="InvalidOperationException"/> if the <see cref="Deque{T}"/> is empty.
+        /// Throws an <see cref="InvalidOperationException"/> if the <see cref="DoubleEndedList{T}"/> is empty.
         /// </summary>
-        /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> is empty.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="DoubleEndedList{T}"/> is empty.</exception>
         private void ThrowIfEmpty()
         {
             if (IsEmpty)
@@ -1354,58 +1354,58 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Enumerates the elements of a <see cref="Deque{T}"/>.
+        /// Enumerates the elements of a <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         public struct Enumerator : IEnumerator<T>, IEnumerator
         {
-            private readonly Deque<T> _deque;
+            private readonly DoubleEndedList<T> _collection;
             private int _index;
             private readonly int _tail;
             private readonly int _version;
 
-            /// <summary>Gets the element in the <see cref="Deque{T}"/> at the current position of the enumerator.</summary>
-            /// <returns>The element in the <see cref="Deque{T}"/> at the current position of the enumerator.</returns>
-            public readonly T Current => _deque._items[_index];
+            /// <summary>Gets the element in the <see cref="DoubleEndedList{T}"/> at the current position of the enumerator.</summary>
+            /// <returns>The element in the <see cref="DoubleEndedList{T}"/> at the current position of the enumerator.</returns>
+            public readonly T Current => _collection._items[_index];
 
             readonly object? IEnumerator.Current => Current;
 
-            internal Enumerator(Deque<T> deque)
+            internal Enumerator(DoubleEndedList<T> collection)
             {
-                _deque = deque;
-                _index = deque._head - 1;
-                _tail = deque._head + deque._count - 1;
-                _version = deque._version;
+                _collection = collection;
+                _index = collection._head - 1;
+                _tail = collection._head + collection._count - 1;
+                _version = collection._version;
             }
 
             /// <inheritdoc/>
             public readonly void Dispose() { }
 
             /// <summary>
-            /// Advances the enumerator to the next element of the <see cref="Deque{T}"/>.
+            /// Advances the enumerator to the next element of the <see cref="DoubleEndedList{T}"/>.
             /// </summary>
-            /// <returns><see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the <see cref="Deque{T}"/>.</returns>
-            /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> was modified after the enumerator was created.</exception>
+            /// <returns><see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the <see cref="DoubleEndedList{T}"/>.</returns>
+            /// <exception cref="InvalidOperationException">The <see cref="DoubleEndedList{T}"/> was modified after the enumerator was created.</exception>
             public bool MoveNext()
             {
                 ThrowIfCollectionModified();
                 return ++_index <= _tail;
             }
 
-            /// <summary>Set the enumerator to its initial position, which is the before the first element in the <see cref="Deque{T}"/>.</summary>
-            /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> was modified after the enumerator was created.</exception>
+            /// <summary>Set the enumerator to its initial position, which is the before the first element in the <see cref="DoubleEndedList{T}"/>.</summary>
+            /// <exception cref="InvalidOperationException">The <see cref="DoubleEndedList{T}"/> was modified after the enumerator was created.</exception>
             public void Reset()
             {
                 ThrowIfCollectionModified();
-                _index = _deque._head - 1;
+                _index = _collection._head - 1;
             }
 
             /// <summary>
-            /// Throw an exception if the <see cref="Deque{T}"/> was modified after the enumerator was created.
+            /// Throw an exception if the <see cref="DoubleEndedList{T}"/> was modified after the enumerator was created.
             /// </summary>
-            /// <exception cref="InvalidOperationException">The <see cref="Deque{T}"/> was modified after the enumerator was created.</exception>
+            /// <exception cref="InvalidOperationException">The <see cref="DoubleEndedList{T}"/> was modified after the enumerator was created.</exception>
             private readonly void ThrowIfCollectionModified()
             {
-                if (_version != _deque._version)
+                if (_version != _collection._version)
                 {
                     ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionModifiedAfterEnumeratorCreated);
                 }

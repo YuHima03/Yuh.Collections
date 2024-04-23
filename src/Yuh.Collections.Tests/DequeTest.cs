@@ -3,66 +3,66 @@ using Xunit.Abstractions;
 
 namespace Yuh.Collections.Tests
 {
-    public class DequeTest(ITestOutputHelper @out)
+    public class DoubleEndedListTest(ITestOutputHelper @out)
     {
         private readonly ITestOutputHelper _out = @out;
 
         [Fact]
         public void GrowTest()
         {
-            Deque<int> deque = new(6);
+            DoubleEndedList<int> list = new(6);
 
-            deque.PushBack(0);
-            deque.PushBack(1);
-            deque.PushBack(2);
-            OutputCapacityAndMargin(deque);
+            list.PushBack(0);
+            list.PushBack(1);
+            list.PushBack(2);
+            OutputCapacityAndMargin(list);
 
-            deque.PushBack(3);
-            OutputCapacityAndMargin(deque);
+            list.PushBack(3);
+            OutputCapacityAndMargin(list);
 
-            deque.PushFront(4);
-            OutputCapacityAndMargin(deque);
+            list.PushFront(4);
+            OutputCapacityAndMargin(list);
 
-            deque.PushFront(5);
-            OutputCapacityAndMargin(deque);
+            list.PushFront(5);
+            OutputCapacityAndMargin(list);
 
-            deque.PushFront(6);
-            OutputCapacityAndMargin(deque);
+            list.PushFront(6);
+            OutputCapacityAndMargin(list);
 
-            deque.PushFront(7);
-            OutputCapacityAndMargin(deque);
+            list.PushFront(7);
+            OutputCapacityAndMargin(list);
 
-            Deque<int> deque2 = new([0, 1, 2, 3]);
-            deque2.EnsureCapacity(8);
-            OutputCapacityAndMargin(deque2);
+            DoubleEndedList<int> list2 = new([0, 1, 2, 3]);
+            list2.EnsureCapacity(8);
+            OutputCapacityAndMargin(list2);
 
-            Deque<int> deque3 = new([0, 1, 2, 3]);
-            deque3.EnsureCapacity(1, 2);
-            OutputCapacityAndMargin(deque3);
+            DoubleEndedList<int> list3 = new([0, 1, 2, 3]);
+            list3.EnsureCapacity(1, 2);
+            OutputCapacityAndMargin(list3);
         }
 
         [Fact]
         public void PushAndPopRangeTest()
         {
-            Deque<int> deque = new([0, 1, 2, 3]);
+            DoubleEndedList<int> list = new([0, 1, 2, 3]);
 
-            deque.PushBackRange([4, 5, 6]);
-            OutputHelpers.OutputElements(deque, _out);
+            list.PushBackRange([4, 5, 6]);
+            OutputHelpers.OutputElements(list, _out);
 
-            OutputHelpers.OutputElements(deque.PopFrontRange(2), _out);
-            OutputHelpers.OutputElements(deque, _out);
+            OutputHelpers.OutputElements(list.PopFrontRange(2), _out);
+            OutputHelpers.OutputElements(list, _out);
 
-            deque.PushFrontRange([7, 8, 9, 10, 11, 12]);
-            OutputHelpers.OutputElements(deque, _out);
+            list.PushFrontRange([7, 8, 9, 10, 11, 12]);
+            OutputHelpers.OutputElements(list, _out);
 
-            OutputHelpers.OutputElements(deque.PopBackRange(4), _out);
-            OutputHelpers.OutputElements(deque, _out);
+            OutputHelpers.OutputElements(list.PopBackRange(4), _out);
+            OutputHelpers.OutputElements(list, _out);
         }
 
         [Fact]
         public void PushAndPopTest()
         {
-            Deque<int> buffer = new(4);
+            DoubleEndedList<int> buffer = new(4);
 
             buffer.PushBack(1);
             buffer.PushBack(2);
@@ -88,15 +88,15 @@ namespace Yuh.Collections.Tests
         [Fact]
         public void InsertTest()
         {
-            Deque<int> deque = new([0, 1, 2, 3, 4, 5, 6, 7]);
+            DoubleEndedList<int> list = new([0, 1, 2, 3, 4, 5, 6, 7]);
 
-            deque.InsertRange(6, [8, 9, 10, 11]);
-            OutputHelpers.OutputElements(deque, _out);
+            list.InsertRange(6, [8, 9, 10, 11]);
+            OutputHelpers.OutputElements(list, _out);
         }
 
-        internal void OutputCapacityAndMargin(Deque<int> deque, [CallerArgumentExpression(nameof(deque))] string? argName = null)
+        internal void OutputCapacityAndMargin(DoubleEndedList<int> list, [CallerArgumentExpression(nameof(list))] string? argName = null)
         {
-            _out.WriteLine($"{argName}: {deque.Capacity}, {deque.FrontMargin}, {deque.BackMargin}");
+            _out.WriteLine($"{argName}: {list.Capacity}, {list.FrontMargin}, {list.BackMargin}");
         }
     }
 }

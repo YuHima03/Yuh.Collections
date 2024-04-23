@@ -2,16 +2,16 @@
 
 namespace Yuh.Collections.Views
 {
-    public class DequeView<T>
+    public class DoubleEndedListView<T>
     {
         public T[] Items = [];
         public int Count;
         public int Head;
         public int Version;
 
-        public Deque<T> Encapsulate()
+        public DoubleEndedList<T> Encapsulate()
         {
-            return Unsafe.As<Deque<T>>(this);
+            return Unsafe.As<DoubleEndedList<T>>(this);
         }
     }
 }

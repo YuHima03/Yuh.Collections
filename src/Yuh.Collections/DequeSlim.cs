@@ -27,8 +27,8 @@ namespace Yuh.Collections
     /// Represents a double-ended queue for which elements can be added to or removed from the front or back.
     /// </summary>
     /// <remarks>
-    ///     This provides most of the functions <see cref="Deque{T}"/> has, and may require smaller memory-region than <see cref="Deque{T}"/>.
-    ///     However, this performs slightly worse than <see cref="Deque{T}"/> in some respects.
+    ///     This provides most of the functions <see cref="DoubleEndedList{T}"/> has, and may require smaller memory-region than <see cref="DoubleEndedList{T}"/>.
+    ///     However, this performs slightly worse than <see cref="DoubleEndedList{T}"/> in some respects.
     /// </remarks>
     /// <typeparam name="T">The type of elements in the <see cref="DequeSlim{T}"/>.</typeparam>
     [DebuggerDisplay("Count = {_count}, Capacity = {_capacity}")]
@@ -432,7 +432,7 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Searches for the specified item and returns the zero-based index of the last occurrence within the entire <see cref="Deque{T}"/>.
+        /// Searches for the specified item and returns the zero-based index of the last occurrence within the entire <see cref="DequeSlim{T}"/>.
         /// </summary>
         /// <param name="item">
         ///     The object to locate in the <see cref="DequeSlim{T}"/>.
