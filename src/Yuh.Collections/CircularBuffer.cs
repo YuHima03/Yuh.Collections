@@ -164,10 +164,12 @@ namespace Yuh.Collections
             _mask = capacity - 1;
         }
 
-        internal CircularBuffer(T[] buffer)
+        internal CircularBuffer(T[] buffer, int head = 0, int count = 0)
         {
             _buffer = buffer;
             _capacity = buffer.Length;
+            _count = count;
+            _head = head;
             _mask = buffer.Length - 1;
         }
 
