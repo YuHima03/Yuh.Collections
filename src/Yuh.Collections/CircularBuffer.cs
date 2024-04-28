@@ -209,6 +209,41 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Copies the elements of the <see cref="CircularBuffer{T}"/> to a span.
+        /// </summary>
+        /// <remarks>
+        /// It is not checked that the number of elements contained in the <see cref="CircularBuffer{T}"/> is greater than 0.
+        /// </remarks>
+        /// <param name="destination"></param>
+        private void CopyToInternal(Span<T> destination)
+        {
+            var bufferSpan = MemoryMarshal.CreateSpan(ref _buffer[0], _capacity);
+            var _end = checked(_head + _count);
+
+            if (_end > _capacity)
+            {
+                var len1 = _capacity - _head;
+
+                // same as:
+                // bufferSpan[_head..].CopyTo(destination);
+                MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(bufferSpan), _head), len1)
+                    .CopyTo(destination);
+
+                // same as:
+                // bufferSpan[..(_end - _capacity)].CopyTo(destination[(_capacity - _head)..])
+                MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(bufferSpan), _end - _capacity)
+                    .CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(bufferSpan), len1), bufferSpan.Length - len1));
+            }
+            else
+            {
+                // same as:
+                // bufferSpan.Slice(_head, _count).CopyTo(destination);
+                MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(bufferSpan), (nint)(uint)_head), _count)
+                    .CopyTo(destination);
+            }
+        }
+
+        /// <summary>
         /// Returns an enumerator that iterates through the <see cref="CircularBuffer{T}"/>.
         /// </summary>
         /// <returns>An enumerator that can be used to iterate through the <see cref="CircularBuffer{T}"/>.</returns>
