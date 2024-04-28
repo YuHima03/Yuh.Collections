@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Yuh.Collections
 {
@@ -62,7 +63,7 @@ namespace Yuh.Collections
     /// <remarks>
     /// This can be substituted for <see cref="DoubleEndedList{T}"/> or <see cref="Deque{T}"/>, but this may perform better than these.
     /// </remarks>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">The type of elements in the collection.</typeparam>
     public class CircularBuffer<T> : ICollection, ICollection<T>, IEnumerable, IEnumerable<T>, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>
     {
         private const int _defaultCapacity = 8;
@@ -378,7 +379,7 @@ namespace Yuh.Collections
             }
             else
             {
-                ThrowHelpers.ThrowNotSupportedException("The insertion of an object to any position other than the front or back is not supported.");
+                ThrowHelpers.ThrowNotSupportedException("The insertion of an object is not supported except on the beginning or end.");
             }
         }
 
