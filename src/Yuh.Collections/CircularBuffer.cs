@@ -5,6 +5,58 @@ using System.Runtime.CompilerServices;
 namespace Yuh.Collections
 {
     /// <summary>
+    /// Provides methods to create a new instance of the <see cref="CircularBuffer{T}"/> class or resize the collection.
+    /// </summary>
+    public static class CircularBuffer
+    {
+        /// <summary>
+        /// Create a new <see cref="CircularBuffer{T}"/> that has specified capacity and has elements copied from the <paramref name="source"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in the collection.</typeparam>
+        /// <param name="source">The <see cref="CircularBuffer{T}"/> whose elements are copied to a new one.s</param>
+        /// <param name="capacity">
+        ///     The capacity of the new collection.
+        ///     The value must be power of 2.
+        /// </param>
+        /// <returns>A new instance of the <see cref="CircularBuffer{T}"/> class that has specified capacity and has elements copied from the <paramref name="source"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="source"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="capacity"/> is not power of 2 or greater than the maximum length of an array.</exception>
+        public static CircularBuffer<T> Resize<T>(CircularBuffer<T> source, int capacity)
+        {
+            ArgumentNullException.ThrowIfNull(source);
+            ThrowHelpers.ThrowIfArgumentIsNotPowerOfTwo(capacity);
+            ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
+
+            var buffer = new T[capacity];
+            source.CopyTo(buffer.AsSpan());
+            return new(buffer, 0, source.Count);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="CircularBuffer{T}"/> that has doubled capacity of the <paramref name="source"/> and has elements copied from it.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in the collection.</typeparam>
+        /// <param name="source">The <see cref="CircularBuffer{T}"/> whose elements are copied to a new one.</param>
+        /// <returns>A new instance of the <see cref="CircularBuffer{T}"/> class that has doubled capacity of the <paramref name="source"/> and has elements copied from it.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="source"/> is null.</exception>
+        /// <exception cref="Exception">The capacity of the new collection is greater than the maximum length of an array.</exception>
+        public static CircularBuffer<T> ResizeDouble<T>(CircularBuffer<T> source)
+        {
+            ArgumentNullException.ThrowIfNull(source);
+
+            int capacity = checked(source.Capacity << 1);
+            if (capacity > Array.MaxLength)
+            {
+                ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+            }
+
+            var buffer = new T[capacity];
+            source.CopyTo(buffer.AsSpan());
+            return new(buffer, 0, source.Count);
+        }
+    }
+
+    /// <summary>
     /// Represents a buffer that supports addition of elements to the front or back, or removal from the front or back.
     /// </summary>
     /// <remarks>
