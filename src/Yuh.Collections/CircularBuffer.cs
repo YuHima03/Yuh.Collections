@@ -1,16 +1,69 @@
 ﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Yuh.Collections
 {
+    /// <summary>
+    /// Provides methods to create a new instance of the <see cref="CircularBuffer{T}"/> class or resize the collection.
+    /// </summary>
+    public static class CircularBuffer
+    {
+        /// <summary>
+        /// Create a new <see cref="CircularBuffer{T}"/> that has specified capacity and has elements copied from the <paramref name="source"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in the collection.</typeparam>
+        /// <param name="source">The <see cref="CircularBuffer{T}"/> whose elements are copied to a new one.s</param>
+        /// <param name="capacity">
+        ///     The capacity of the new collection.
+        ///     The value must be power of 2.
+        /// </param>
+        /// <returns>A new instance of the <see cref="CircularBuffer{T}"/> class that has specified capacity and has elements copied from the <paramref name="source"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="source"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="capacity"/> is not power of 2 or greater than the maximum length of an array.</exception>
+        public static CircularBuffer<T> Resize<T>(CircularBuffer<T> source, int capacity)
+        {
+            ArgumentNullException.ThrowIfNull(source);
+            ThrowHelpers.ThrowIfArgumentIsNotPowerOfTwo(capacity);
+            ThrowHelpers.ThrowIfArgumentIsGreaterThanMaxArrayLength(capacity);
+
+            var buffer = new T[capacity];
+            source.CopyTo(buffer.AsSpan());
+            return new(buffer, 0, source.Count);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="CircularBuffer{T}"/> that has doubled capacity of the <paramref name="source"/> and has elements copied from it.
+        /// </summary>
+        /// <typeparam name="T">The type of elements in the collection.</typeparam>
+        /// <param name="source">The <see cref="CircularBuffer{T}"/> whose elements are copied to a new one.</param>
+        /// <returns>A new instance of the <see cref="CircularBuffer{T}"/> class that has doubled capacity of the <paramref name="source"/> and has elements copied from it.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="source"/> is null.</exception>
+        /// <exception cref="Exception">The capacity of the new collection is greater than the maximum length of an array.</exception>
+        public static CircularBuffer<T> ResizeDouble<T>(CircularBuffer<T> source)
+        {
+            ArgumentNullException.ThrowIfNull(source);
+
+            int capacity = checked(source.Capacity << 1);
+            if (capacity > Array.MaxLength)
+            {
+                ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+            }
+
+            var buffer = new T[capacity];
+            source.CopyTo(buffer.AsSpan());
+            return new(buffer, 0, source.Count);
+        }
+    }
+
     /// <summary>
     /// Represents a buffer that supports addition of elements to the front or back, or removal from the front or back.
     /// </summary>
     /// <remarks>
     /// This can be substituted for <see cref="DoubleEndedList{T}"/> or <see cref="Deque{T}"/>, but this may perform better than these.
     /// </remarks>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">The type of elements in the collection.</typeparam>
     public class CircularBuffer<T> : ICollection, ICollection<T>, IEnumerable, IEnumerable<T>, IList<T>, IReadOnlyCollection<T>, IReadOnlyList<T>
     {
         private const int _defaultCapacity = 8;
@@ -111,10 +164,12 @@ namespace Yuh.Collections
             _mask = capacity - 1;
         }
 
-        internal CircularBuffer(T[] buffer)
+        internal CircularBuffer(T[] buffer, int head = 0, int count = 0)
         {
             _buffer = buffer;
             _capacity = buffer.Length;
+            _count = count;
+            _head = head;
             _mask = buffer.Length - 1;
         }
 
@@ -163,6 +218,25 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Copies the elements of the <see cref="CircularBuffer{T}"/> to a span.
+        /// </summary>
+        /// <param name="destination">The span that the elements are copied from the <see cref="CircularBuffer{T}"/> to.</param>
+        public void CopyTo(Span<T> destination)
+        {
+            if (_count == 0)
+            {
+                return;
+            }
+
+            if (destination.Length < _count)
+            {
+                ThrowHelpers.ThrowArgumentException(nameof(destination), "The length of the specified span is less than the number of elements contained in the collection.");
+            }
+
+            CopyToInternal(destination);
+        }
+
+        /// <summary>
         /// Copies the elements of the <see cref="CircularBuffer{T}"/> to an <typeparamref name="T"/>[], starting at a particular index.
         /// </summary>
         /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from <see cref="CircularBuffer{T}"/>.</param>
@@ -172,21 +246,20 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentException">The number of the elements in the source <see cref="CircularBuffer{T}"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
         public void CopyTo(T[] array, int arrayIndex)
         {
+            if (_count == 0)
+            {
+                return;
+            }
+
+            ArgumentNullException.ThrowIfNull(array);
             ThrowHelpers.ThrowIfArgumentIsNegative(arrayIndex);
             if (array.Length - arrayIndex < _count)
             {
                 ThrowHelpers.ThrowArgumentException("The number of the elements in the source buffer is greater than the available space from the specified index to the end of the destination array.");
             }
 
-            if (_head + _count > _capacity)
-            {
-                Array.Copy(_buffer, _head, array, arrayIndex, _capacity - _head);
-                Array.Copy(_buffer, 0, array, arrayIndex + _capacity - _head, (_head + _count) & _mask);
-            }
-            else
-            {
-                Array.Copy(_buffer, _head, array, arrayIndex, _count);
-            }
+            var arraySpan = MemoryMarshal.CreateSpan(ref array[0], array.Length); // It is ensured that array.Length is greater than 0.
+            CopyToInternal(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(arraySpan), (nint)(uint)arrayIndex), arraySpan.Length - arrayIndex));
         }
 
         void ICollection.CopyTo(Array array, int index)
@@ -205,6 +278,41 @@ namespace Yuh.Collections
             else
             {
                 Array.Copy(_buffer, _head, array, index, _count);
+            }
+        }
+
+        /// <summary>
+        /// Copies the elements of the <see cref="CircularBuffer{T}"/> to a span.
+        /// </summary>
+        /// <remarks>
+        /// It is not checked that the number of elements contained in the <see cref="CircularBuffer{T}"/> is greater than 0.
+        /// </remarks>
+        /// <param name="destination"></param>
+        private void CopyToInternal(Span<T> destination)
+        {
+            var bufferSpan = MemoryMarshal.CreateSpan(ref _buffer[0], _capacity);
+            var _end = checked(_head + _count);
+
+            if (_end > _capacity)
+            {
+                var len1 = _capacity - _head;
+
+                // same as:
+                // bufferSpan[_head..].CopyTo(destination);
+                MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(bufferSpan), _head), len1)
+                    .CopyTo(destination);
+
+                // same as:
+                // bufferSpan[..(_end - _capacity)].CopyTo(destination[(_capacity - _head)..])
+                MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(bufferSpan), _end - _capacity)
+                    .CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(bufferSpan), len1), bufferSpan.Length - len1));
+            }
+            else
+            {
+                // same as:
+                // bufferSpan.Slice(_head, _count).CopyTo(destination);
+                MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(bufferSpan), (nint)(uint)_head), _count)
+                    .CopyTo(destination);
             }
         }
 
@@ -273,7 +381,7 @@ namespace Yuh.Collections
             }
             else
             {
-                ThrowHelpers.ThrowNotSupportedException("The insertion of an object to any position other than the front or back is not supported.");
+                ThrowHelpers.ThrowNotSupportedException("The insertion of an object is not supported except on the beginning or end.");
             }
         }
 
