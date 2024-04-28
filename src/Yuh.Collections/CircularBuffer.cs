@@ -191,21 +191,20 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentException">The number of the elements in the source <see cref="CircularBuffer{T}"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
         public void CopyTo(T[] array, int arrayIndex)
         {
+            if (_count == 0)
+            {
+                return;
+            }
+
+            ArgumentNullException.ThrowIfNull(array);
             ThrowHelpers.ThrowIfArgumentIsNegative(arrayIndex);
             if (array.Length - arrayIndex < _count)
             {
                 ThrowHelpers.ThrowArgumentException("The number of the elements in the source buffer is greater than the available space from the specified index to the end of the destination array.");
             }
 
-            if (_head + _count > _capacity)
-            {
-                Array.Copy(_buffer, _head, array, arrayIndex, _capacity - _head);
-                Array.Copy(_buffer, 0, array, arrayIndex + _capacity - _head, (_head + _count) & _mask);
-            }
-            else
-            {
-                Array.Copy(_buffer, _head, array, arrayIndex, _count);
-            }
+            var arraySpan = MemoryMarshal.CreateSpan(ref array[0], array.Length); // It is ensured that array.Length is greater than 0.
+            CopyToInternal(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(arraySpan), (nint)(uint)arrayIndex), arraySpan.Length - arrayIndex));
         }
 
         void ICollection.CopyTo(Array array, int index)
