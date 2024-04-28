@@ -163,6 +163,25 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Copies the elements of the <see cref="CircularBuffer{T}"/> to a span.
+        /// </summary>
+        /// <param name="destination">The span that the elements are copied from the <see cref="CircularBuffer{T}"/> to.</param>
+        public void CopyTo(Span<T> destination)
+        {
+            if (_count == 0)
+            {
+                return;
+            }
+
+            if (destination.Length < _count)
+            {
+                ThrowHelpers.ThrowArgumentException(nameof(destination), "The length of the specified span is less than the number of elements contained in the collection.");
+            }
+
+            CopyToInternal(destination);
+        }
+
+        /// <summary>
         /// Copies the elements of the <see cref="CircularBuffer{T}"/> to an <typeparamref name="T"/>[], starting at a particular index.
         /// </summary>
         /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from <see cref="CircularBuffer{T}"/>.</param>
