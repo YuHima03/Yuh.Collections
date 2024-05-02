@@ -679,41 +679,6 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Returns a new instance of the <see cref="CircularBuffer{T}"/> class that contains elements copied from this <see cref="CircularBuffer{T}"/> and has the specified capacity.
-        /// </summary>
-        /// <param name="capacity">The number of elements that the new instance of the <see cref="CircularBuffer{T}"/> class can contain without resizing.</param>
-        /// <returns>The new instance of the <see cref="CircularBuffer{T}"/> class that contains elements copied from this <see cref="CircularBuffer{T}"/> and has specified capacity.</returns>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> must be greater than or equal to the number of elements contained in the <see cref="CircularBuffer{T}"/>, and less than or equal to <see cref="Array.MaxLength"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="capacity"/> must be power or 2.</exception>
-        public CircularBuffer<T> Resize(int capacity)
-        {
-            if (capacity < _count)
-            {
-                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(capacity), "`capacity` must be greater or equal to the number of the elements contained in this buffer.");
-            }
-
-            CircularBuffer<T> newBuffer = new(capacity)
-            {
-                _count = this._count
-            };
-
-            if (_count != 0)
-            {
-                if (_head + _count > _capacity)
-                {
-                    Array.Copy(_buffer, _head, newBuffer._buffer, 0, _capacity - _head);
-                    Array.Copy(_buffer, 0, newBuffer._buffer, _capacity - _head, (_head + _count) & _mask);
-                }
-                else
-                {
-                    Array.Copy(_buffer, _head, newBuffer._buffer, 0, _count);
-                }
-            }
-
-            return newBuffer;
-        }
-
-        /// <summary>
         /// If <typeparamref name="T"/> is reference or contains references, sets the default value of <typeparamref name="T"/> to the <paramref name="value"/> parameter; otherwise, do nothing.
         /// </summary>
         /// <param name="value"></param>
