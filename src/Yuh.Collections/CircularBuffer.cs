@@ -187,12 +187,13 @@ namespace Yuh.Collections
             {
                 if (_head + _count > _capacity)
                 {
-                    Array.Clear(_buffer, _head, _capacity - _head);
-                    Array.Clear(_buffer, 0, (_head + _count) & _mask);
+                    ref var bufferRef = ref MemoryMarshal.GetReference(_buffer.AsSpan());
+                    MemoryMarshal.CreateSpan(ref Unsafe.Add(ref bufferRef, _head), _capacity - _head).Clear();
+                    MemoryMarshal.CreateSpan(ref bufferRef, (_head + _count) & _mask).Clear();
                 }
                 else
                 {
-                    Array.Clear(_buffer, _head, _count);
+                    MemoryMarshal.CreateSpan(ref _buffer[_head], _count).Clear();
                 }
             }
             _head = 0;
