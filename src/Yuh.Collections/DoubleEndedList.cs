@@ -260,6 +260,16 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Copies the elements of the <see cref="DoubleEndedList{T}"/> to a span.
+        /// </summary>
+        /// <param name="span">The span that is the destination of the elements copied from the <see cref="DoubleEndedList{T}"/>.</param>
+        /// <exception cref="ArgumentException">The number of the elements in the source <see cref="DoubleEndedList{T}"/> is greater than the length of <paramref name="span"/>.</exception>
+        public void CopyTo(Span<T> span)
+        {
+            AsReadOnlySpan().CopyTo(span);
+        }
+
+        /// <summary>
         /// Copies the elements of the <see cref="DoubleEndedList{T}"/> to an <typeparamref name="T"/>[], starting at a particular index.
         /// </summary>
         /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from <see cref="DoubleEndedList{T}"/>.</param>
