@@ -540,13 +540,15 @@ namespace Yuh.Collections
                     ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
                 }
 
+                ref var _itemsRef = ref _items[0];
+
                 if (index < (_count >> 1))
                 {
                     EnsureCapacityInternal(collection.Count, 0);
 
                     int newHead = _head - collection.Count;
-                    var src = MemoryMarshal.CreateSpan(ref _items[_head], index);
-                    var dst = MemoryMarshal.CreateSpan(ref _items[newHead], index);
+                    var src = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, _head), index);
+                    var dst = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, newHead), index);
                     src.CopyTo(dst);
 
                     collection.CopyTo(_items, newHead + index);
@@ -558,8 +560,8 @@ namespace Yuh.Collections
 
                     int cpyItemsCount = _count - index;
                     int cpyHead = _head + index;
-                    var src = MemoryMarshal.CreateSpan(ref _items[cpyHead], cpyItemsCount);
-                    var dst = MemoryMarshal.CreateSpan(ref _items[cpyHead + collection.Count], cpyItemsCount);
+                    var src = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, cpyHead), cpyItemsCount);
+                    var dst = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, cpyHead + collection.Count), cpyItemsCount);
                     src.CopyTo(dst);
 
                     collection.CopyTo(_items, cpyHead);
@@ -593,16 +595,18 @@ namespace Yuh.Collections
                     ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
                 }
 
+                ref var _itemsRef = ref _items[0];
+
                 if (index < (_count >> 1))
                 {
                     EnsureCapacityInternal(items.Length, 0);
 
                     int newHead = _head - items.Length;
-                    var src = MemoryMarshal.CreateSpan(ref _items[_head], index);
-                    var dst = MemoryMarshal.CreateSpan(ref _items[newHead], index);
+                    var src = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, _head), index);
+                    var dst = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, newHead), index);
                     src.CopyTo(dst);
 
-                    items.CopyTo(MemoryMarshal.CreateSpan(ref _items[newHead + index], items.Length));
+                    items.CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, newHead + index), items.Length));
                     _head = newHead;
                 }
                 else
@@ -611,11 +615,11 @@ namespace Yuh.Collections
 
                     int cpyItemsCount = _count - index;
                     int cpyHead = _head + index;
-                    var src = MemoryMarshal.CreateSpan(ref _items[cpyHead], cpyItemsCount);
-                    var dst = MemoryMarshal.CreateSpan(ref _items[cpyHead + items.Length], cpyItemsCount);
+                    var src = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, cpyHead), cpyItemsCount);
+                    var dst = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, cpyHead + items.Length), cpyItemsCount);
                     src.CopyTo(dst);
 
-                    items.CopyTo(MemoryMarshal.CreateSpan(ref _items[cpyHead], items.Length));
+                    items.CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, cpyHead), items.Length));
                 }
 
                 _count += items.Length;
@@ -718,13 +722,13 @@ namespace Yuh.Collections
         private void PopBackRangeInternal(Span<T> destination)
         {
             int count = destination.Length;
-            var source = AsSpan()[(^count)..];
+            var source = MemoryMarshal.CreateSpan(ref _items[_head + _count - count], count); // AsSpan()[(^count)..]
             source.CopyTo(destination);
 
             _count -= count;
             _version++;
             CollectionHelpers.ClearIfReferenceOrContainsReferences(source);
-            }
+        }
 
         /// <summary>
         /// Removes and returns the object at the beginning of the <see cref="DoubleEndedList{T}"/>.
@@ -785,17 +789,13 @@ namespace Yuh.Collections
         private void PopFrontRangeInternal(Span<T> destination)
         {
             int count = destination.Length;
-            var source = AsSpan()[..count];
+            var source = MemoryMarshal.CreateSpan(ref _items[_head], count); // AsSpan()[..count]
             source.CopyTo(destination);
 
             _count -= count;
             _head += count;
             _version++;
-
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
-                source.Clear();
-            }
+            CollectionHelpers.ClearIfReferenceOrContainsReferences(source);
         }
 
         /// <summary>
@@ -869,7 +869,7 @@ namespace Yuh.Collections
             else
             {
                 EnsureCapacityInternal(0, items.Length);
-                items.CopyTo(_items.AsSpan()[(_head + _count)..]);
+                items.CopyTo(MemoryMarshal.CreateSpan(ref _items[_head + _count], items.Length)); // _items.AsSpan().Slice(_head + _count, items.Length)
                 _count += items.Length;
                 _version++;
             }
@@ -945,7 +945,7 @@ namespace Yuh.Collections
             {
                 EnsureCapacityInternal(count, 0);
                 _head -= count;
-                items.CopyTo(_items.AsSpan()[_head..]);
+                items.CopyTo(MemoryMarshal.CreateSpan(ref _items[_head], count)); // _items.AsSpan().Slice(_head, count);
                 _count += count;
                 _version++;
             }
@@ -1016,7 +1016,7 @@ namespace Yuh.Collections
         private void RemoveRangeInternal(int beginIndex, int endIndex)
         {
             var count = endIndex - beginIndex;
-            var itemsSpan = _items.AsSpan();
+            ref var itemsRef = ref _items[0];
 
             if (beginIndex == 0)
             {
@@ -1028,27 +1028,38 @@ namespace Yuh.Collections
                 else
                 {
                     _head += count;
-                    CollectionHelpers.ClearIfReferenceOrContainsReferences(itemsSpan.Slice(_head, count));
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(
+                        MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsRef, _head), count) // itemsSpan.Slice(_head, count);
+                    );
                 }
             }
             else if (endIndex == _count)
             {
-                CollectionHelpers.ClearIfReferenceOrContainsReferences(itemsSpan.Slice(_head + _count - count, count));
+                CollectionHelpers.ClearIfReferenceOrContainsReferences(
+                    MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsRef, _head + _count - count), count) // itemsSpan.Slice(_head + _count - count, count);
+                );
             }
             else
             {
                 if (beginIndex < _count - endIndex)
                 {
-                    itemsSpan.Slice(_head, beginIndex).CopyTo(itemsSpan.Slice(_head + count, beginIndex));
+                    MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsRef, _head), beginIndex) // itemsSpan.Slice(_head, beginIndex)
+                        .CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsRef, _head + count), beginIndex)); // itemsSpan.Slice(_head + count, beginIndex)
 
-                    CollectionHelpers.ClearIfReferenceOrContainsReferences(itemsSpan.Slice(_head, count));
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(
+                        MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsRef, _head), count) // itemsSpan.Slice(_head, count);
+                    );
                 }
                 else
                 {
                     var movedItemsCount = _head + _count - endIndex;
-                    itemsSpan.Slice(endIndex, movedItemsCount).CopyTo(itemsSpan.Slice(endIndex - count, movedItemsCount));
 
-                    CollectionHelpers.ClearIfReferenceOrContainsReferences(itemsSpan.Slice(_head + _count - count, count));
+                    MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsRef, endIndex), movedItemsCount) // itemsSpan.Slice(endIndex, movedItemsCount)
+                        .CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsRef, endIndex - count), movedItemsCount)); // itemsSpan.Slice(endIndex - count, movedItemsCount)
+
+                    CollectionHelpers.ClearIfReferenceOrContainsReferences(
+                        MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsRef, _head + _count - count), count) // itemsSpan.Slice(_head + _count - count, count);
+                    );
                 }
             }
 
@@ -1332,11 +1343,11 @@ namespace Yuh.Collections
             {
                 if (diff > 0)
                 {
-                    src[0..diff].Clear();
+                    MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(src), diff).Clear(); // src[..diff]
                 }
                 else
                 {
-                    src[^(-diff)..].Clear();
+                    MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(src), src.Length + diff), -diff).Clear(); // src[^(-diff)..]
                 }
             }
 
