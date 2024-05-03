@@ -319,7 +319,7 @@ namespace Yuh.Collections
             ThrowHelpers.ThrowIfArgumentIsNegative(frontMargin);
             ThrowHelpers.ThrowIfArgumentIsNegative(backMargin);
 
-            if (frontMargin + backMargin + _count > Array.MaxLength)
+            if (checked(frontMargin + backMargin + _count) > Array.MaxLength)
             {
                 ThrowHelpers.ThrowArgumentException("The total needed capacity is greater than `Array.MaxLength`.", "{ frontMargin, backMargin }");
             }
