@@ -307,7 +307,7 @@ namespace Yuh.Collections
             {
                 ThrowHelpers.ThrowArgumentException("The number of the elements in the source collection is greater than the available space from the specified index to the end of the destination array.", nameof(arrayIndex));
             }
-            CopyToInternal(array, arrayIndex);
+            CopyToInternal(MemoryMarshal.CreateSpan(ref array[0], _count));
         }
 
         void ICollection.CopyTo(Array array, int index)
@@ -325,6 +325,24 @@ namespace Yuh.Collections
             else
             {
                 Array.Copy(_items, _head, array, index, _count);
+            }
+        }
+
+        private void CopyToInternal(Span<T> span)
+        {
+            if (_head + _count > _capacity)
+            {
+                ref var itemsRef = ref _items[0];
+                var count1 = _capacity - _head;
+                var count2 = _head + _count - _capacity;
+                MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsRef, _head), count1) // _items.AsSpan().Slice(_head, count1)
+                    .CopyTo(span);
+                MemoryMarshal.CreateSpan(ref itemsRef, count2) // _items.AsSpan()[..count2]
+                    .CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(span), count1), count2)); // span[count1..]
+            }
+            else
+            {
+                MemoryMarshal.CreateSpan(ref _items[_head], _count).CopyTo(span); // _items.AsSpan().Slice(_head, _count)
             }
         }
 
@@ -1035,7 +1053,7 @@ namespace Yuh.Collections
             else
             {
                 T[] items = new T[capacity];
-                CopyToInternal(items, 0);
+                CopyToInternal(items.AsSpan());
                 _items = items;
             }
             _capacity = capacity;
