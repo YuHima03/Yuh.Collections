@@ -723,12 +723,8 @@ namespace Yuh.Collections
 
             _count -= count;
             _version++;
-
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
-                source.Clear();
+            CollectionHelpers.ClearIfReferenceOrContainsReferences(source);
             }
-        }
 
         /// <summary>
         /// Removes and returns the object at the beginning of the <see cref="DoubleEndedList{T}"/>.
