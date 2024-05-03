@@ -279,7 +279,14 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentException">The number of the elements in the source <see cref="DoubleEndedList{T}"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
         public void CopyTo(T[] array, int arrayIndex)
         {
-            AsReadOnlySpan().CopyTo(array.AsSpan()[arrayIndex..]);
+            ArgumentNullException.ThrowIfNull(array);
+            ThrowHelpers.ThrowIfArgumentIsNegative(arrayIndex);
+            if (arrayIndex >= array.Length)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(arrayIndex), "The value must be less than the number of elements contained in the collection.");
+            }
+
+            CopyTo(MemoryMarshal.CreateSpan(ref array[arrayIndex], array.Length - arrayIndex));
         }
 
         void ICollection.CopyTo(Array array, int index)
