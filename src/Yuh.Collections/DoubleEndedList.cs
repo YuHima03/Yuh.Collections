@@ -514,6 +514,9 @@ namespace Yuh.Collections
             InsertRangeInternal(index, items);
         }
 
+        /// <remarks>
+        /// This method doesn't check if <paramref name="index"/> is valid index in the collection.
+        /// </remarks>
         private void InsertRangeInternal(int index, ICollection<T> collection)
         {
             if (collection.Count == 0)
