@@ -346,19 +346,6 @@ namespace Yuh.Collections
             }
         }
 
-        private void CopyToInternal(T[] array, int arrayIndex)
-        {
-            if (_head + _count > _capacity)
-            {
-                Array.Copy(_items, _head, array, arrayIndex, _capacity - _head);
-                Array.Copy(_items, 0, array, arrayIndex + _capacity - _head, _head + _count - _capacity);
-            }
-            else
-            {
-                Array.Copy(_items, _head, array, arrayIndex, _count);
-            }
-        }
-
         /// <summary>
         ///     Ensures that the capacity of this <see cref="Deque{T}"/> is at least the specified one.
         ///     If the current capacity is less than the specified one, resizes the internal array so that the <see cref="Deque{T}"/> can accommodate the specified number of elements without resizing.
