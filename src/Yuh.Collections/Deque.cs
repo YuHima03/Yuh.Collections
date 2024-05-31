@@ -926,7 +926,17 @@ namespace Yuh.Collections
         /// <returns></returns>
         public bool Remove(T item)
         {
-            throw new NotImplementedException();
+            int idx = IndexOf(item);
+
+            if (idx < 0)
+            {
+                return false;
+            }
+            else
+            {
+                RemoveAt(idx);
+                return true;
+            }
         }
 
         void IList.Remove(object? value)
