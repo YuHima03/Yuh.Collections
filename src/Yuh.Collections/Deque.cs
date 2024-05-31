@@ -330,6 +330,11 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentException">The number of the elements in the source <see cref="Deque{T}"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.</exception>
         public void CopyTo(T[] array, int arrayIndex)
         {
+            ArgumentNullException.ThrowIfNull(array);
+            if (_count == 0)
+            {
+                return;
+            }
             if (array.Length - arrayIndex < _count)
             {
                 ThrowHelpers.ThrowArgumentException("The number of the elements in the source collection is greater than the available space from the specified index to the end of the destination array.", nameof(arrayIndex));
@@ -339,6 +344,11 @@ namespace Yuh.Collections
 
         void ICollection.CopyTo(Array array, int index)
         {
+            ArgumentNullException.ThrowIfNull(array);
+            if (_count == 0)
+            {
+                return;
+            }
             if (array.Length - index < _count)
             {
                 ThrowHelpers.ThrowArgumentException("The number of the elements in the source collection is greater than the available space from the specified index to the end of the destination array.", nameof(index));
@@ -754,6 +764,11 @@ namespace Yuh.Collections
         public void PushBackRange(ReadOnlySpan<T> items)
         {
             int count = items.Length;
+            if (count == 0)
+            {
+                return;
+            }
+
             int requiredCapacity = _count + count;
             if (requiredCapacity > Array.MaxLength)
             {
@@ -841,6 +856,11 @@ namespace Yuh.Collections
         public void PushFrontRange(ReadOnlySpan<T> items)
         {
             int count = items.Length;
+            if (count == 0)
+            {
+                return;
+            }
+
             int requiredCapacity = _count + count;
             if (requiredCapacity > Array.MaxLength)
             {
