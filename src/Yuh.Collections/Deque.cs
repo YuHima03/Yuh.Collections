@@ -138,7 +138,14 @@ namespace Yuh.Collections
 
         internal T First => _items[_head];
 
-        internal T Last => _items[(_head + _count - 1) % _capacity];
+        internal T Last
+        {
+            get
+            {
+                var tail = _head + _count - 1;
+                return (tail >= _capacity) ? _items[tail - _capacity] : _items[tail];
+            }
+        }
 
         /// <summary>
         /// Initializes an new instance of the <see cref="Deque{T}"/> class.
