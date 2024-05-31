@@ -1297,6 +1297,9 @@ namespace Yuh.Collections
         /// <summary>
         /// Creates a new array as an internal array at the specified size, and copies to the array starting at the specified index all the elements contained in the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
+        /// <remarks>
+        /// This method does NOT check if <paramref name="capacity"/> and <paramref name="frontMargin"/> are valid.
+        /// </remarks>
         /// <param name="capacity"></param>
         /// <param name="frontMargin"></param>
         private void ResizeInternal(int capacity, int frontMargin)
