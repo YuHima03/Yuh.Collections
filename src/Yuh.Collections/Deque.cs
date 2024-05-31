@@ -598,7 +598,11 @@ namespace Yuh.Collections
         private void PopBackRangeInternal(Span<T> destination)
         {
             int count = destination.Length;
-            int lastIdx = (_head + _count - 1) % _capacity;
+            int lastIdx = _head + _count - 1;
+            if (lastIdx >= _capacity)
+            {
+                lastIdx -= _capacity; // lastIdx = (_head + _count - 1) % _capacity
+            }
             int rangeBeginsAt = lastIdx - count + 1;
             ref var itemsRef = ref MemoryMarshal.GetArrayDataReference(_items);
 
@@ -642,7 +646,11 @@ namespace Yuh.Collections
             var res = First;
             CollectionHelpers.SetDefaultValueIfReferenceOrContainsReferences(ref _firstRef);
 
-            _head = (_head + 1) % _capacity;
+            _head++;
+            if (_head == _capacity)
+            {
+                _head = 0; // _head = (_head + 1) % _capacity
+            }
             _count--;
             _version++;
 
@@ -710,7 +718,11 @@ namespace Yuh.Collections
                 CollectionHelpers.ClearIfReferenceOrContainsReferences(source_1, source_2);
                 }
 
-            _head = (rangeEndsAt + 1) % _capacity;
+            _head = rangeEndsAt + 1;
+            if (_head >= _capacity)
+            {
+                _head -= _capacity; // _head = (rangeEndsAt + 1) - _capacity
+            }
             _count -= count;
             _version++;
         }
@@ -729,7 +741,12 @@ namespace Yuh.Collections
                 Grow();
             }
 
-            _items[(_head + _count) % _capacity] = item;
+            int index = _head + _count;
+            if (index >= _capacity)
+            {
+                index -= _capacity; // _end = (_head + _count) % _capacity
+            }
+            _items[index] = item;
             _count++;
             _version++;
         }
@@ -781,8 +798,12 @@ namespace Yuh.Collections
 
             EnsureCapacityInternal(requiredCapacity);
 
-            int rangeBeginsAt = (_head + _count) % _capacity;
-            var dest = _items.AsSpan();
+            int rangeBeginsAt = _head + _count;
+            if (rangeBeginsAt >= _capacity)
+            {
+                rangeBeginsAt -= _capacity; // rangeBeginsAt = (_head + _count) % _capacity
+            }
+
             ref var destRef = ref MemoryMarshal.GetArrayDataReference(_items);
             int sliceAt = _capacity - rangeBeginsAt;
 
@@ -820,7 +841,7 @@ namespace Yuh.Collections
                 Grow();
             }
 
-            _head = (_head - 1 + _capacity) % _capacity;
+            _head = (_head == 0) ? (_capacity - 1) : (_head - 1); // ((_head - 1) + _capacity) % _capacity
             _items[_head] = item;
             _count++;
             _version++;
@@ -1030,9 +1051,29 @@ namespace Yuh.Collections
                 {
                     var items = _items.AsSpan();
 
-                    for (int i = _head + beginIndex - 1; i >= _head; i--)
+                    int iFrom = _head + beginIndex - 1;
+                    if (iFrom >= _capacity)
                     {
-                        items[checked(i + count) % _capacity] = items[i % _capacity];
+                        iFrom -= _capacity; // iFrom = (_head + beginIndex - 1) % _capacity
+                    }
+
+                    int iTo = iFrom + count;
+                    if (iTo >= _capacity)
+                    {
+                        iTo -= _capacity; // iTo = (iFrom + count) % _capacity
+                    }
+
+                    for (int i = 0; i < beginIndex; i++)
+                    {
+                        items[iTo--] = items[iFrom--];
+                        if (iFrom == -1)
+                        {
+                            iFrom += _capacity;
+                        }
+                        if (iTo == -1)
+                    {
+                            iTo += _capacity;
+                        }
                     }
 
                     int newHead = checked(_head + count);
@@ -1060,15 +1101,36 @@ namespace Yuh.Collections
                     int _end = _head + _count;
                     var items = _items.AsSpan();
 
-                    for (int i = _head + endIndex; i < _end; i++)
+                    int iFrom = _head + endIndex;
+                    if (iFrom >= _capacity)
                     {
-                        items[checked(i - count + _count) % _count] = items[i % _count];
+                        iFrom -= _capacity; // iFrom = (_head + endIndex) % _capacity
+                    }
+
+                    int iTo = iFrom - count;
+                    if (iTo < 0)
+                    {
+                        iTo += _capacity; // iTo = (iFrom - count) % _capacity
+                    }
+
+                    for (int i = 0; i < _count - endIndex; i++)
+                    {
+                        if (iFrom == _capacity)
+                        {
+                            iFrom = 0;
+                        }
+                        if (iTo == _capacity)
+                    {
+                            iTo = 0;
+                        }
+                        items[iTo++] = items[iFrom++];
                     }
 
                     if (_end >= _capacity)
                     {
-                        _end -= _capacity;
+                        _end -= _capacity; // _end %= _capacity
                     }
+
                     int newEnd = _end - count;
                     ref var itemsRef = ref MemoryMarshal.GetReference(items);
 
