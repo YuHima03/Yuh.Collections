@@ -365,6 +365,10 @@ namespace Yuh.Collections
             }
         }
 
+        /// <remarks>
+        /// This method does NOT check if the <see cref="Deque{T}"/> is empty and if the <paramref name="span"/> has sufficient capacity to accomodate elements copied from the <see cref="Deque{T}"/>.
+        /// </remarks>
+        /// <param name="span"></param>
         private void CopyToInternal(Span<T> span)
         {
             ref var itemsRef = ref MemoryMarshal.GetArrayDataReference(_items);
