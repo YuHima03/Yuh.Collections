@@ -612,7 +612,7 @@ namespace Yuh.Collections
                 source.CopyTo(destination);
 
                 CollectionHelpers.ClearIfReferenceOrContainsReferences(source);
-                }
+            }
             else
             {
                 var source_1 = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsRef, _capacity + rangeBeginsAt), -rangeBeginsAt); // _items.AsSpan()[^(-rangeBeginsAt)..]
@@ -624,7 +624,7 @@ namespace Yuh.Collections
                 );
 
                 CollectionHelpers.ClearIfReferenceOrContainsReferences(source_1, source_2);
-                }
+            }
 
             _count -= count;
             _version++;
@@ -702,7 +702,7 @@ namespace Yuh.Collections
                 var source = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsRef, _head), count); // _items.AsSpan().Slice(_head, count)
                 source.CopyTo(destination);
                 CollectionHelpers.ClearIfReferenceOrContainsReferences(source);
-                }
+            }
             else
             {
                 int len_1 = _capacity - _head;
@@ -716,7 +716,7 @@ namespace Yuh.Collections
                 );
 
                 CollectionHelpers.ClearIfReferenceOrContainsReferences(source_1, source_2);
-                }
+            }
 
             _head = rangeEndsAt + 1;
             if (_head >= _capacity)
@@ -1008,7 +1008,7 @@ namespace Yuh.Collections
                     int newHead = checked(_head + count);
                     ref var itemsRef = ref MemoryMarshal.GetArrayDataReference(_items);
 
-                    if (newHead <= _capacity) // #01
+                    if (newHead < _capacity) // #01
                     {
                         CollectionHelpers.ClearIfReferenceOrContainsReferences(
                             MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsRef, _head), count) // items.Slice(_head, count)
@@ -1081,7 +1081,7 @@ namespace Yuh.Collections
                             iFrom += _capacity;
                         }
                         if (iTo == -1)
-                    {
+                        {
                             iTo += _capacity;
                         }
                     }
@@ -1130,7 +1130,7 @@ namespace Yuh.Collections
                             iFrom = 0;
                         }
                         if (iTo == _capacity)
-                    {
+                        {
                             iTo = 0;
                         }
                         items[iTo++] = items[iFrom++];
