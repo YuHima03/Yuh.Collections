@@ -1252,31 +1252,29 @@ namespace Yuh.Collections
             }
             else
             {
-                T result = _items[_head + index];
+                ref var headRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_items), _head);
+                T result = Unsafe.Add(ref headRef, index);
 
                 // make it costs lower to move the elements.
                 if (index <= (_count >> 1))
                 {
                     // shift the elements in [0,index) of the list.
-                    var span = MemoryMarshal.CreateSpan(ref _items[_head], index + 1);
-                    for (int i = index; i > 0; i--)
-                    {
-                        span[i] = span[i - 1];
-                    }
+                    MemoryMarshal.CreateReadOnlySpan(ref headRef, index)
+                        .CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref headRef, 1), index));
 
-                    SetDefaultValueIfNeeded(ref span[0]);
+                    SetDefaultValueIfNeeded(ref headRef);
                     _head++;
                 }
                 else
                 {
-                    // shift the elements in (index, _count) of the list.
-                    var span = MemoryMarshal.CreateSpan(ref _items[_head + index], _count - index);
-                    for (int i = 0; i < _count - index - 1; i++)
-                    {
-                        span[i] = span[i + 1];
-                    }
+                    ref var beginRef = ref Unsafe.Add(ref headRef, index - 1);
+                    var rangeLength = _count - index - 1;
 
-                    SetDefaultValueIfNeeded(ref span[_count - index - 1]);
+                    // shift the elements in (index, _count) of the list.
+                    MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref beginRef, 1), rangeLength)
+                        .CopyTo(MemoryMarshal.CreateSpan(ref beginRef, rangeLength));
+
+                    SetDefaultValueIfNeeded(ref Unsafe.Add(ref headRef, _count - 1));
                 }
 
                 _count--;
@@ -1311,8 +1309,8 @@ namespace Yuh.Collections
             else
             {
                 T[] newArray = new T[capacity];
-                Array.Copy(_items, _head, newArray, frontMargin, _count);
-
+                MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_items), _head), _count)
+                    .CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(newArray), frontMargin), _count));
                 _items = newArray;
                 _head = frontMargin;
             }
@@ -1334,9 +1332,9 @@ namespace Yuh.Collections
                 return;
             }
 
-            var src = MemoryMarshal.CreateSpan(ref _items[_head], _count);
-            var dst = MemoryMarshal.CreateSpan(ref _items[_head + diff], _count);
-
+            ref var itemsHeadRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_items), _head); // ref _items[_head]
+            var src = MemoryMarshal.CreateSpan(ref itemsHeadRef, _count);
+            var dst = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref itemsHeadRef, diff), _count);
             src.CopyTo(dst);
 
             if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
