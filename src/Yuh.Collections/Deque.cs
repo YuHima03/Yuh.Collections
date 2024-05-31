@@ -949,7 +949,7 @@ namespace Yuh.Collections
                 ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
             }
 
-            RemoveRangeInternal(index, checked(index + 1));
+            RemoveRangeInternal(index, index + 1);
         }
 
         /// <summary>
