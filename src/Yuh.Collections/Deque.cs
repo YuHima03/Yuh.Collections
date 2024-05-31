@@ -303,6 +303,24 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Copies the elements of the <see cref="Deque{T}"/> to a span.
+        /// </summary>
+        /// <param name="span">The span that is the destination of the elements copied from the <see cref="Deque{T}"/>.</param>
+        /// <exception cref="ArgumentException">The length of <paramref name="span"/> is less than the number of elements contained in the <see cref="Deque{T}"/>.</exception>
+        public void CopyTo(Span<T> span)
+        {
+            if (_count == 0)
+            {
+                return;
+            }
+            if (span.Length < _count)
+            {
+                ThrowHelpers.ThrowArgumentException(nameof(span), "The length of the span is less than the number of elements contained in the collection.");
+            }
+            CopyToInternal(span);
+        }
+
+        /// <summary>
         /// Copies the elements of the <see cref="Deque{T}"/> to an <typeparamref name="T"/>[], starting at a particular index.
         /// </summary>
         /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from <see cref="Deque{T}"/>.</param>
