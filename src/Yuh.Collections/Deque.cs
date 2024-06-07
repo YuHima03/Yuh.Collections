@@ -67,7 +67,8 @@ namespace Yuh.Collections
             {
                 if ((uint)index < (uint)_count)
                 {
-                    return _items[(_head + index) % _capacity];
+                    int i = _head + index;
+                    return (i >= _capacity) ? _items[i - _capacity] : _items[i]; // _items[i % _capacity]
                 }
                 else
                 {
@@ -80,7 +81,16 @@ namespace Yuh.Collections
             {
                 if ((uint)index < (uint)_count)
                 {
-                    _items[(_head + index) % _capacity] = value;
+                    int i = _head + index;
+                    if (i >= _capacity)
+                    {
+                        _items[i - _capacity] = value;
+                    }
+                    else
+                    {
+                        _items[i] = value;
+                    }
+                    // _items[i % _capacity] = value;
                     _version++;
                 }
                 else
