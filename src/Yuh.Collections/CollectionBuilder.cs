@@ -10,7 +10,7 @@ namespace Yuh.Collections
     public ref struct CollectionBuilder<T>
     {
 
-        private readonly Span<T[]> _containers; // { T[1], T[2], T[4], ..., T[2^30] }
+        private readonly Span<T[]> _segments; // { T[1], T[2], T[4], ..., T[2^30] }
         private int _count = 0;
         private int _allocatedCount = 0; // in the range [0, 31]
 
@@ -27,17 +27,17 @@ namespace Yuh.Collections
         /// <summary>
         /// Initializes a new instance of the <see cref="CollectionBuilder{T}"/> type which has used-specified span that accomodate elements.
         /// </summary>
-        /// <param name="containers">A span used to keep elements added to this collection.</param>
-        public CollectionBuilder(Span<T[]> containers)
+        /// <param name="segments">A span used to keep elements added to this collection.</param>
+        public CollectionBuilder(Span<T[]> segments)
         {
-            if (containers.Length <= 31)
+            if (segments.Length <= 31)
             {
-                _containers = containers;
-                Capacity = (int)((1U << containers.Length) - 1);
+                _segments = segments;
+                Capacity = (int)((1U << segments.Length) - 1);
             }
             else
             {
-                _containers = containers[..31];
+                _segments = segments[..31];
                 Capacity = int.MaxValue;
             }
         }
@@ -58,15 +58,15 @@ namespace Yuh.Collections
 
             if (_count == currentCapacity)
             {
-                var container = new T[currentCapacity + 1];
-                container[0] = item;
-                _containers[_allocatedCount] = container;
+                var currentSegment = new T[currentCapacity + 1];
+                currentSegment[0] = item;
+                _segments[_allocatedCount] = currentSegment;
                 _allocatedCount++;
             }
             else
             {
                 int destIndex = _count - (currentCapacity - (1 << (_allocatedCount - 1)));
-                _containers[_allocatedCount - 1][destIndex] = item;
+                _segments[_allocatedCount - 1][destIndex] = item;
             }
 
             _count++;
@@ -91,7 +91,7 @@ namespace Yuh.Collections
 
             if (_allocatedCount == 0)
             {
-                _containers[0] = new T[1];
+                _segments[0] = new T[1];
                 _allocatedCount = 1;
             }
 
@@ -102,41 +102,41 @@ namespace Yuh.Collections
             if (newCount < currentCapacity) // if this condition is true, `currentCapacity` is not 0 and it is ensured that `this._allocatedCount` is positive.
             {
                 items.CopyTo(MemoryMarshal.CreateSpan(
-                    ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_containers[_allocatedCount - 1]), startIndex),
+                    ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_segments[_allocatedCount - 1]), startIndex),
                     items.Length
                 ));
             }
             else
             {
-                int containerLength = 1 << (_allocatedCount - 1);
+                int currentSegmentLength = 1 << (_allocatedCount - 1);
                 var src = items;
 
-                int cpyLength = containerLength - startIndex;
+                int cpyLength = currentSegmentLength - startIndex;
                 MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(src), cpyLength)
-                    .CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_containers[_allocatedCount - 1]), startIndex), cpyLength));
-                containerLength <<= 1;
-                _containers[_allocatedCount] = new T[containerLength];
+                    .CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(_segments[_allocatedCount - 1]), startIndex), cpyLength));
+                currentSegmentLength <<= 1;
+                _segments[_allocatedCount] = new T[currentSegmentLength];
                 _allocatedCount++;
 
                 int remainsCount = src.Length - cpyLength;
                 src = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(src), cpyLength), remainsCount);
-                
+
                 while (true)
                 {
-                    cpyLength = containerLength;
+                    cpyLength = currentSegmentLength;
 
                     if (remainsCount <= cpyLength)
                     {
-                        src.CopyTo(_containers[_allocatedCount - 1].AsSpan());
+                        src.CopyTo(_segments[_allocatedCount - 1].AsSpan());
                         break;
                     }
                     else
                     {
                         MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(src), cpyLength)
-                            .CopyTo(_containers[_allocatedCount - 1].AsSpan());
+                            .CopyTo(_segments[_allocatedCount - 1].AsSpan());
 
-                        containerLength <<= 1;
-                        _containers[_allocatedCount] = new T[containerLength];
+                        currentSegmentLength <<= 1;
+                        _segments[_allocatedCount] = new T[currentSegmentLength];
                         _allocatedCount++;
                         remainsCount -= cpyLength;
                         src = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(src), cpyLength), remainsCount);
@@ -164,27 +164,27 @@ namespace Yuh.Collections
                 ThrowHelpers.ThrowArgumentException("The destination span doesn't have enough space to accomodate elements in this collection.", nameof(destination));
             }
 
-            int containerLength = 1;
+            int currentSegmentLength = 1;
             int remainsCount = _count;
             for (int i = 0; ; i++)
             {
-                if (remainsCount <= containerLength)
+                if (remainsCount <= currentSegmentLength)
                 {
-                    MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetArrayDataReference(_containers[i]), remainsCount)
+                    MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetArrayDataReference(_segments[i]), remainsCount)
                         .CopyTo(destination);
                     break;
                 }
 
-                int nextContainerLength = containerLength << 1;
+                int nextSegmentLength = currentSegmentLength << 1;
 
-                _containers[i].AsSpan().CopyTo(destination);
+                _segments[i].AsSpan().CopyTo(destination);
                 destination = MemoryMarshal.CreateSpan(
-                    ref Unsafe.Add(ref MemoryMarshal.GetReference(destination), containerLength),
-                    nextContainerLength
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(destination), currentSegmentLength),
+                    nextSegmentLength
                 );
 
-                remainsCount -= containerLength;
-                containerLength = nextContainerLength;
+                remainsCount -= currentSegmentLength;
+                currentSegmentLength = nextSegmentLength;
             }
         }
     }
