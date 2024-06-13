@@ -16,8 +16,6 @@ namespace Yuh.Collections
         private int _countInCurrentSegment = 0;
         private readonly Span<T[]> _segments; // { T[1], T[2], T[4], ..., T[2^30] }
 
-        private Span<T> _currentSegment;
-        private int _indexInCurrentSegment = 0;
 
         /// <summary>
         /// The number of elements that can be contained in the <see cref="CollectionBuilder{T}"/>.
