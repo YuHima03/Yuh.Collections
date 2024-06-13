@@ -70,7 +70,8 @@ namespace Yuh.Collections
 
         private void Grow()
         {
-            var nextSegment = GC.AllocateUninitializedArray<T>(_currentSegment.Length << 1);
+            int nextSegmentLength = (_allocatedCount == 0) ? 1 : (_currentSegment.Length << 1);
+            var nextSegment = GC.AllocateUninitializedArray<T>(nextSegmentLength);
             _segments[_allocatedCount] = nextSegment;
             _currentSegment = nextSegment.AsSpan();
             _indexInCurrentSegment = 0;
