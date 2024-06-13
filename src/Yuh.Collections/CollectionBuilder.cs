@@ -74,7 +74,7 @@ namespace Yuh.Collections
             var nextSegment = GC.AllocateUninitializedArray<T>(nextSegmentLength);
             _segments[_allocatedCount] = nextSegment;
             _currentSegment = nextSegment.AsSpan();
-            _indexInCurrentSegment = 0;
+            _countInCurrentSegment = 0;
             _allocatedCount++;
         }
 
