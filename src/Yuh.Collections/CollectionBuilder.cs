@@ -249,5 +249,13 @@ namespace Yuh.Collections
 #endif
             return list;
         }
+
+#if NET8_0_OR_GREATER
+        [InlineArray(27)]
+        private struct SegmentsArray
+        {
+            private T[] _value;
+        }
+#endif
     }
 }
