@@ -7,12 +7,13 @@ namespace Yuh.Collections
     /// Repreents a temporary collection that is used to build new collections.
     /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
-    public ref struct CollectionBuilder<T>
+    public ref struct CollectionBuilder<T>// : IDisposable
     {
-
-        private readonly Span<T[]> _segments; // { T[1], T[2], T[4], ..., T[2^30] }
-        private int _count = 0;
         private int _allocatedCount = 0; // in the range [0, 31]
+        private int _count = 0;
+        private Span<T> _currentSegment = [];
+        private int _countInCurrentSegment = 0;
+        private readonly Span<T[]> _segments; // { T[1], T[2], T[4], ..., T[2^30] }
 
         private Span<T> _currentSegment;
         private int _indexInCurrentSegment = 0;
