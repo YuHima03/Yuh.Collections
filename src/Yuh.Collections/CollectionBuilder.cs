@@ -80,6 +80,30 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Adds elements in a <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <param name="items">An <see cref="IEnumerable{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
+        public void AddRange(IEnumerable<T> items)
+        {
+            ArgumentNullException.ThrowIfNull(items);
+
+            var currentSegment = _currentSegment;
+
+            foreach (var item in items)
+            {
+                if (_countInCurrentSegment == currentSegment.Length)
+                {
+                    Grow();
+                    currentSegment = _currentSegment;
+                }
+
+                currentSegment[_countInCurrentSegment] = item;
+                _countInCurrentSegment++;
+                _count++;
+            }
+        }
+
+        /// <summary>
         /// Adds elements in the span to the back of the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
         /// <param name="items">A span over elements to add.</param>
