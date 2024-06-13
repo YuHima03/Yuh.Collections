@@ -14,6 +14,9 @@ namespace Yuh.Collections
         private int _count = 0;
         private int _allocatedCount = 0; // in the range [0, 31]
 
+        private Span<T> _currentSegment;
+        private int _indexInCurrentSegment = 0;
+
         /// <summary>
         /// The number of elements that can be contained in the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
@@ -70,6 +73,15 @@ namespace Yuh.Collections
             }
 
             _count++;
+        }
+
+        private void Grow()
+        {
+            var nextSegment = GC.AllocateUninitializedArray<T>(_currentSegment.Length << 1);
+            _segments[_allocatedCount] = nextSegment;
+            _currentSegment = nextSegment.AsSpan();
+            _indexInCurrentSegment = 0;
+            _allocatedCount++;
         }
 
         /// <summary>
