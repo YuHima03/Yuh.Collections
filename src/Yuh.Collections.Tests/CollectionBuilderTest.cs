@@ -9,8 +9,7 @@ namespace Yuh.Collections.Tests
         [Fact]
         public void AddTest()
         {
-            var _container = new int[31][];
-            CollectionBuilder<int> builder = new(_container.AsSpan());
+            CollectionBuilder<int> builder = new();
             foreach (var i in Enumerable.Range(0, 100))
             {
                 builder.Add(i);
@@ -22,10 +21,22 @@ namespace Yuh.Collections.Tests
         }
 
         [Fact]
+        public void AddRangeEnumerableTest()
+        {
+            CollectionBuilder<int> builder = new();
+
+            for (int i = 0; i < 8; i++)
+            {
+                builder.AddRange(Enumerable.Range(0, 64));
+            }
+
+            OutputHelpers.OutputElements(builder.ToArray(), _out);
+        }
+
+        [Fact]
         public void AddRangeTest()
         {
-            var _container = new int[31][];
-            CollectionBuilder<int> builder = new(_container.AsSpan());
+            CollectionBuilder<int> builder = new();
 
             int[] input = [0, 1, 2, 3, 4, 5, 6, 7];
             for(int i = 0; i < 8; i++)
