@@ -68,6 +68,7 @@ namespace Yuh.Collections
             _count++;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Grow()
         {
             int nextSegmentLength = (_allocatedCount == 0) ? 1 : (_currentSegment.Length << 1);
