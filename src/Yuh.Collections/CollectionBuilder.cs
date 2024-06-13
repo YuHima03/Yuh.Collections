@@ -58,21 +58,13 @@ namespace Yuh.Collections
                 ThrowHelpers.ThrowException("This collection is already full.");
             }
 
-            int currentCapacity = (int)((1U << _allocatedCount) - 1);
-
-            if (_count == currentCapacity)
+            if (_countInCurrentSegment == _currentSegment.Length)
             {
-                var currentSegment = new T[currentCapacity + 1];
-                currentSegment[0] = item;
-                _segments[_allocatedCount] = currentSegment;
-                _allocatedCount++;
-            }
-            else
-            {
-                int destIndex = _count - (currentCapacity - (1 << (_allocatedCount - 1)));
-                _segments[_allocatedCount - 1][destIndex] = item;
+                Grow();
             }
 
+            _currentSegment[_countInCurrentSegment] = item;
+            _countInCurrentSegment++;
             _count++;
         }
 
