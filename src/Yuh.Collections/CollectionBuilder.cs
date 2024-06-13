@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using SysCollectionsMarshal = System.Runtime.InteropServices.CollectionsMarshal;
 
 namespace Yuh.Collections
 {
@@ -217,6 +218,38 @@ namespace Yuh.Collections
                 remainsCount -= currentSegmentLength;
                 currentSegmentLength = nextSegmentLength;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly T[] ToArray()
+        {
+            if (_count == 0)
+            {
+                return [];
+            }
+
+            var array = GC.AllocateUninitializedArray<T>(_count);
+            CopyTo(array.AsSpan());
+            return array;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly List<T> ToList()
+        {
+            if (_count == 0)
+            {
+                return [];
+            }
+
+#if NET8_0_OR_GREATER
+            var list = new List<T>(_count);
+            SysCollectionsMarshal.SetCount(list, _count);
+            CopyTo(SysCollectionsMarshal.AsSpan(list));
+#else
+            var list = Enumerable.Repeat(default(T)!, _count).ToList();
+            CopyTo(SysCollectionsMarshal.AsSpan(list));
+#endif
+            return list;
         }
     }
 }
