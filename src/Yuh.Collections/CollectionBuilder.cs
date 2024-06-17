@@ -104,6 +104,20 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Adds elements in a <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <remarks>
+        /// This implementation assumes that <paramref name="items"/> is NOT <see cref="ICollection{T}"/> and thus doesn't check if it is.
+        /// </remarks>
+        /// <param name="items"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddNonICollectionRange(IEnumerable<T> items)
+        {
+            ArgumentNullException.ThrowIfNull(items);
+            AddNonICollectionRangeInternal(items);
+        }
+
+        /// <remarks>
         /// This doesn't check if <paramref name="items"/> is null.
         /// </remarks>
         private void AddNonICollectionRangeInternal(IEnumerable<T> items)
