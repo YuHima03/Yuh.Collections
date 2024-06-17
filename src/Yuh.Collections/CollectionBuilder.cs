@@ -104,6 +104,27 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// This doesn't check if <paramref name="items"/> is null.
+        /// </remarks>
+        private void AddNonICollectionRangeInternal(IEnumerable<T> items)
+        {
+            var currentSegment = _currentSegment;
+
+            foreach (var item in items)
+            {
+                if (_countInCurrentSegment == currentSegment.Length)
+                {
+                    Grow();
+                    currentSegment = _currentSegment;
+                }
+
+                currentSegment[_countInCurrentSegment] = item;
+                _countInCurrentSegment++;
+                _count++;
+            }
+        }
+
+        /// <summary>
         /// Adds elements in the span to the back of the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
         /// <param name="items">A span over elements to add.</param>
