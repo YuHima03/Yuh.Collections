@@ -10,7 +10,7 @@ namespace Yuh.Collections
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     public ref struct CollectionBuilder<T>// : IDisposable
     {
-        public const int SegmentsCount = 27;
+        private const int SegmentsCount = 27;
 
         /// <summary>
         /// The minimum length of each segments.
