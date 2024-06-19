@@ -105,6 +105,7 @@ namespace Yuh.Collections
         /// Adds elements in a <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
         /// <param name="items">An <see cref="IEnumerable{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
