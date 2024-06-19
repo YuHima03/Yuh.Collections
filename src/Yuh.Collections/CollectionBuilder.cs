@@ -68,18 +68,6 @@ namespace Yuh.Collections
             _count++;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Grow()
-        {
-            var nextSegment = GC.AllocateUninitializedArray<T>(_nextSegmentLength);
-            _segments[_allocatedCount] = nextSegment;
-
-            _allocatedCount++;
-            _currentSegment = nextSegment.AsSpan();
-            _countInCurrentSegment = 0;
-            _nextSegmentLength <<= 1;
-        }
-
         /// <summary>
         /// Adds elements in a <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
@@ -231,6 +219,18 @@ namespace Yuh.Collections
                 destRef = ref Unsafe.Add(ref Unsafe.AsRef(in destRef), segmentLength);
                 remainsCount -= segment.Length;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Grow()
+        {
+            var nextSegment = GC.AllocateUninitializedArray<T>(_nextSegmentLength);
+            _segments[_allocatedCount] = nextSegment;
+
+            _allocatedCount++;
+            _currentSegment = nextSegment.AsSpan();
+            _countInCurrentSegment = 0;
+            _nextSegmentLength <<= 1;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
