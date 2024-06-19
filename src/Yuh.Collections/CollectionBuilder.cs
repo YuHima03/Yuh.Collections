@@ -100,16 +100,16 @@ namespace Yuh.Collections
         /// </remarks>
         /// <param name="items"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddNonICollectionRange(IEnumerable<T> items)
+        public void AddIEnumerableRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
-            AddNonICollectionRangeInternal(items);
+            AddIEnumerableRangeInternal(items);
         }
 
         /// <remarks>
         /// This doesn't check if <paramref name="items"/> is null.
         /// </remarks>
-        private void AddNonICollectionRangeInternal(IEnumerable<T> items)
+        private void AddIEnumerableRangeInternal(IEnumerable<T> items)
         {
             var currentSegment = _currentSegment;
 
