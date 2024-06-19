@@ -327,7 +327,7 @@ namespace Yuh.Collections
         }
 
 #if NET8_0_OR_GREATER
-        [InlineArray(27)]
+        [InlineArray(SegmentsCount)]
         private struct SegmentsArray
         {
             private T[] _value;
