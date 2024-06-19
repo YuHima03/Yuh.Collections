@@ -12,6 +12,9 @@ namespace Yuh.Collections
     {
         public const int SegmentsCount = 27;
 
+        /// <summary>
+        /// The minimum length of each segments.
+        /// </summary>
         public const int MinSegmentLength = 16;
 
         private int _allocatedCount = 0; // in the range [0, 27]
@@ -31,8 +34,15 @@ namespace Yuh.Collections
         /// </summary>
         public readonly int Count => _count;
 
+        /// <summary>
+        /// Initializes a collection builder whose fields are set to default value.
+        /// </summary>
         public CollectionBuilder() { }
 
+        /// <summary>
+        /// Initializes a collection builder whose first segment can contain exactly specified number of elements.
+        /// </summary>
+        /// <param name="firstSegmentLength">The number of elements that can be contained in the first segment.</param>
         public CollectionBuilder(int firstSegmentLength)
         {
             if (firstSegmentLength < MinSegmentLength || Array.MaxLength < firstSegmentLength)
@@ -64,6 +74,10 @@ namespace Yuh.Collections
             _count++;
         }
 
+        /// <summary>
+        /// Adds elements in an <see cref="ICollection{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>
+        /// </summary>
+        /// <param name="items">An <see cref="ICollection{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddICollectionRange(ICollection<T> items)
         {
@@ -325,6 +339,10 @@ namespace Yuh.Collections
             CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
         }
 
+        /// <summary>
+        /// Creates an array from the <see cref="CollectionBuilder{T}"/> and returns it.
+        /// </summary>
+        /// <returns>An array which contains elements copied from the <see cref="CollectionBuilder{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly T[] ToArray()
         {
@@ -338,6 +356,10 @@ namespace Yuh.Collections
             return array;
         }
 
+        /// <summary>
+        /// Creates an <see cref="List{T}"/> from the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <returns>A <see cref="List{T}"/> which contains elements copied from the <see cref="CollectionBuilder{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly List<T> ToList()
         {
