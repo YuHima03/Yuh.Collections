@@ -115,19 +115,13 @@ namespace Yuh.Collections
         {
             ArgumentNullException.ThrowIfNull(items);
 
-            var currentSegment = _currentSegment;
-
-            foreach (var item in items)
+            if (items is ICollection<T> collection)
             {
-                if (_countInCurrentSegment == currentSegment.Length)
+                AddICollectionRangeInternal(collection);
+            }
+            else
                 {
-                    Grow();
-                    currentSegment = _currentSegment;
-                }
-
-                currentSegment[_countInCurrentSegment] = item;
-                _countInCurrentSegment++;
-                _count++;
+                AddIEnumerableRange(items);
             }
         }
 
