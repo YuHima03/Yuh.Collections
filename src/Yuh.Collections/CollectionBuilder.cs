@@ -40,12 +40,6 @@ namespace Yuh.Collections
                 ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(firstSegmentLength), "The value is less than the minimum length of a segment, or greater than the maximum length of an array.");
             }
             _nextSegmentLength = firstSegmentLength;
-
-#if NET8_0_OR_GREATER
-            _segments = new();
-#else
-            _segments = GC.AllocateUninitializedArray<T[]>(27);
-#endif
         }
 
         /// <summary>
