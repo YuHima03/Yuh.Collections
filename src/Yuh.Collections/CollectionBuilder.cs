@@ -21,7 +21,7 @@ namespace Yuh.Collections
 #if NET8_0_OR_GREATER
         private SegmentsArray _segments;
 #else
-        private readonly T[][] _segments;
+        private readonly T[][] _segments = new T[SegmentsCount][];
 #endif
 
         /// <summary>
