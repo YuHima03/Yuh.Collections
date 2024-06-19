@@ -112,16 +112,20 @@ namespace Yuh.Collections
         private void AddIEnumerableRangeInternal(IEnumerable<T> items)
         {
             var currentSegment = _currentSegment;
+            ref T destRef = ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), _countInCurrentSegment);
 
-            foreach (var item in items)
+            using var enumerator = items.GetEnumerator();
+            while (enumerator.MoveNext())
             {
                 if (_countInCurrentSegment == currentSegment.Length)
                 {
                     Grow();
                     currentSegment = _currentSegment;
+                    destRef = ref MemoryMarshal.GetReference(currentSegment);
                 }
 
-                currentSegment[_countInCurrentSegment] = item;
+                destRef = enumerator.Current;
+                destRef = ref Unsafe.Add(ref destRef, 1);
                 _countInCurrentSegment++;
                 _count++;
             }
