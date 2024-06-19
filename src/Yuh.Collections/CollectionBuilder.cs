@@ -233,7 +233,7 @@ namespace Yuh.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Grow(int neededLength)
-            => GrowExact(Math.Min(neededLength, _nextSegmentLength));
+            => GrowExact(Math.Max(neededLength, _nextSegmentLength));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void GrowExact(int length)
