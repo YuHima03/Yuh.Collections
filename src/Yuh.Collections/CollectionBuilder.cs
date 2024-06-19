@@ -116,7 +116,7 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds elements in a <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
+        /// Adds elements in an <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
         /// <param name="items">An <see cref="IEnumerable{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -135,12 +135,12 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Adds elements in a <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
+        /// Adds elements in an <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
         /// <remarks>
         /// This implementation assumes that <paramref name="items"/> is NOT <see cref="ICollection{T}"/> and thus doesn't check if it is.
         /// </remarks>
-        /// <param name="items"></param>
+        /// <param name="items">An <see cref="IEnumerable{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddIEnumerableRange(IEnumerable<T> items)
         {
