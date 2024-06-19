@@ -70,6 +70,43 @@ namespace Yuh.Collections
             _count++;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddICollectionRange(ICollection<T> items)
+        {
+            ArgumentNullException.ThrowIfNull(items);
+            AddICollectionRangeInternal(items);
+        }
+
+        private void AddICollectionRangeInternal(ICollection<T> items)
+        {
+            int itemsLength = items.Count;
+            int copyStartsAt = 0;
+
+            int remainingCapacityInCurrentSegment = _currentSegment.Length - _countInCurrentSegment;
+            if (remainingCapacityInCurrentSegment == 0)
+            {
+                Grow(itemsLength);
+            }
+            else if (remainingCapacityInCurrentSegment >= itemsLength)
+            {
+                copyStartsAt = _countInCurrentSegment;
+            }
+            else if (remainingCapacityInCurrentSegment <= itemsLength - _currentSegment.Length * 2) // _countInCurrentSegment + itemsLength >= _currentSegment.Length * 3
+            {
+                ShrinkCurrentSegmentToFit();
+                Grow(itemsLength);
+            }
+            else
+            {
+                ExpandCurrentSegment(_countInCurrentSegment + itemsLength);
+                copyStartsAt = _countInCurrentSegment;
+            }
+
+            items.CopyTo(_segments[_allocatedCount - 1], copyStartsAt);
+            _count += itemsLength;
+            _countInCurrentSegment += itemsLength;
+        }
+
         /// <summary>
         /// Adds elements in a <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
