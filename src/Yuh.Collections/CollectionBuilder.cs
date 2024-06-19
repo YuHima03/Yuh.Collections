@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SysCollectionsMarshal = System.Runtime.InteropServices.CollectionsMarshal;
 
@@ -231,6 +231,23 @@ namespace Yuh.Collections
             _currentSegment = nextSegment.AsSpan();
             _countInCurrentSegment = 0;
             _nextSegmentLength <<= 1;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ResizeCurrentSegment(int length)
+        {
+            var newSegment = GC.AllocateUninitializedArray<T>(length);
+            var countInNewSegment = Math.Min(length, _currentSegment.Length);
+            ref var currentSegmentRef = ref MemoryMarshal.GetReference(_currentSegment);
+
+            MemoryMarshal.CreateReadOnlySpan(ref currentSegmentRef, countInNewSegment).CopyTo(newSegment);
+            CollectionHelpers.ClearIfReferenceOrContainsReferences(
+                MemoryMarshal.CreateSpan(ref currentSegmentRef, _countInCurrentSegment)
+            );
+
+            _segments[_allocatedCount - 1] = newSegment;
+            _currentSegment = newSegment.AsSpan();
+            _countInCurrentSegment = countInNewSegment;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
