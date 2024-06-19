@@ -226,6 +226,10 @@ namespace Yuh.Collections
             => GrowExact(_nextSegmentLength);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Grow(int neededLength)
+            => GrowExact(Math.Min(neededLength, _nextSegmentLength));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void GrowExact(int length)
         {
             var newSegment = GC.AllocateUninitializedArray<T>(length);
