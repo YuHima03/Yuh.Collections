@@ -131,7 +131,7 @@ namespace Yuh.Collections
         /// Adds elements in the span to the back of the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
         /// <param name="items">A span over elements to add.</param>
-        /// <exception cref="ArgumentException">The <see cref="CollectionBuilder{T}"/> doesn't have enough space to accomodate elements contained in <paramref name="items"/>.</exception>
+        /// <exception cref="ArgumentException">The <see cref="CollectionBuilder{T}"/> doesn't have enough space to accommodate elements contained in <paramref name="items"/>.</exception>
         public void AddRange(ReadOnlySpan<T> items)
         {
             if (items.Length == 0)
@@ -141,7 +141,7 @@ namespace Yuh.Collections
 
             if (items.Length > Array.MaxLength - _count) // use this way to avoid overflow
             {
-                ThrowHelpers.ThrowArgumentException("This collection doesn't have enough space to accomodate elements of the specified span.", nameof(items));
+                ThrowHelpers.ThrowArgumentException("This collection doesn't have enough space to accommodate elements of the specified span.", nameof(items));
             }
 
             int newCount = _count + items.Length;
@@ -188,7 +188,7 @@ namespace Yuh.Collections
         /// Copies elements in the <see cref="CollectionBuilder{T}"/> to the specified span.
         /// </summary>
         /// <param name="destination"></param>
-        /// <exception cref="ArgumentException"><paramref name="destination"/> doesn't have enough space to accomodate elements copied.</exception>
+        /// <exception cref="ArgumentException"><paramref name="destination"/> doesn't have enough space to accommodate elements copied.</exception>
         public readonly void CopyTo(Span<T> destination)
         {
             if (_count == 0)
@@ -198,7 +198,7 @@ namespace Yuh.Collections
 
             if (destination.Length < _count)
             {
-                ThrowHelpers.ThrowArgumentException("The destination span doesn't have enough space to accomodate elements in this collection.", nameof(destination));
+                ThrowHelpers.ThrowArgumentException("The destination span doesn't have enough space to accommodate elements in this collection.", nameof(destination));
             }
 
             int remainsCount = _count;
