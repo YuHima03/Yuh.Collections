@@ -223,7 +223,7 @@ namespace Yuh.Collections
 
                 segment.AsSpan().CopyTo(MemoryMarshal.CreateSpan(ref destRef, segmentLength));
                 destRef = ref Unsafe.Add(ref Unsafe.AsRef(in destRef), segmentLength);
-                remainsCount -= segment.Length;
+                remainsCount -= segmentLength;
             }
         }
 
