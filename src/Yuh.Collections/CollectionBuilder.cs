@@ -16,7 +16,7 @@ namespace Yuh.Collections
         private int _count = 0;
         private Span<T> _currentSegment = [];
         private int _countInCurrentSegment = 0;
-        private readonly int _firstSegmentLength = MinSegmentLength;
+        private int _nextSegmentLength = MinSegmentLength;
 
 #if NET8_0_OR_GREATER
         private SegmentsArray _segments;
@@ -37,7 +37,7 @@ namespace Yuh.Collections
             {
                 ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(firstSegmentLength), "The value is less than the minimum length of a segment, or greater than the maximum length of an array.");
             }
-            _firstSegmentLength = firstSegmentLength;
+            _nextSegmentLength = firstSegmentLength;
 
 #if NET8_0_OR_GREATER
             _segments = new();
@@ -71,12 +71,13 @@ namespace Yuh.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Grow()
         {
-            int nextSegmentLength = _firstSegmentLength << _allocatedCount;
-            var nextSegment = GC.AllocateUninitializedArray<T>(nextSegmentLength);
+            var nextSegment = GC.AllocateUninitializedArray<T>(_nextSegmentLength);
             _segments[_allocatedCount] = nextSegment;
+
+            _allocatedCount++;
             _currentSegment = nextSegment.AsSpan();
             _countInCurrentSegment = 0;
-            _allocatedCount++;
+            _nextSegmentLength <<= 1;
         }
 
         /// <summary>
@@ -212,7 +213,6 @@ namespace Yuh.Collections
                 ThrowHelpers.ThrowArgumentException("The destination span doesn't have enough space to accomodate elements in this collection.", nameof(destination));
             }
 
-            int currentSegmentLength = _firstSegmentLength;
             int remainsCount = _count;
             ref T destRef = ref MemoryMarshal.GetReference(destination);
 
