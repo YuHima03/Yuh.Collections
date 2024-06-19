@@ -115,7 +115,7 @@ namespace Yuh.Collections
                 AddICollectionRangeInternal(collection);
             }
             else
-                {
+            {
                 AddIEnumerableRange(items);
             }
         }
@@ -361,7 +361,9 @@ namespace Yuh.Collections
         [InlineArray(SegmentsCount)]
         private struct SegmentsArray
         {
+#pragma warning disable IDE0051, IDE0044
             private T[] _value;
+#pragma warning restore IDE0051, IDE0044
         }
 #endif
     }
