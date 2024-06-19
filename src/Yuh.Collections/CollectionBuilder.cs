@@ -258,6 +258,36 @@ namespace Yuh.Collections
             _countInCurrentSegment = countInNewSegment;
         }
 
+        [method: MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ExpandCurrentSegment(int length)
+        {
+            var newSegment = GC.AllocateUninitializedArray<T>(length);
+            var newSegmentSpan = newSegment.AsSpan();
+
+            var src = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment);
+            src.CopyTo(newSegmentSpan);
+
+            _segments[_allocatedCount - 1] = newSegment;
+            _currentSegment = newSegmentSpan;
+
+            CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ShrinkCurrentSegmentToFit()
+        {
+            var newSegment = GC.AllocateUninitializedArray<T>(_countInCurrentSegment);
+            var newSegmentSpan = newSegment.AsSpan();
+
+            var src = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment);
+            src.CopyTo(newSegmentSpan);
+
+            _segments[_allocatedCount - 1] = newSegment;
+            _currentSegment = newSegmentSpan;
+
+            CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly T[] ToArray()
         {
