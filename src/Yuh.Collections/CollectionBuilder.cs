@@ -238,6 +238,11 @@ namespace Yuh.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void GrowExact(int length)
         {
+            if (_allocatedCount == SegmentsCount)
+            {
+                ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+            }
+
             var newSegment = GC.AllocateUninitializedArray<T>(length);
             _segments[_allocatedCount] = newSegment;
 
