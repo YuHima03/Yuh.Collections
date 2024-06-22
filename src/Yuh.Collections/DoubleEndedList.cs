@@ -187,6 +187,13 @@ namespace Yuh.Collections
             _version++;
         }
 
+        internal DoubleEndedList(T[] innerArray, int head, int count)
+        {
+            _count = count;
+            _head = head;
+            _items = innerArray;
+        }
+
         int IList.Add(object? value)
         {
             if (value is T tValue)
