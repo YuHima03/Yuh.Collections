@@ -267,6 +267,16 @@ namespace Yuh.Collections
             }
         }
 
+        public int GetAllocatedCapacity()
+        {
+            int capacity = 0;
+            for (int i = 0; i < _allocatedCount; i++)
+            {
+                capacity += _segments[i].Length;
+            }
+            return capacity;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Grow()
             => GrowExact(_nextSegmentLength);
