@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Runtime.InteropServices;
 using System.Text;
+using SysCollectionsMarshal = System.Runtime.InteropServices.CollectionsMarshal;
 
 namespace Yuh.Collections
 {
@@ -40,6 +41,37 @@ namespace Yuh.Collections
             );
             return new(values, head, length);
         }
+
+        /// <summary>
+        /// Creates a <see cref="List{T}"/> from the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <param name="builder">A <see cref="CollectionBuilder{T}"/> whose elements are copied to the new <see cref="List{T}"/>.</param>
+        /// <returns>A <see cref="List{T}"/> which contains elements copied from the <see cref="CollectionBuilder{T}"/>.</returns>
+        public static List<T> ToList<T>(in this CollectionBuilder<T> builder)
+        {
+            int capacity = builder.GetAllocatedCapacity();
+            int length = builder.Count;
+
+            List<T> list = new(capacity);
+#if NET8_0_OR_GREATER
+            SysCollectionsMarshal.SetCount(list, length);
+            builder.CopyTo(SysCollectionsMarshal.AsSpan(list));
+            return list;
+#else
+            if (length <= 1024 * 1024)
+            {
+                T[] values = ArrayPool<T>.Shared.Rent(capacity);
+                builder.CopyTo(values.AsSpan());
+                list.AddRange(values);
+                ArrayPool<T>.Shared.Return(values);
+            }
+            else
+            {
+                list.AddRange(builder.ToArray());
+            }
+            return list;
+        }
+#endif
 
         /// <summary>
         /// Creates a <see cref="string"/> from the <see cref="CollectionBuilder{T}"/>.
