@@ -56,7 +56,6 @@ namespace Yuh.Collections
 #if NET8_0_OR_GREATER
             SysCollectionsMarshal.SetCount(list, length);
             builder.CopyTo(SysCollectionsMarshal.AsSpan(list));
-            return list;
 #else
             if (length <= 1024 * 1024)
             {
@@ -69,9 +68,9 @@ namespace Yuh.Collections
             {
                 list.AddRange(builder.ToArray());
             }
+#endif
             return list;
         }
-#endif
 
         /// <summary>
         /// Creates a <see cref="string"/> from the <see cref="CollectionBuilder{T}"/>.
