@@ -46,7 +46,7 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="builder">A <see cref="CollectionBuilder{T}"/> whose elements (characters) are copied to the new <see cref="string"/>.</param>
         /// <returns>A new <see cref="string"/> whose characters are copied from the <see cref="CollectionBuilder{T}"/>.</returns>
-        public static string ToString(in this CollectionBuilder<char> builder)
+        public static string ToBasicString(in this CollectionBuilder<char> builder)
         {
             int length = builder.Count;
             if (length <= 1024)
