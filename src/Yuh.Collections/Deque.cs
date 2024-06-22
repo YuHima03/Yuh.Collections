@@ -249,6 +249,14 @@ namespace Yuh.Collections
             _head = 0;
         }
 
+        internal Deque(T[] innerArray, int head, int count)
+        {
+            _capacity = innerArray.Length;
+            _count = count;
+            _head = head;
+            _items = innerArray;
+        }
+
         void ICollection<T>.Add(T item)
         {
             PushBack(item);
