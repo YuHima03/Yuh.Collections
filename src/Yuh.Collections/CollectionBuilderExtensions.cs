@@ -10,11 +10,11 @@ namespace Yuh.Collections
     public static class CollectionBuilderExtensions
     {
         /// <summary>
-        /// Creates a new instance of the <see cref="Deque{T}"/> class that contains elements copied from the <see cref="CollectionBuilder{T}"/>.
+        /// Creates a <see cref="Deque{T}"/> from the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
         /// <typeparam name="T">The type of elements of the collection.</typeparam>
         /// <param name="builder">A <see cref="CollectionBuilder{T}"/> whose elements are copied to the new <see cref="Deque{T}"/>.</param>
-        /// <returns>A new <see cref="Deque{T}"/> whose elements are copied from the <see cref="CollectionBuilder{T}"/>.</returns>
+        /// <returns>A <see cref="Deque{T}"/> which contains elements are copied from the <see cref="CollectionBuilder{T}"/>.</returns>
         public static Deque<T> ToDeque<T>(in this CollectionBuilder<T> builder)
         {
             T[] values = new T[builder.GetAllocatedCapacity()];
@@ -23,11 +23,11 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Creates a new instance of the <see cref="DoubleEndedList{T}"/> class that contains elements copied from the <see cref="CollectionBuilder{T}"/>.
+        /// Creates <see cref="DoubleEndedList{T}"/> from the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
         /// <typeparam name="T">The type of elements of the collection.</typeparam>
         /// <param name="builder">A <see cref="CollectionBuilder{T}"/> whose elements are copied to the new <see cref="DoubleEndedList{T}"/>.</param>
-        /// <returns>A new <see cref="DoubleEndedList{T}"/> whose elements are copied from the <see cref="CollectionBuilder{T}"/>.</returns>
+        /// <returns>A <see cref="DoubleEndedList{T}"/> which contains elements are copied from the <see cref="CollectionBuilder{T}"/>.</returns>
         public static DoubleEndedList<T> ToDoubleEndedList<T>(in this CollectionBuilder<T> builder)
         {
             int capacity = builder.GetAllocatedCapacity();
@@ -42,10 +42,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Creates a new <see cref="string"/> from the <see cref="CollectionBuilder{T}"/> the type of which is <see cref="char"/>.
+        /// Creates a <see cref="string"/> from the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
         /// <param name="builder">A <see cref="CollectionBuilder{T}"/> whose elements (characters) are copied to the new <see cref="string"/>.</param>
-        /// <returns>A new <see cref="string"/> whose characters are copied from the <see cref="CollectionBuilder{T}"/>.</returns>
+        /// <returns>A <see cref="string"/> which contains characters are copied from the <see cref="CollectionBuilder{T}"/>.</returns>
         public static string ToBasicString(in this CollectionBuilder<char> builder)
         {
             int length = builder.Count;
@@ -68,10 +68,10 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Creates a new instance of the <see cref="StringBuilder"/> class that contains characters copied from the <see cref="CollectionBuilder{T}"/>.
+        /// Creates <see cref="StringBuilder"/> from the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
         /// <param name="builder">A <see cref="CollectionBuilder{T}"/> whose elements (characters) are copied to the new <see cref="StringBuilder"/>.</param>
-        /// <returns>A new <see cref="StringBuilder"/> whose characters are copied from the <see cref="CollectionBuilder{T}"/>.</returns>
+        /// <returns>A <see cref="StringBuilder"/> which contains characters are copied from the <see cref="CollectionBuilder{T}"/>.</returns>
         public static StringBuilder ToStringBuilder(in this CollectionBuilder<char> builder)
         {
             int length = builder.Count;
