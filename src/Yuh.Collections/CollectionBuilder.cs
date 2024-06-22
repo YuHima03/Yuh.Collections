@@ -267,6 +267,10 @@ namespace Yuh.Collections
             }
         }
 
+        /// <summary>
+        /// Returns the number of elements that can be contained in the <see cref="CollectionBuilder{T}"/> without allocate new internal array.
+        /// </summary>
+        /// <returns>The number of elements that can be contained in the <see cref="CollectionBuilder{T}"/> without allocating new internal array.</returns>
         public int GetAllocatedCapacity()
         {
             int capacity = 0;
