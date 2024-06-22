@@ -349,29 +349,6 @@ namespace Yuh.Collections
             return array;
         }
 
-        /// <summary>
-        /// Creates an <see cref="List{T}"/> from the <see cref="CollectionBuilder{T}"/>.
-        /// </summary>
-        /// <returns>A <see cref="List{T}"/> which contains elements copied from the <see cref="CollectionBuilder{T}"/>.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly List<T> ToList()
-        {
-            if (_count == 0)
-            {
-                return [];
-            }
-
-#if NET8_0_OR_GREATER
-            var list = new List<T>(_count);
-            SysCollectionsMarshal.SetCount(list, _count);
-            CopyTo(SysCollectionsMarshal.AsSpan(list));
-#else
-            var list = Enumerable.Repeat(default(T)!, _count).ToList();
-            CopyTo(SysCollectionsMarshal.AsSpan(list));
-#endif
-            return list;
-        }
-
 #if NET8_0_OR_GREATER
         [InlineArray(SegmentsCount)]
         private struct SegmentsArray
