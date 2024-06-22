@@ -6,6 +6,26 @@ namespace Yuh.Collections
 {
     public static class CollectionBuilderExtensions
     {
+        public static Deque<T> ToDeque<T>(in this CollectionBuilder<T> builder)
+        {
+            T[] values = new T[builder.GetAllocatedCapacity()];
+            builder.CopyTo(values.AsSpan());
+            return new(values, 0, builder.Count);
+        }
+
+        public static Deque<T> ToDoubleEndedList<T>(in this CollectionBuilder<T> builder)
+        {
+            int capacity = builder.GetAllocatedCapacity();
+            int length = builder.Count;
+            int head = (capacity - length) >> 1;
+            T[] values = new T[capacity];
+
+            builder.CopyTo(
+                MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(values), head)
+            );
+            return new(values, head, length);
+        }
+
         public static string ToString(in this CollectionBuilder<char> builder)
         {
             int length = builder.Count;
