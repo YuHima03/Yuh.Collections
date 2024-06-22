@@ -28,7 +28,7 @@ namespace Yuh.Collections
         /// <typeparam name="T">The type of elements of the collection.</typeparam>
         /// <param name="builder">A <see cref="CollectionBuilder{T}"/> whose elements are copied to the new <see cref="DoubleEndedList{T}"/>.</param>
         /// <returns>A new <see cref="DoubleEndedList{T}"/> whose elements are copied from the <see cref="CollectionBuilder{T}"/>.</returns>
-        public static Deque<T> ToDoubleEndedList<T>(in this CollectionBuilder<T> builder)
+        public static DoubleEndedList<T> ToDoubleEndedList<T>(in this CollectionBuilder<T> builder)
         {
             int capacity = builder.GetAllocatedCapacity();
             int length = builder.Count;
