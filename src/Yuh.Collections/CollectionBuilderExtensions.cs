@@ -86,7 +86,7 @@ namespace Yuh.Collections
                 builder.CopyTo(chars);
                 return new(chars);
             }
-            else
+            else if (length <= 1024 * 1024)
             {
                 var charsArray = ArrayPool<char>.Shared.Rent(length);
                 var chars = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(charsArray), length);
@@ -95,6 +95,10 @@ namespace Yuh.Collections
 
                 ArrayPool<char>.Shared.Return(charsArray);
                 return s;
+            }
+            else
+            {
+                return new(builder.ToArray());
             }
         }
 
@@ -113,7 +117,7 @@ namespace Yuh.Collections
                 builder.CopyTo(chars);
                 return sb.Append(chars);
             }
-            else
+            else if (length <= 1024 * 1024)
             {
                 var charsArray = ArrayPool<char>.Shared.Rent(length);
                 var chars = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(charsArray), length);
@@ -122,6 +126,10 @@ namespace Yuh.Collections
 
                 ArrayPool<char>.Shared.Return(charsArray);
                 return sb;
+            }
+            else
+            {
+                return sb.Append(builder.ToArray());
             }
         }
     }
