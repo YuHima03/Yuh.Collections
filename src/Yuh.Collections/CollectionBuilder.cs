@@ -267,6 +267,20 @@ namespace Yuh.Collections
             }
         }
 
+        /// <summary>
+        /// Returns the number of elements that can be contained in the <see cref="CollectionBuilder{T}"/> without allocate new internal array.
+        /// </summary>
+        /// <returns>The number of elements that can be contained in the <see cref="CollectionBuilder{T}"/> without allocating new internal array.</returns>
+        public readonly int GetAllocatedCapacity()
+        {
+            int capacity = 0;
+            for (int i = 0; i < _allocatedCount; i++)
+            {
+                capacity += _segments[i].Length;
+            }
+            return capacity;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Grow()
             => GrowExact(_nextSegmentLength);
@@ -337,29 +351,6 @@ namespace Yuh.Collections
             var array = GC.AllocateUninitializedArray<T>(_count);
             CopyTo(array.AsSpan());
             return array;
-        }
-
-        /// <summary>
-        /// Creates an <see cref="List{T}"/> from the <see cref="CollectionBuilder{T}"/>.
-        /// </summary>
-        /// <returns>A <see cref="List{T}"/> which contains elements copied from the <see cref="CollectionBuilder{T}"/>.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly List<T> ToList()
-        {
-            if (_count == 0)
-            {
-                return [];
-            }
-
-#if NET8_0_OR_GREATER
-            var list = new List<T>(_count);
-            SysCollectionsMarshal.SetCount(list, _count);
-            CopyTo(SysCollectionsMarshal.AsSpan(list));
-#else
-            var list = Enumerable.Repeat(default(T)!, _count).ToList();
-            CopyTo(SysCollectionsMarshal.AsSpan(list));
-#endif
-            return list;
         }
 
 #if NET8_0_OR_GREATER
