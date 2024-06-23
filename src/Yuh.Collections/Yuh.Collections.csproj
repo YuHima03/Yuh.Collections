@@ -24,7 +24,7 @@
     <Description>Provides collection types and searching methods.</Description>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>Fixed a critical bug in the `Deque&lt;T&gt;` class.</PackageReleaseNotes>
+    <PackageReleaseNotes></PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
