@@ -6,6 +6,18 @@ This library provides collection types including deque, and also provides method
 
 ## Features
 
+### Advanced Collection Types
+
+#### Deque
+
+Deque (double-ended-queue) supports addition or removal of elements at the front or back of collection in constant time.
+In other words, deque has features of both stack and queue.
+
+#### Collection Builder
+
+Collection-builder is literally used to build collections such as array, list, string and so on.
+Extension methods for `IEnumerable<T>` perform little better than the collection-builder in this library, but the collection-builder supports merging `IEnumerable<T>`s like `StringBuilder` class.
+
 ### Aggressive Use of Span&lt;T&gt;
 
 We actively use Span&lt;T&gt; or ReadOnlySpan&lt;T&gt; as a argument of methods or in internal implementations.
@@ -13,25 +25,6 @@ This enables functions to run faster and save memory.
 
 We also provide collection types that can be converted to Span&lt;T&gt; or ReadOnlySpan&lt;T&gt;.
 
-### Performance-oriented Implementation
+## How to Install
 
-We focus on making functions perform better.
-We not only use Span&lt;T&gt;, but also use throwing-methods instead of throw-statements so that .NET Runtime can inline methods.
-
----
-
-## 概要
-
-両端キュー (deque) を含むコレクション型や, 探索に使う関数群を提供します.
-
-## 特徴
-
-### Span&lt;T&gt; を積極的に利用
-
-Span&lt;T&gt; や ReadOnlySpan&lt;T&gt; をメソッドの引数や内部実装に積極的に採用し, 高速かつ余計なメモリ領域を占領しない動作を実現しています.
-
-また, Span&lt;T&gt; や ReadOnlySpan&lt;T&gt; への変換に対応したコレクション型も提供しています.
-
-### 徹底的にパフォーマンスを重視した実装
-
-Span&lt;T&gt; の活用はもちろん, 例外のスローを別の関数に任せることでインライン化による高速化を図るなどしています.
+To install this library into your projects, please visit [here](https://www.nuget.org/packages/Yuh.Collections) (NuGet) and install the NuGet package in the way you like.
