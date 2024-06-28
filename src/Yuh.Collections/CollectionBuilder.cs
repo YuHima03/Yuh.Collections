@@ -25,8 +25,6 @@ namespace Yuh.Collections
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     public ref struct CollectionBuilder<T>// : IDisposable
     {
-        private const int SegmentsCount = 27;
-
         /// <summary>
         /// The minimum length of each segments.
         /// </summary>
@@ -41,7 +39,7 @@ namespace Yuh.Collections
 #if NET8_0_OR_GREATER
         private CollectionBuilder.SegmentsArray<T> _segments;
 #else
-        private readonly T[][] _segments = new T[SegmentsCount][];
+        private readonly T[][] _segments = new T[CollectionBuilder.SegmentsCount][];
 #endif
 
         /// <summary>
