@@ -6,6 +6,11 @@ namespace Yuh.Collections
 {
     public static class CollectionBuilder
     {
+        /// <summary>
+        /// The minimum length of each segments.
+        /// </summary>
+        public const int MinSegmentLength = 16;
+
         internal const int SegmentsCount = 27;
 
 #if NET8_0_OR_GREATER
@@ -25,16 +30,12 @@ namespace Yuh.Collections
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     public ref struct CollectionBuilder<T>// : IDisposable
     {
-        /// <summary>
-        /// The minimum length of each segments.
-        /// </summary>
-        public const int MinSegmentLength = 16;
 
         private int _allocatedCount = 0; // in the range [0, 27]
         private int _count = 0;
         private Span<T> _currentSegment = [];
         private int _countInCurrentSegment = 0;
-        private int _nextSegmentLength = MinSegmentLength;
+        private int _nextSegmentLength = CollectionBuilder.MinSegmentLength;
 
 #if NET8_0_OR_GREATER
         private CollectionBuilder.SegmentsArray<T> _segments;
@@ -58,7 +59,7 @@ namespace Yuh.Collections
         /// <param name="firstSegmentLength">The number of elements that can be contained in the first segment.</param>
         public CollectionBuilder(int firstSegmentLength)
         {
-            if (firstSegmentLength < MinSegmentLength || Array.MaxLength < firstSegmentLength)
+            if (firstSegmentLength < CollectionBuilder.MinSegmentLength || Array.MaxLength < firstSegmentLength)
             {
                 ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(firstSegmentLength), "The value is less than the minimum length of a segment, or greater than the maximum length of an array.");
             }
@@ -305,7 +306,7 @@ namespace Yuh.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void GrowExact(int length)
         {
-            if (_allocatedCount == SegmentsCount)
+            if (_allocatedCount == CollectionBuilder.SegmentsCount)
             {
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
