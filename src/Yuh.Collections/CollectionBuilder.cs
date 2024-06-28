@@ -4,13 +4,13 @@ using SysCollectionsMarshal = System.Runtime.InteropServices.CollectionsMarshal;
 
 namespace Yuh.Collections
 {
-    internal static class CollectionBuilder
+    public static class CollectionBuilder
     {
-        public const int SegmentsCount = 27;
+        internal const int SegmentsCount = 27;
 
 #if NET8_0_OR_GREATER
         [InlineArray(SegmentsCount)]
-        public struct SegmentsArray<T>
+        internal struct SegmentsArray<T>
         {
 #pragma warning disable IDE0051, IDE0044
             private T[] _value;
