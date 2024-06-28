@@ -4,6 +4,21 @@ using SysCollectionsMarshal = System.Runtime.InteropServices.CollectionsMarshal;
 
 namespace Yuh.Collections
 {
+    internal static class CollectionBuilder
+    {
+        public const int SegmentsCount = 27;
+
+#if NET8_0_OR_GREATER
+        [InlineArray(SegmentsCount)]
+        public struct SegmentsArray<T>
+        {
+#pragma warning disable IDE0051, IDE0044
+            private T[] _value;
+#pragma warning restore IDE0051, IDE0044
+        }
+#endif
+    }
+
     /// <summary>
     /// Represents a temporary collection that is used to build new collections.
     /// </summary>
@@ -24,7 +39,7 @@ namespace Yuh.Collections
         private int _nextSegmentLength = MinSegmentLength;
 
 #if NET8_0_OR_GREATER
-        private SegmentsArray _segments;
+        private CollectionBuilder.SegmentsArray<T> _segments;
 #else
         private readonly T[][] _segments = new T[SegmentsCount][];
 #endif
@@ -352,15 +367,5 @@ namespace Yuh.Collections
             CopyTo(array.AsSpan());
             return array;
         }
-
-#if NET8_0_OR_GREATER
-        [InlineArray(SegmentsCount)]
-        private struct SegmentsArray
-        {
-#pragma warning disable IDE0051, IDE0044
-            private T[] _value;
-#pragma warning restore IDE0051, IDE0044
-        }
-#endif
     }
 }
