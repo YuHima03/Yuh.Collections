@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Yuh.Collections
 {
@@ -30,6 +31,38 @@ namespace Yuh.Collections
                 span1.Clear();
                 span2.Clear();
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool TryGetReadOnlySpan<T>(IEnumerable<T> items, out ReadOnlySpan<T> span)
+        {
+            var itemsType = items.GetType();
+            var TType = typeof(T);
+
+            if (itemsType == typeof(T[]))
+            {
+                span = Unsafe.As<T[]>(items).AsSpan();
+                return true;
+            }
+            else if (itemsType == typeof(List<T>))
+            {
+                span = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(Unsafe.As<List<T>>(items));
+                return true;
+            }
+            else if (itemsType == typeof(DoubleEndedList<T>))
+            {
+                span = Unsafe.As<DoubleEndedList<T>>(items).AsSpan();
+                return true;
+            }
+            else if (TType == typeof(char) && itemsType == typeof(string))
+            {
+                var TSpan = Unsafe.As<string>(items).AsSpan();
+                span = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<char, T>(ref MemoryMarshal.GetReference(TSpan)), TSpan.Length);
+                return true;
+            }
+
+            span = default;
+            return false;
         }
     }
 }
