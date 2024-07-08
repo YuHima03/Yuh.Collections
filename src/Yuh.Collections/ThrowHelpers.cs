@@ -7,6 +7,8 @@ namespace Yuh.Collections
     {
         internal const string M_CapacityReachedUpperLimit = "The capacity of the collection has reached its upper limit.";
 
+        internal const string M_CollectionHasNoEnoughSpaceToAccommodateItems = "This collection doesn't have enough space to accommodate the items.";
+
         internal const string M_CollectionIsEmpty = "The collection is empty.";
 
         internal const string M_CollectionModifiedAfterEnumeratorCreated = "The collection was modified after the enumerator was created.";
