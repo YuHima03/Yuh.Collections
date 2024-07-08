@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using SysCollectionsMarshal = System.Runtime.InteropServices.CollectionsMarshal;
 
 namespace Yuh.Collections
 {
@@ -30,7 +29,6 @@ namespace Yuh.Collections
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     public ref struct CollectionBuilder<T>// : IDisposable
     {
-
         private int _allocatedCount = 0; // in the range [0, 27]
         private int _count = 0;
         private Span<T> _currentSegment = [];
