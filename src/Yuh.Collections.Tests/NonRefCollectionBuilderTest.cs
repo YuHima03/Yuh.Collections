@@ -6,7 +6,7 @@
         private const int InsertionCount = 16;
         private const int TotalCount = CollectionLength * InsertionCount;
 
-        private static readonly IEnumerable<int> TestEnumerable = Enumerable.Range(0, CollectionLength); 
+        private static readonly IEnumerable<int> TestEnumerable = Enumerable.Range(0, CollectionLength);
 
         [Fact]
         public void AddRangeICollectionTest()
@@ -55,6 +55,36 @@
             }
 
             Assert.Equal(builder.ToArray(), list);
+        }
+
+        [Fact]
+        public void AddValueTest()
+        {
+            NonRefCollectionBuilder<char> builder = new();
+            try
+            {
+                builder.AddFormatted(int.MaxValue, 12);
+                builder.Add('\n');
+                builder.AddFormatted(int.MinValue, 12);
+                builder.Add('\n');
+                builder.AddFormatted(long.MaxValue, 12);
+                builder.Add('\n');
+                builder.AddFormatted(long.MinValue, 12);
+
+                Assert.Equal(
+                    builder.ToArray(),
+                    $"""
+                    {int.MaxValue}
+                    {int.MinValue}
+                    {long.MaxValue}
+                    {long.MinValue}
+                    """.ReplaceLineEndings("\n")
+                );
+            }
+            finally
+            {
+                builder.Dispose();
+            }
         }
     }
 }
