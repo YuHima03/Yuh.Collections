@@ -55,6 +55,10 @@ namespace Yuh.Collections
             {
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
+            else if (_count == 0)
+            {
+                Grow();
+            }
 
             var currentSegmentLength = _segments.CurrentSegmentLength;
             if (_countInCurrentSegment == currentSegmentLength)
