@@ -336,6 +336,86 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Reserves contiguous region of memory from the <see cref="NonRefCollectionBuilder{T}"/> to write specified number of elements and returns span over the memory region.
+        /// </summary>
+        /// <param name="length">The length of the returned span.</param>
+        /// <returns>The span over the <see cref="NonRefCollectionBuilder{T}"/> which can accommodate exactly specified number of elements.</returns>
+        public Span<T> ReserveRange(int length)
+        {
+            if (Array.MaxLength - _count < length)
+            {
+                ThrowHelpers.ThrowArgumentException("The value is greater than the maximum number of elements that can be added to this collection.", nameof(length));
+            }
+            if (length == 0)
+            {
+                return [];
+            }
+
+            Span<T> currentSegment;
+
+            if (_allocatedCount == 0 || _countInCurrentSegment == (currentSegment = _segments[_allocatedCount - 1]).Length)
+            {
+                Grow(Math.Max(length, _segments.DefaultNextSegmentLength));
+                _count += length;
+                _countInCurrentSegment += length;
+                return MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_segments[_allocatedCount - 1]), length);
+            }
+
+            Span<T> dest;
+            _segments.ExpandCurrentSegmentWithoutResizing();
+
+            if (currentSegment.Length - _countInCurrentSegment >= length)
+            {
+                dest = MemoryMarshal.CreateSpan(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), _countInCurrentSegment),
+                    length
+                );
+            }
+            else if (_countInCurrentSegment + length < checked(_segments.DefaultNextSegmentLength + currentSegment.Length))
+            {
+                _segments.ExpandCurrentSegment(_countInCurrentSegment + length);
+                dest = MemoryMarshal.CreateSpan(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(_segments[_allocatedCount - 1]), _countInCurrentSegment),
+                    length
+                );
+            }
+            else
+            {
+                _segments.ShrinkCurrentSegment(_countInCurrentSegment);
+                Grow(_countInCurrentSegment); // it is ensured that `_countInCurrentSegment` is greater than `_segment.DefaultNextSegmentLength`
+                dest = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_segments[_allocatedCount - 1]), length);
+            }
+
+            _count += length;
+            _countInCurrentSegment += length;
+            return dest;
+        }
+
+        /// <summary>
+        /// Remove specified number of elements from the back of the <see cref="NonRefCollectionBuilder{T}"/>.
+        /// </summary>
+        /// <param name="length">The number of elements to remove.</param>
+        public void RemoveRange(int length)
+        {
+            if ((uint)length > (uint)_countInCurrentSegment)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(length), "The value is greater than the number of elements that can be removed.");
+            }
+            
+            _count -= length;
+            _countInCurrentSegment -= length;
+
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            {
+                var span = MemoryMarshal.CreateSpan(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(_segments[_allocatedCount - 1]), _countInCurrentSegment),
+                    length
+                );
+                span.Clear();
+            }
+        }
+
+        /// <summary>
         /// Creates an array from the <see cref="NonRefCollectionBuilder{T}"/> and returns it.
         /// </summary>
         /// <returns>An array which contains elements copied from the <see cref="NonRefCollectionBuilder{T}"/>.</returns>
