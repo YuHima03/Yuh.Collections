@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -13,14 +14,6 @@ namespace Yuh.Collections
         internal const int SegmentsCount = 27;
 
 #if NET8_0_OR_GREATER
-        [InlineArray(SegmentsCount)]
-        internal struct SegmentsArray<T>
-        {
-#pragma warning disable IDE0051, IDE0044
-            private T[] _value;
-#pragma warning restore IDE0051, IDE0044
-        }
-
         [InlineArray(SegmentsCount)]
         internal struct Array27<T>
         {
@@ -39,15 +32,10 @@ namespace Yuh.Collections
     {
         private int _allocatedCount = 0; // in the range [0, 27]
         private int _count = 0;
-        private Span<T> _currentSegment = [];
         private int _countInCurrentSegment = 0;
-        private int _nextSegmentLength = CollectionBuilder.MinSegmentLength;
+        private Span<T> _currentSegment = [];
 
-#if NET8_0_OR_GREATER
-        private CollectionBuilder.SegmentsArray<T> _segments;
-#else
-        private readonly T[][] _segments = new T[CollectionBuilder.SegmentsCount][];
-#endif
+        private BuffersContainer<T> _segments = new();
 
         /// <summary>
         /// Gets the number of elements contained in the <see cref="CollectionBuilder{T}"/>.
@@ -65,193 +53,270 @@ namespace Yuh.Collections
         /// <param name="firstSegmentLength">The number of elements that can be contained in the first segment.</param>
         public CollectionBuilder(int firstSegmentLength)
         {
-            if (firstSegmentLength < CollectionBuilder.MinSegmentLength || Array.MaxLength < firstSegmentLength)
-            {
-                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(firstSegmentLength), "The value is less than the minimum length of a segment, or greater than the maximum length of an array.");
-            }
-            _nextSegmentLength = firstSegmentLength;
+            _segments = new(firstSegmentLength);
+        }
+
+        /// <inheritdoc/>
+        public readonly void Dispose()
+        {
+            _segments.Dispose();
         }
 
         /// <summary>
-        /// Adds a element to the back of the <see cref="CollectionBuilder{T}"/>.
+        /// Adds a element to the back of the <see cref="NonRefCollectionBuilder{T}"/>.
         /// </summary>
         /// <param name="item">An object to add.</param>
-        /// <exception cref="Exception">The <see cref="CollectionBuilder{T}"/> is already full.</exception>
+        /// <exception cref="Exception">The <see cref="NonRefCollectionBuilder{T}"/> is already full.</exception>
         public void Add(T item)
         {
             if (_count == Array.MaxLength)
             {
-                ThrowHelpers.ThrowException("This collection is already full.");
+                ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
-
-            if (_countInCurrentSegment == _currentSegment.Length)
+            else if (_count == 0)
             {
                 Grow();
             }
 
-            _currentSegment[_countInCurrentSegment] = item;
-            _countInCurrentSegment++;
+            var currentSegmentLength = _segments.CurrentSegmentLength;
+            if (_countInCurrentSegment == currentSegmentLength)
+            {
+                var currentSegmentCapacity = _segments.CurrentSegmentCapacity;
+                if (currentSegmentLength == currentSegmentCapacity)
+                {
+                    Grow();
+                }
+                else
+                {
+                    _segments.ExpandCurrentSegment(currentSegmentCapacity);
+                }
+            }
+
+            _segments[_allocatedCount - 1][_countInCurrentSegment] = item;
             _count++;
+            _countInCurrentSegment++;
         }
 
         /// <summary>
-        /// Adds elements in an <see cref="ICollection{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>
+        /// Adds elements in an <see cref="ICollection{T}"/> to the back of the <see cref="NonRefCollectionBuilder{T}"/>
         /// </summary>
-        /// <param name="items">An <see cref="ICollection{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        /// <param name="items">An <see cref="ICollection{T}"/> whose elements are copied to the <see cref="NonRefCollectionBuilder{T}"/>.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="items"/> is null.</exception>
         public void AddICollectionRange(ICollection<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
             AddICollectionRangeInternal(items);
         }
 
-        private void AddICollectionRangeInternal(ICollection<T> items)
+        internal void AddICollectionRangeInternal([NotNull] ICollection<T> items)
         {
-            int itemsLength = items.Count;
-            int copyStartsAt = 0;
+            int srcCount = items.Count;
+            if (srcCount == 0)
+            {
+                return;
+            }
 
-            int remainingCapacityInCurrentSegment = _currentSegment.Length - _countInCurrentSegment;
-            if (remainingCapacityInCurrentSegment == 0)
+            if (Array.MaxLength - _count < srcCount)
             {
-                Grow(itemsLength);
+                ThrowHelpers.ThrowArgumentException(ThrowHelpers.M_CollectionHasNoEnoughSpaceToAccommodateItems, nameof(items));
             }
-            else if (remainingCapacityInCurrentSegment >= itemsLength)
+
+            int currentSegmentCapacity; // this must be set to `_segments.CurrentSegmentCapacity` on the next if statement
+
+            if (_allocatedCount == 0 || _countInCurrentSegment == (currentSegmentCapacity = _segments.CurrentSegmentCapacity))
             {
-                copyStartsAt = _countInCurrentSegment;
+                Grow(Math.Max(srcCount, _segments.DefaultNextSegmentLength));
             }
-            else if (remainingCapacityInCurrentSegment <= itemsLength - _currentSegment.Length * 2) // _countInCurrentSegment + itemsLength >= _currentSegment.Length * 3
+            else if (checked(currentSegmentCapacity + _segments.DefaultNextSegmentLength) <= _countInCurrentSegment + srcCount)
             {
-                ShrinkCurrentSegmentToFit();
-                Grow(itemsLength);
+                _segments.ShrinkCurrentSegment(_countInCurrentSegment);
+                Grow(srcCount);
             }
             else
             {
-                ExpandCurrentSegment(_countInCurrentSegment + itemsLength);
-                copyStartsAt = _countInCurrentSegment;
+                _segments.ExpandCurrentSegment(_countInCurrentSegment + srcCount);
             }
 
-            items.CopyTo(_segments[_allocatedCount - 1], copyStartsAt);
-            _count += itemsLength;
-            _countInCurrentSegment += itemsLength;
+            items.CopyTo(_segments.ArrayAt(_allocatedCount - 1), _countInCurrentSegment);
+            _count += srcCount;
+            _countInCurrentSegment += srcCount;
         }
 
         /// <summary>
-        /// Adds elements in an <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
-        /// </summary>
-        /// <param name="items">An <see cref="IEnumerable{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddRange(IEnumerable<T> items)
-        {
-            ArgumentNullException.ThrowIfNull(items);
-
-            if (items is ICollection<T> collection)
-            {
-                AddICollectionRangeInternal(collection);
-            }
-            else
-            {
-                AddIEnumerableRange(items);
-            }
-        }
-
-        /// <summary>
-        /// Adds elements in an <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
+        /// Adds elements in an <see cref="IEnumerable{T}"/> to the back of the <see cref="NonRefCollectionBuilder{T}"/>.
         /// </summary>
         /// <remarks>
         /// This implementation assumes that <paramref name="items"/> is NOT <see cref="ICollection{T}"/> and thus doesn't check if it is.
         /// </remarks>
-        /// <param name="items">An <see cref="IEnumerable{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        /// <param name="items">An <see cref="IEnumerable{T}"/> whose elements are copied to the <see cref="NonRefCollectionBuilder{T}"/>.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="items"/> is null.</exception>
         public void AddIEnumerableRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
             AddIEnumerableRangeInternal(items);
         }
 
-        /// <remarks>
-        /// This doesn't check if <paramref name="items"/> is null.
-        /// </remarks>
-        private void AddIEnumerableRangeInternal(IEnumerable<T> items)
+        private void AddIEnumerableRangeInternal([NotNull] IEnumerable<T> items)
         {
-            var currentSegment = _currentSegment;
+            var enumerator = items.GetEnumerator();
+            if (!enumerator.MoveNext())
+            {
+                // The source collection is empty.
+                return;
+            }
+
+            if (_allocatedCount == 0)
+            {
+                Grow();
+            }
+            else
+            {
+                _segments.ExpandCurrentSegmentWithoutResizing();
+                if (_countInCurrentSegment == _segments.CurrentSegmentLength)
+                {
+                    Grow();
+                }
+            }
+
+            var currentSegment = _segments[_allocatedCount - 1];
             ref T destRef = ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), _countInCurrentSegment);
 
-            using var enumerator = items.GetEnumerator();
+            // add first element of `items`
+            destRef = enumerator.Current;
+            destRef = ref Unsafe.Add(ref destRef, 1);
+            _count++;
+            _countInCurrentSegment++;
+
             while (enumerator.MoveNext())
             {
                 if (_countInCurrentSegment == currentSegment.Length)
                 {
                     Grow();
-                    currentSegment = _currentSegment;
+                    currentSegment = _segments[_allocatedCount - 1];
                     destRef = ref MemoryMarshal.GetReference(currentSegment);
                 }
 
                 destRef = enumerator.Current;
                 destRef = ref Unsafe.Add(ref destRef, 1);
-                _countInCurrentSegment++;
                 _count++;
+                _countInCurrentSegment++;
             }
         }
 
         /// <summary>
-        /// Adds elements in the span to the back of the <see cref="CollectionBuilder{T}"/>.
+        /// Adds elements in an <see cref="IEnumerable{T}"/> to the back of the <see cref="NonRefCollectionBuilder{T}"/>.
+        /// </summary>
+        /// <param name="items">An <see cref="IEnumerable{T}"/> whose elements are copied to the <see cref="NonRefCollectionBuilder{T}"/>.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="items"/> is null.</exception>
+        public void AddRange(IEnumerable<T> items)
+        {
+            ArgumentNullException.ThrowIfNull(items);
+
+            if (CollectionHelpers.TryGetReadOnlySpan(items, out var span))
+            {
+                AddRange(span);
+            }
+            else if (items is ICollection<T> collection)
+            {
+                AddICollectionRangeInternal(collection);
+            }
+            else
+            {
+                AddIEnumerableRangeInternal(items);
+            }
+        }
+
+        /// <summary>
+        /// Adds elements in the span to the back of the <see cref="NonRefCollectionBuilder{T}"/>.
         /// </summary>
         /// <param name="items">A span over elements to add.</param>
-        /// <exception cref="ArgumentException">The <see cref="CollectionBuilder{T}"/> doesn't have enough space to accommodate elements contained in <paramref name="items"/>.</exception>
+        /// <exception cref="ArgumentException">The <see cref="NonRefCollectionBuilder{T}"/> doesn't have enough space to accommodate elements contained in <paramref name="items"/>.</exception>
         public void AddRange(ReadOnlySpan<T> items)
         {
-            if (items.Length == 0)
+            if (items.IsEmpty)
             {
                 return;
             }
 
-            if (items.Length > Array.MaxLength - _count) // use this way to avoid overflow
+            var itemsLength = items.Length;
+            if (Array.MaxLength - _count < itemsLength)
             {
-                ThrowHelpers.ThrowArgumentException("This collection doesn't have enough space to accommodate elements of the specified span.", nameof(items));
+                ThrowHelpers.ThrowArgumentException(ThrowHelpers.M_CollectionHasNoEnoughSpaceToAccommodateItems, nameof(items));
             }
 
-            int newCount = _count + items.Length;
-            int remainsCount = items.Length;
-            ref readonly T beginningRef = ref MemoryMarshal.GetReference(items);
+            int currentSegmentCapacity; // this must be set to `_segments.CurrentSegmentCapacity` on the next if statement.
 
-            while (true)
+            if (_allocatedCount == 0 || _countInCurrentSegment == (currentSegmentCapacity = _segments.CurrentSegmentCapacity))
             {
-                int maxCopyLength = _currentSegment.Length - _countInCurrentSegment;
-
-                if (maxCopyLength == 0)
-                {
-                    Grow();
-                    continue;
-                }
-
-                if (remainsCount <= maxCopyLength)
-                {
-                    MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in beginningRef), remainsCount)
-                        .CopyTo(MemoryMarshal.CreateSpan(
-                            ref Unsafe.Add(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment),
-                            remainsCount
-                        ));
-                    _countInCurrentSegment += remainsCount;
-                    break;
-                }
-                else
-                {
-                    MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in beginningRef), maxCopyLength)
-                        .CopyTo(MemoryMarshal.CreateSpan(
-                            ref Unsafe.Add(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment),
-                            remainsCount
-                        ));
-                    beginningRef = ref Unsafe.Add(ref Unsafe.AsRef(in beginningRef), maxCopyLength);
-                    remainsCount -= maxCopyLength;
-                    Grow();
-                }
+                Grow(Math.Max(itemsLength, _segments.DefaultNextSegmentLength));
+                items.CopyTo(_segments[_allocatedCount - 1]);
+                _count += itemsLength;
+                _countInCurrentSegment = itemsLength;
+                return;
             }
 
-            _count = newCount;
+            var currentSegment = _segments[_allocatedCount - 1];
+            _segments.ExpandCurrentSegmentWithoutResizing();
+
+            if (currentSegmentCapacity - _countInCurrentSegment >= itemsLength)
+            {
+                items.CopyTo(MemoryMarshal.CreateSpan(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), _countInCurrentSegment),
+                    itemsLength
+                ));
+                _count += itemsLength;
+                _countInCurrentSegment += itemsLength;
+            }
+            else
+            {
+                ref var itemsRef = ref MemoryMarshal.GetReference(items);
+
+                var src1 = MemoryMarshal.CreateReadOnlySpan(ref itemsRef, currentSegmentCapacity - _countInCurrentSegment);
+                src1.CopyTo(MemoryMarshal.CreateSpan(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), _countInCurrentSegment),
+                    src1.Length
+                ));
+
+                var src2 = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref itemsRef, src1.Length), itemsLength - src1.Length);
+                Grow(Math.Max(src2.Length, _segments.DefaultNextSegmentLength));
+                src2.CopyTo(_segments[_allocatedCount - 1]);
+
+                _count += itemsLength;
+                _countInCurrentSegment = src2.Length;
+            }
         }
 
         /// <summary>
-        /// Copies elements in the <see cref="CollectionBuilder{T}"/> to the specified span.
+        /// Returns the number of elements that can be contained in the <see cref="NonRefCollectionBuilder{T}"/> without allocate new internal array.
+        /// </summary>
+        /// <returns>The number of elements that can be contained in the <see cref="NonRefCollectionBuilder{T}"/> without allocating new internal array.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly int GetAllocatedCapacity()
+        {
+            int capacity = 0;
+            for (int i = 0; i < _allocatedCount; i++)
+            {
+                capacity += _segments[i].Length;
+            }
+            return capacity;
+        }
+
+        private void Grow()
+        {
+            _segments.AllocateNewBuffer();
+            _allocatedCount++;
+            _countInCurrentSegment = 0;
+        }
+
+        private void Grow(int minimumLength)
+        {
+            _segments.AllocateNewBuffer(minimumLength);
+            _allocatedCount++;
+            _countInCurrentSegment = 0;
+        }
+
+        /// <summary>
+        /// Copies elements in the <see cref="NonRefCollectionBuilder{T}"/> to the specified span.
         /// </summary>
         /// <param name="destination"></param>
         /// <exception cref="ArgumentException"><paramref name="destination"/> doesn't have enough space to accommodate elements copied.</exception>
@@ -270,96 +335,108 @@ namespace Yuh.Collections
             int remainsCount = _count;
             ref T destRef = ref MemoryMarshal.GetReference(destination);
 
-            foreach (var segment in _segments)
+            for (int i = 0; i < _allocatedCount; i++)
             {
-                int segmentLength = segment.Length;
+                var segment = _segments[i];
+                var segmentLength = segment.Length;
 
                 if (remainsCount <= segmentLength)
                 {
-                    MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetArrayDataReference(segment), remainsCount)
-                        .CopyTo(MemoryMarshal.CreateSpan(ref destRef, remainsCount));
+                    MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(segment), remainsCount)
+                        .CopyTo(MemoryMarshal.CreateSpan(ref destRef, segmentLength));
                     break;
                 }
 
-                segment.AsSpan().CopyTo(MemoryMarshal.CreateSpan(ref destRef, segmentLength));
+                segment.CopyTo(MemoryMarshal.CreateSpan(ref destRef, segmentLength));
                 destRef = ref Unsafe.Add(ref destRef, segmentLength);
                 remainsCount -= segmentLength;
             }
         }
 
         /// <summary>
-        /// Returns the number of elements that can be contained in the <see cref="CollectionBuilder{T}"/> without allocate new internal array.
+        /// Reserves contiguous region of memory from the <see cref="NonRefCollectionBuilder{T}"/> to write specified number of elements and returns span over the memory region.
         /// </summary>
-        /// <returns>The number of elements that can be contained in the <see cref="CollectionBuilder{T}"/> without allocating new internal array.</returns>
-        public readonly int GetAllocatedCapacity()
+        /// <param name="length">The length of the returned span.</param>
+        /// <returns>The span over the <see cref="NonRefCollectionBuilder{T}"/> which can accommodate exactly specified number of elements.</returns>
+        public Span<T> ReserveRange(int length)
         {
-            int capacity = 0;
-            for (int i = 0; i < _allocatedCount; i++)
+            if (Array.MaxLength - _count < length)
             {
-                capacity += _segments[i].Length;
+                ThrowHelpers.ThrowArgumentException("The value is greater than the maximum number of elements that can be added to this collection.", nameof(length));
             }
-            return capacity;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Grow()
-            => GrowExact(_nextSegmentLength);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Grow(int neededLength)
-            => GrowExact(Math.Max(neededLength, _nextSegmentLength));
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void GrowExact(int length)
-        {
-            if (_allocatedCount == CollectionBuilder.SegmentsCount)
+            if (length == 0)
             {
-                ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
+                return [];
             }
 
-            var newSegment = GC.AllocateUninitializedArray<T>(length);
-            _segments[_allocatedCount] = newSegment;
+            Span<T> currentSegment;
 
-            _allocatedCount++;
-            _currentSegment = newSegment.AsSpan();
-            _countInCurrentSegment = 0;
-            _nextSegmentLength <<= 1;
-        }
+            if (_allocatedCount == 0 || _countInCurrentSegment == (currentSegment = _segments[_allocatedCount - 1]).Length)
+            {
+                Grow(Math.Max(length, _segments.DefaultNextSegmentLength));
+                _count += length;
+                _countInCurrentSegment += length;
+                return MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_segments[_allocatedCount - 1]), length);
+            }
 
-        [method: MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ExpandCurrentSegment(int length)
-        {
-            var newSegment = GC.AllocateUninitializedArray<T>(length);
-            var newSegmentSpan = newSegment.AsSpan();
+            Span<T> dest;
+            _segments.ExpandCurrentSegmentWithoutResizing();
 
-            var src = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment);
-            src.CopyTo(newSegmentSpan);
+            if (currentSegment.Length - _countInCurrentSegment >= length)
+            {
+                dest = MemoryMarshal.CreateSpan(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), _countInCurrentSegment),
+                    length
+                );
+            }
+            else if (_countInCurrentSegment + length < checked(_segments.DefaultNextSegmentLength + currentSegment.Length))
+            {
+                _segments.ExpandCurrentSegment(_countInCurrentSegment + length);
+                dest = MemoryMarshal.CreateSpan(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(_segments[_allocatedCount - 1]), _countInCurrentSegment),
+                    length
+                );
+            }
+            else
+            {
+                _segments.ShrinkCurrentSegment(_countInCurrentSegment);
+                Grow(_countInCurrentSegment); // it is ensured that `_countInCurrentSegment` is greater than `_segment.DefaultNextSegmentLength`
+                dest = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_segments[_allocatedCount - 1]), length);
+            }
 
-            _segments[_allocatedCount - 1] = newSegment;
-            _currentSegment = newSegmentSpan;
-
-            CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ShrinkCurrentSegmentToFit()
-        {
-            var newSegment = GC.AllocateUninitializedArray<T>(_countInCurrentSegment);
-            var newSegmentSpan = newSegment.AsSpan();
-
-            var src = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment);
-            src.CopyTo(newSegmentSpan);
-
-            _segments[_allocatedCount - 1] = newSegment;
-            _currentSegment = newSegmentSpan;
-
-            CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
+            _count += length;
+            _countInCurrentSegment += length;
+            return dest;
         }
 
         /// <summary>
-        /// Creates an array from the <see cref="CollectionBuilder{T}"/> and returns it.
+        /// Remove specified number of elements from the back of the <see cref="NonRefCollectionBuilder{T}"/>.
         /// </summary>
-        /// <returns>An array which contains elements copied from the <see cref="CollectionBuilder{T}"/>.</returns>
+        /// <param name="length">The number of elements to remove.</param>
+        public void RemoveRange(int length)
+        {
+            if ((uint)length > (uint)_countInCurrentSegment)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(length), "The value is greater than the number of elements that can be removed.");
+            }
+
+            _count -= length;
+            _countInCurrentSegment -= length;
+
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            {
+                var span = MemoryMarshal.CreateSpan(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(_segments[_allocatedCount - 1]), _countInCurrentSegment),
+                    length
+                );
+                span.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Creates an array from the <see cref="NonRefCollectionBuilder{T}"/> and returns it.
+        /// </summary>
+        /// <returns>An array which contains elements copied from the <see cref="NonRefCollectionBuilder{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly T[] ToArray()
         {
