@@ -55,26 +55,18 @@ namespace Yuh.Collections
             {
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
-            else if (_count == 0)
+
+            if (_allocatedCount == 0 || _countInCurrentSegment == _segments.CurrentSegmentCapacity)
             {
                 Grow();
+                _segments.CurrentSegment[0] = item;
+                _count++;
+                _countInCurrentSegment = 1;
+                return;
             }
 
-            var currentSegmentLength = _segments.CurrentSegmentLength;
-            if (_countInCurrentSegment == currentSegmentLength)
-            {
-                var currentSegmentCapacity = _segments.CurrentSegmentCapacity;
-                if (currentSegmentLength == currentSegmentCapacity)
-                {
-                    Grow();
-                }
-                else
-                {
-                    _segments.ExpandCurrentSegment(currentSegmentCapacity);
-                }
-            }
-
-            _segments[_allocatedCount - 1][_countInCurrentSegment] = item;
+            _segments.ExpandCurrentSegmentWithoutResizing();
+            _segments.CurrentSegment[_countInCurrentSegment] = item;
             _count++;
             _countInCurrentSegment++;
         }
