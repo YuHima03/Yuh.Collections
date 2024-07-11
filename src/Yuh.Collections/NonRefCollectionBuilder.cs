@@ -351,9 +351,7 @@ namespace Yuh.Collections
                 return [];
             }
 
-            Span<T> currentSegment;
-
-            if (_allocatedCount == 0 || _countInCurrentSegment == (currentSegment = _segments[_allocatedCount - 1]).Length)
+            if (_allocatedCount == 0 || _countInCurrentSegment == _segments.CurrentSegmentCapacity)
             {
                 Grow(Math.Max(length, _segments.DefaultNextSegmentLength));
                 _count += length;
@@ -361,6 +359,7 @@ namespace Yuh.Collections
                 return MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_segments[_allocatedCount - 1]), length);
             }
 
+            Span<T> currentSegment = _segments.CurrentSegment;
             Span<T> dest;
             _segments.ExpandCurrentSegmentWithoutResizing();
 
