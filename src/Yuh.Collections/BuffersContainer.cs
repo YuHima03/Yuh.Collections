@@ -8,13 +8,12 @@ namespace Yuh.Collections
     {
         private int _count = 0;
         private int _nextSegmentLength = CollectionBuilder.MinSegmentLength;
+        private fixed int _segmentsLength[CollectionBuilder.SegmentsCount];
 
 #if NET8_0_OR_GREATER
         private CollectionBuilder.Array27<T[]> _segments;
-        private CollectionBuilder.Array27<int> _segmentsLength;
 #else
         private readonly T[][] _segments = new T[CollectionBuilder.SegmentsCount][];
-        private fixed int _segmentsLength[CollectionBuilder.SegmentsCount];
 #endif
 
         public readonly Span<T> CurrentSegment => _segments[_count - 1];
