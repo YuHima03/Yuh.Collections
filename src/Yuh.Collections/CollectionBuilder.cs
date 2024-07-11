@@ -18,8 +18,8 @@ namespace Yuh.Collections
         public const int MinSegmentLength = 16;
 
         private int _count = 0;
-        private Span<T> _currentSegment = [];
         private int _countInCurrentSegment = 0;
+        private Span<T> _currentSegment = [];
         private int _nextSegmentLength = MinSegmentLength;
         private int _segmentsCount = 0; // in the range [0, 27]
 
