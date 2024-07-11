@@ -17,11 +17,11 @@ namespace Yuh.Collections
         /// </summary>
         public const int MinSegmentLength = 16;
 
-        private int _allocatedCount = 0; // in the range [0, 27]
         private int _count = 0;
         private Span<T> _currentSegment = [];
         private int _countInCurrentSegment = 0;
         private int _nextSegmentLength = MinSegmentLength;
+        private int _segmentsCount = 0; // in the range [0, 27]
 
 #if NET8_0_OR_GREATER
         private SegmentsArray _segments;
@@ -110,7 +110,7 @@ namespace Yuh.Collections
                 copyStartsAt = _countInCurrentSegment;
             }
 
-            items.CopyTo(_segments[_allocatedCount - 1], copyStartsAt);
+            items.CopyTo(_segments[_segmentsCount - 1], copyStartsAt);
             _count += itemsLength;
             _countInCurrentSegment += itemsLength;
         }
@@ -274,7 +274,7 @@ namespace Yuh.Collections
         public readonly int GetAllocatedCapacity()
         {
             int capacity = 0;
-            for (int i = 0; i < _allocatedCount; i++)
+            for (int i = 0; i < _segmentsCount; i++)
             {
                 capacity += _segments[i].Length;
             }
@@ -306,15 +306,15 @@ namespace Yuh.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void GrowExact(int length)
         {
-            if (_allocatedCount == SegmentsCount)
+            if (_segmentsCount == SegmentsCount)
             {
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
 
             var newSegment = GC.AllocateUninitializedArray<T>(length);
-            _segments[_allocatedCount] = newSegment;
+            _segments[_segmentsCount] = newSegment;
 
-            _allocatedCount++;
+            _segmentsCount++;
             _currentSegment = newSegment.AsSpan();
             _countInCurrentSegment = 0;
             _nextSegmentLength <<= 1;
@@ -329,7 +329,7 @@ namespace Yuh.Collections
             var src = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment);
             src.CopyTo(newSegmentSpan);
 
-            _segments[_allocatedCount - 1] = newSegment;
+            _segments[_segmentsCount - 1] = newSegment;
             _currentSegment = newSegmentSpan;
 
             CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
@@ -344,7 +344,7 @@ namespace Yuh.Collections
             var src = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment);
             src.CopyTo(newSegmentSpan);
 
-            _segments[_allocatedCount - 1] = newSegment;
+            _segments[_segmentsCount - 1] = newSegment;
             _currentSegment = newSegmentSpan;
 
             CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
