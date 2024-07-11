@@ -281,14 +281,28 @@ namespace Yuh.Collections
             return capacity;
         }
 
+        /// <summary>
+        /// Allocate new buffer than can accommodate at least <see cref="_nextSegmentLength"/> elements.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Grow()
             => GrowExact(_nextSegmentLength);
 
+        /// <summary>
+        /// Allocate new buffer than can accommodate at least specified number of elements.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="neededLength"/> is greater than <see cref="_nextSegmentLength"/>, this method allocate new buffer that can accommodate <paramref name="neededLength"/> elements; otherwise, <see cref="_nextSegmentLength"/> elements.
+        /// </remarks>
+        /// <param name="neededLength"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Grow(int neededLength)
             => GrowExact(Math.Max(neededLength, _nextSegmentLength));
 
+        /// <summary>
+        /// Allocate new buffer that can accommodate at least specified number of elements.
+        /// </summary>
+        /// <param name="length"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void GrowExact(int length)
         {
