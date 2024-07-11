@@ -267,6 +267,21 @@ namespace Yuh.Collections
             }
         }
 
+        [method: MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ExpandCurrentSegment(int length)
+        {
+            var newSegment = GC.AllocateUninitializedArray<T>(length);
+            var newSegmentSpan = newSegment.AsSpan();
+
+            var src = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment);
+            src.CopyTo(newSegmentSpan);
+
+            _segments[_segmentsCount - 1] = newSegment;
+            _currentSegment = newSegmentSpan;
+
+            CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
+        }
+
         /// <summary>
         /// Returns the number of elements that can be contained in the <see cref="CollectionBuilder{T}"/> without allocate new internal array.
         /// </summary>
@@ -318,21 +333,6 @@ namespace Yuh.Collections
             _currentSegment = newSegment.AsSpan();
             _countInCurrentSegment = 0;
             _nextSegmentLength <<= 1;
-        }
-
-        [method: MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ExpandCurrentSegment(int length)
-        {
-            var newSegment = GC.AllocateUninitializedArray<T>(length);
-            var newSegmentSpan = newSegment.AsSpan();
-
-            var src = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment);
-            src.CopyTo(newSegmentSpan);
-
-            _segments[_segmentsCount - 1] = newSegment;
-            _currentSegment = newSegmentSpan;
-
-            CollectionHelpers.ClearIfReferenceOrContainsReferences(src);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
