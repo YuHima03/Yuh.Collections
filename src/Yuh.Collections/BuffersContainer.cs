@@ -17,6 +17,7 @@ namespace Yuh.Collections
         private fixed int _segmentsLength[CollectionBuilder.SegmentsCount];
 #endif
 
+        public readonly Span<T> CurrentSegment => _segments[_count - 1];
         public readonly int CurrentSegmentCapacity => _segments[_count - 1].Length;
         public readonly int CurrentSegmentLength => _segmentsLength[_count - 1];
         public readonly int DefaultNextSegmentLength => _nextSegmentLength;
