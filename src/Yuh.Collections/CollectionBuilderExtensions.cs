@@ -12,6 +12,14 @@ namespace Yuh.Collections
     {
         private const int MinInitialReserveLength = 32;
 
+        /// <summary>
+        /// Appends a string to the back of the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <param name="builder">The collection builder to add <paramref name="s"/> to.</param>
+        /// <param name="s">
+        ///     A string to add.
+        ///     The value can be null or empty string.
+        /// </param>
         public static void AppendLiteral(ref this CollectionBuilder<char> builder, string? s)
         {
             if (string.IsNullOrEmpty(s))
@@ -28,6 +36,15 @@ namespace Yuh.Collections
             }
         }
 
+        /// <summary>
+        /// Appends the string expression of the value to the back of the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the value.</typeparam>
+        /// <param name="builder">The collection builder to add a string to.</param>
+        /// <param name="value">The value the string expression of which is added to <paramref name="builder"/>.</param>
+        /// <param name="estimatedStringLength">The estimated length of a string to add.</param>
+        /// <param name="format">A span containing the characters that represent a standard or custom format string that defines the acceptable format for the destination collection.</param>
+        /// <param name="provider">An optional object that supplies culture-specific formatting information for the destination collection.</param>
         public static void AppendFormatted<T>(ref this CollectionBuilder<char> builder, T value, int estimatedStringLength = MinInitialReserveLength, ReadOnlySpan<char> format = default, IFormatProvider? provider = null)
         {
             if (value is ISpanFormattable valueSpanFormattable)
