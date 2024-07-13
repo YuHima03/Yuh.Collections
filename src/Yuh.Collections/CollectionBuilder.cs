@@ -34,7 +34,7 @@ namespace Yuh.Collections
     /// Represents a temporary collection that is used to build new collections.
     /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
-    public unsafe ref struct CollectionBuilder<T>// : IDisposable
+    public unsafe ref struct CollectionBuilder<T> // : IDisposable
     {
         private int _count = 0;
         private int _countInCurrentSegment = 0;
@@ -521,7 +521,7 @@ namespace Yuh.Collections
 
         private static void ReturnIfArrayIsFromArrayPool(T[] array)
         {
-            if((uint)(array.Length - CollectionBuilder.MinArrayLengthFromArrayPool) <= (CollectionBuilder.MaxArrayLengthFromArrayPool - CollectionBuilder.MinArrayLengthFromArrayPool))
+            if ((uint)(array.Length - CollectionBuilder.MinArrayLengthFromArrayPool) <= (CollectionBuilder.MaxArrayLengthFromArrayPool - CollectionBuilder.MinArrayLengthFromArrayPool))
             {
                 ArrayPool<T>.Shared.Return(array);
             }
