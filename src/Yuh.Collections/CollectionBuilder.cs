@@ -447,6 +447,28 @@ namespace Yuh.Collections
             }
         }
 
+        private void RemoveCurrentSegment()
+        {
+            if (_segmentsCount == 0)
+            {
+                return;
+            }
+
+            var currentSegment = Interlocked.Exchange(ref _segments[_segmentsCount - 1], null!);
+
+            if (_countInCurrentSegment != 0)
+            { 
+                CollectionHelpers.ClearIfReferenceOrContainsReferences(_currentSegment);
+            }
+
+            ReturnIfArrayIsFromArrayPool(currentSegment);
+            _segmentsCount--;
+            _currentSegment = GetSegmentAt(_segmentsCount - 1);
+            _countInCurrentSegment = _currentSegment.Length;
+            _growIsNeeded = true;
+            return;
+        }
+
         /// <summary>
         /// Removes specified number of elements from the end of the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
@@ -458,9 +480,16 @@ namespace Yuh.Collections
             {
                 return;
             }
-            if ((uint)length > _countInCurrentSegment)
+            if ((uint)length > _count)
             {
-                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(length), "The value is greater than the number of elements in the current segment.");
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(length), "The value is negative or greater than the number of elements in the collection builder.");
+            }
+            else if (length > _countInCurrentSegment)
+            {
+                length -= _countInCurrentSegment;
+                RemoveCurrentSegment();
+                RemoveRange(length);
+                return;
             }
 
             _count -= length;
