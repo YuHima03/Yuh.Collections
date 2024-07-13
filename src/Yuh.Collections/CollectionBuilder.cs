@@ -79,7 +79,7 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="item">An object to add.</param>
         /// <exception cref="Exception">The <see cref="CollectionBuilder{T}"/> is already full.</exception>
-        public void Add(T item)
+        public void Append(T item)
         {
             if (_count == Array.MaxLength)
             {
@@ -97,13 +97,13 @@ namespace Yuh.Collections
         /// Adds elements in an <see cref="ICollection{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>
         /// </summary>
         /// <param name="items">An <see cref="ICollection{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
-        public void AddICollectionRange(ICollection<T> items)
+        public void AppendICollectionRange(ICollection<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
-            AddICollectionRangeInternal(items);
+            AppendICollectionRangeInternal(items);
         }
 
-        private void AddICollectionRangeInternal(ICollection<T> items)
+        private void AppendICollectionRangeInternal(ICollection<T> items)
         {
             int itemsLength = items.Count;
             if (itemsLength == 0)
@@ -112,7 +112,7 @@ namespace Yuh.Collections
             }
             else if (itemsLength == 1)
             {
-                Add(items.First());
+                Append(items.First());
                 return;
             }
 
@@ -153,17 +153,17 @@ namespace Yuh.Collections
         /// Adds elements in an <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
         /// <param name="items">An <see cref="IEnumerable{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
-        public void AddRange(IEnumerable<T> items)
+        public void AppendRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
 
             if (items is ICollection<T> collection)
             {
-                AddICollectionRangeInternal(collection);
+                AppendICollectionRangeInternal(collection);
             }
             else
             {
-                AddIEnumerableRangeInternal(items);
+                AppendIEnumerableRangeInternal(items);
             }
         }
 
@@ -174,16 +174,16 @@ namespace Yuh.Collections
         /// This implementation assumes that <paramref name="items"/> is NOT <see cref="ICollection{T}"/> and thus doesn't check if it is.
         /// </remarks>
         /// <param name="items">An <see cref="IEnumerable{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
-        public void AddIEnumerableRange(IEnumerable<T> items)
+        public void AppendIEnumerableRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
-            AddIEnumerableRangeInternal(items);
+            AppendIEnumerableRangeInternal(items);
         }
 
         /// <remarks>
         /// This doesn't check if <paramref name="items"/> is null.
         /// </remarks>
-        private void AddIEnumerableRangeInternal(IEnumerable<T> items)
+        private void AppendIEnumerableRangeInternal(IEnumerable<T> items)
         {
             int countInCurrentSegment = _countInCurrentSegment;
             var currentSegment = _currentSegment;
@@ -216,7 +216,7 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="items">A span over elements to add.</param>
         /// <exception cref="ArgumentException">The <see cref="CollectionBuilder{T}"/> doesn't have enough space to accommodate elements contained in <paramref name="items"/>.</exception>
-        public void AddRange(scoped ReadOnlySpan<T> items)
+        public void AppendRange(scoped ReadOnlySpan<T> items)
         {
             if (items.Length == 0)
             {
@@ -224,7 +224,7 @@ namespace Yuh.Collections
             }
             else if (items.Length == 1)
             {
-                Add(items[0]);
+                Append(items[0]);
                 return;
             }
             if (items.Length > Array.MaxLength - _count) // use this way to avoid overflow
