@@ -30,9 +30,9 @@ namespace Yuh.Collections
 #endif
     }
 
-        /// <summary>
+    /// <summary>
     /// Represents a temporary collection that is used to build new collections.
-        /// </summary>
+    /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     public unsafe ref struct CollectionBuilder<T>// : IDisposable
     {
@@ -347,23 +347,15 @@ namespace Yuh.Collections
             {
                 for (int i = 0; i < _segmentsCount; i++)
                 {
-                    var segment = _segments[i];
-                    if ((uint)(segment.Length - MinArrayLengthFromArrayPool) <= (MaxArrayLengthFromArrayPool - MinArrayLengthFromArrayPool)) // MinArrayLengthFromArrayPool <= segment.Length && segment.Length <= MaxArrayLengthFromArrayPool
-                    {
-                        GetSegmentAt(i).Clear();
-                        ArrayPool<T>.Shared.Return(_segments[i]);
-                    }
+                    GetSegmentAt(i).Clear();
+                    ReturnIfArrayIsFromArrayPool(_segments[i]);
                 }
             }
             else
             {
                 for (int i = 0; i < _segmentsCount; i++)
                 {
-                    var segment = _segments[i];
-                    if ((uint)(segment.Length - MinArrayLengthFromArrayPool) <= (MaxArrayLengthFromArrayPool - MinArrayLengthFromArrayPool)) // MinArrayLengthFromArrayPool <= segment.Length && segment.Length <= MaxArrayLengthFromArrayPool
-                    {
-                        ArrayPool<T>.Shared.Return(_segments[i]);
-                    }
+                    ReturnIfArrayIsFromArrayPool(_segments[i]);
                 }
             }
         }
@@ -378,10 +370,7 @@ namespace Yuh.Collections
             copySource.CopyTo(newSegmentSpan);
 
             CollectionHelpers.ClearIfReferenceOrContainsReferences(copySource);
-            if (MinArrayLengthFromArrayPool <= oldSegment.Length && oldSegment.Length <= MaxArrayLengthFromArrayPool)
-            {
-                ArrayPool<T>.Shared.Return(oldSegment);
-            }
+            ReturnIfArrayIsFromArrayPool(oldSegment);
 
             _currentSegment = newSegmentSpan;
             _segmentsLength[_segmentsCount - 1] = newSegment.Length;
@@ -528,6 +517,14 @@ namespace Yuh.Collections
             _countInCurrentSegment += length;
             _growIsNeeded = (_countInCurrentSegment == _currentSegment.Length);
             return range;
+        }
+
+        private static void ReturnIfArrayIsFromArrayPool(T[] array)
+        {
+            if((uint)(array.Length - CollectionBuilder.MinArrayLengthFromArrayPool) <= (CollectionBuilder.MaxArrayLengthFromArrayPool - CollectionBuilder.MinArrayLengthFromArrayPool))
+            {
+                ArrayPool<T>.Shared.Return(array);
+            }
         }
 
         private void ShrinkCurrentSegmentToFit()
