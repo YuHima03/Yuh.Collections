@@ -447,6 +447,11 @@ namespace Yuh.Collections
             }
         }
 
+        /// <summary>
+        /// Removes specified number of elements from the end of the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <param name="length">The number of elements to remove from the <see cref="CollectionBuilder{T}"/>.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/> is negative or greater than <see cref="Count"/>.</exception>
         public void RemoveRange(int length)
         {
             if (length == 0)
@@ -472,6 +477,11 @@ namespace Yuh.Collections
             }
         }
 
+        /// <summary>
+        /// Reserves the specified length of memory region from the back of the <see cref="CollectionBuilder{T}"/> and returns the span over the region.
+        /// </summary>
+        /// <param name="length">The number of elements that the reserved memory region can exactly accommodate.</param>
+        /// <returns>The span over the reserved memory region.</returns>
         public Span<T> ReserveRange(int length)
         {
             if (Array.MaxLength - _count < (uint)length)
