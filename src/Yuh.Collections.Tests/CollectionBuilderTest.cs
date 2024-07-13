@@ -1,60 +1,105 @@
-﻿using Xunit.Abstractions;
+﻿using System.Diagnostics;
+using System.Text;
 
 namespace Yuh.Collections.Tests
 {
-    public class CollectionBuilderTest(ITestOutputHelper @out)
+    public class CollectionBuilderTest()
     {
-        private readonly ITestOutputHelper _out = @out;
+        private const int TestEnumerableCount = 128;
+        private const int InsertionCount = 512;
+        private const int TotalItemsCount = TestEnumerableCount * InsertionCount;
+
+        private static IEnumerable<int> TestEnumerable => Enumerable.Range(0, TestEnumerableCount);
 
         [Fact]
         public void AddTest()
         {
-            CollectionBuilder<int> builder = new();
-            foreach (var i in Enumerable.Range(0, 100))
+            using CollectionBuilder<int> builder = new();
+            List<int> list = new(TotalItemsCount);
+
+            var enumerable = TestEnumerable;
+
+            foreach (var _ in Enumerable.Range(0, InsertionCount))
             {
-                builder.Add(i);
-            }
-
-            var array = new int[builder.Count];
-            builder.CopyTo(array.AsSpan());
-            OutputHelpers.OutputElements(array, _out);
-        }
-
-        [Fact]
-        public void AddRangeEnumerableTest()
-        {
-            CollectionBuilder<int> builder = new();
-
-            for (int i = 0; i < 8; i++)
-            {
-                builder.AddRange(Enumerable.Range(0, 64));
-            }
-
-            OutputHelpers.OutputElements(builder.ToArray(), _out);
-        }
-
-        [Fact]
-        public void AddRangeTest()
-        {
-            CollectionBuilder<int> builder = new();
-
-            int[] input = [0, 1, 2, 3, 4, 5, 6, 7];
-            for(int i = 0; i < 8; i++)
-            {
-                try
+                foreach (var num in TestEnumerable)
                 {
-                    builder.AddRange(input.AsSpan());
-                }
-                catch(Exception e)
-                {
-                    _out.WriteLine($"Error at {i}.");
-                    throw new Exception(null, e);
+                    builder.Append(num);
+                    list.Add(num);
                 }
             }
 
-            var array = new int[builder.Count];
-            builder.CopyTo(array.AsSpan());
-            OutputHelpers.OutputElements(array, _out);
+            Assert.Equal(list, builder.ToArray());
+        }
+
+        [Fact]
+        public void AddIEnumerableRangeTest()
+        {
+            using CollectionBuilder<int> builder = new();
+            List<int> list = new(TotalItemsCount);
+
+            var enumerable = TestEnumerable;
+
+            foreach (var _ in Enumerable.Range(0, InsertionCount))
+            {
+                builder.AppendIEnumerableRange(enumerable);
+                list.AddRange(enumerable);
+            }
+
+            Assert.Equal(list, builder.ToArray());
+        }
+
+        [Fact]
+        public void AddICollectionRangeTest()
+        {
+            using CollectionBuilder<int> builder = new();
+            List<int> list = new(TotalItemsCount);
+
+            var collection = (ICollection<int>)TestEnumerable.ToArray();
+
+            foreach (var _ in Enumerable.Range(0, InsertionCount))
+            {
+                builder.AppendICollectionRange(collection);
+                list.AddRange(collection);
+            }
+
+            Assert.Equal(list, builder.ToArray());
+        }
+
+        [Fact]
+        public void AddSpanRangeTest()
+        {
+            using CollectionBuilder<int> builder = new();
+            List<int> list = new(TotalItemsCount);
+
+            var span = TestEnumerable.ToArray().AsSpan();
+
+            foreach (var _ in Enumerable.Range(0, InsertionCount))
+            {
+                builder.AppendRange(span);
+                list.AddRange(span);
+            }
+
+            Assert.Equal(list, builder.ToArray());
+        }
+
+        [Fact]
+        public void AppendFormattableTest()
+        {
+            CollectionBuilder<char> builder = new();
+            StringBuilder sb = new();
+
+            var endl = Environment.NewLine;
+            foreach (var _ in Enumerable.Range(0, InsertionCount))
+            {
+                var now = DateTime.Now;
+                builder.AppendFormatted(now);
+                builder.AppendLiteral(endl);
+                sb.Append(now).Append(endl);
+            }
+
+            Debug.WriteLine(builder.GetAllocatedCapacity());
+            Assert.Equal(sb.ToString(), builder.ToBasicString());
+            builder.Dispose();
         }
     }
 }
