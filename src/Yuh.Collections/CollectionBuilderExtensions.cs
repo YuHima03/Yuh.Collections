@@ -10,6 +10,50 @@ namespace Yuh.Collections
     /// </summary>
     public static class CollectionBuilderExtensions
     {
+        private const int MinInitialReserveLength = 32;
+
+        public static void AppendLiteral(ref this CollectionBuilder<char> builder, string? s)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                return;
+            }
+            if (s.Length == 1)
+            {
+                builder.Append(s[0]);
+            }
+            else
+            {
+                builder.AppendRange(s.AsSpan());
+            }
+        }
+
+        public static void AppendFormatted<T>(ref this CollectionBuilder<char> builder, T value, int estimatedStringLength = MinInitialReserveLength, ReadOnlySpan<char> format = default, IFormatProvider? provider = null)
+        {
+            if (value is ISpanFormattable valueSpanFormattable)
+            {
+                int charsWritten;
+                int destLength = Math.Max(estimatedStringLength, MinInitialReserveLength);
+
+                while (!valueSpanFormattable.TryFormat(builder.ReserveRange(destLength), out charsWritten, format, provider))
+                {
+                    builder.RemoveRange(destLength);
+                    destLength = checked(destLength << 1);
+                }
+
+                builder.RemoveRange(destLength - charsWritten);
+                return;
+            }
+            else if (value is IFormattable valueFormattable)
+            {
+                builder.AppendLiteral(valueFormattable.ToString(format.ToString(), provider));
+                return;
+            }
+
+            builder.AppendLiteral(value?.ToString());
+            return;
+        }
+
         /// <summary>
         /// Creates a <see cref="Deque{T}"/> from the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
