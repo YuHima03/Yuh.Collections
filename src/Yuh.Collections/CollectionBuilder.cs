@@ -4,40 +4,50 @@ using System.Runtime.InteropServices;
 
 namespace Yuh.Collections
 {
-    /// <summary>
+    internal static class CollectionBuilder
+    {
+        internal const int MaxArrayLengthFromArrayPool = 1024 * 1024;
+
+#if NET8_0_OR_GREATER
+        internal const int MinArrayLengthFromArrayPool = 2048;
+#elif NET7_0_OR_GREATER
+        internal const int MinArrayLengthFromArrayPool = 512;
+#else
+        internal const int MinArrayLengthFromArrayPool = 128;
+#endif
+
+        internal const int MinSegmentLength = 16;
+        internal const int SegmentsContainerLength = 27;
+
+#if NET8_0_OR_GREATER
+        [InlineArray(SegmentsContainerLength)]
+        internal struct Array27<T>
+        {
+#pragma warning disable IDE0051, IDE0044
+            private T _value;
+#pragma warning restore IDE0051, IDE0044
+        }
+#endif
+    }
+
+        /// <summary>
     /// Represents a temporary collection that is used to build new collections.
-    /// </summary>
+        /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     public unsafe ref struct CollectionBuilder<T>// : IDisposable
     {
-        private const int SegmentsCount = 27;
-        private const int MaxArrayLengthFromArrayPool = 1024 * 1024;
-
-#if NET8_0_OR_GREATER
-        private const int MinArrayLengthFromArrayPool = 2048;
-#elif NET7_0_OR_GREATER
-        private const int MinArrayLengthFromArrayPool = 512;
-#else
-        private const int MinArrayLengthFromArrayPool = 128;
-#endif
-
-        /// <summary>
-        /// The minimum length of each segments.
-        /// </summary>
-        public const int MinSegmentLength = 16;
-
         private int _count = 0;
         private int _countInCurrentSegment = 0;
         private Span<T> _currentSegment = [];
         private bool _growIsNeeded = true;
-        private int _nextSegmentLength = MinSegmentLength;
+        private int _nextSegmentLength = CollectionBuilder.MinSegmentLength;
         private int _segmentsCount = 0; // in the range [0, 27]
         private fixed int _segmentsLength[32]; // set the length 32 for SIMD operations
 
 #if NET8_0_OR_GREATER
-        private SegmentsArray _segments;
+        private CollectionBuilder.Array27<T[]> _segments;
 #else
-        private readonly T[][] _segmentsArray = new T[SegmentsCount][];
+        private readonly T[][] _segmentsArray = new T[CollectionBuilder.SegmentsContainerLength][];
         private readonly Span<T[]> _segments;
 #endif
 
@@ -67,7 +77,7 @@ namespace Yuh.Collections
         /// <param name="firstSegmentLength">The number of elements that can be contained in the first segment.</param>
         public CollectionBuilder(int firstSegmentLength) : this()
         {
-            if (firstSegmentLength < MinSegmentLength || Array.MaxLength < firstSegmentLength)
+            if (firstSegmentLength < CollectionBuilder.MinSegmentLength || Array.MaxLength < firstSegmentLength)
             {
                 ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(firstSegmentLength), "The value is less than the minimum length of a segment, or greater than the maximum length of an array.");
             }
@@ -274,11 +284,11 @@ namespace Yuh.Collections
 
         private static T[] AllocateNewArray(int length)
         {
-            if (length < MinArrayLengthFromArrayPool)
+            if (length < CollectionBuilder.MinArrayLengthFromArrayPool)
             {
                 return new T[length];
             }
-            else if (length <= MaxArrayLengthFromArrayPool)
+            else if (length <= CollectionBuilder.MaxArrayLengthFromArrayPool)
             {
                 return ArrayPool<T>.Shared.Rent(length);
             }
@@ -313,7 +323,7 @@ namespace Yuh.Collections
             int remainsCount = _count;
             ref T destRef = ref MemoryMarshal.GetReference(destination);
 
-            for (int i = 0; i < SegmentsCount; i++)
+            for (int i = 0; i < CollectionBuilder.SegmentsContainerLength; i++)
             {
                 var segment = GetSegmentAt(i);
 
@@ -421,7 +431,7 @@ namespace Yuh.Collections
         /// <param name="length"></param>
         private void GrowExact(int length)
         {
-            if (_segmentsCount == SegmentsCount)
+            if (_segmentsCount == CollectionBuilder.SegmentsContainerLength)
             {
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
@@ -541,15 +551,5 @@ namespace Yuh.Collections
             CopyTo(array.AsSpan());
             return array;
         }
-
-#if NET8_0_OR_GREATER
-        [InlineArray(SegmentsCount)]
-        private struct SegmentsArray
-        {
-#pragma warning disable IDE0051, IDE0044
-            private T[] _value;
-#pragma warning restore IDE0051, IDE0044
-        }
-#endif
     }
 }
