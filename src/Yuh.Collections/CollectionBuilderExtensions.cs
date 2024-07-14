@@ -10,6 +10,67 @@ namespace Yuh.Collections
     /// </summary>
     public static class CollectionBuilderExtensions
     {
+        private const int MinInitialReserveLength = 32;
+
+        /// <summary>
+        /// Appends a string to the back of the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <param name="builder">The collection builder to add <paramref name="s"/> to.</param>
+        /// <param name="s">
+        ///     A string to add.
+        ///     The value can be null or empty string.
+        /// </param>
+        public static void AppendLiteral(ref this CollectionBuilder<char> builder, string? s)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                return;
+            }
+            if (s.Length == 1)
+            {
+                builder.Append(s[0]);
+            }
+            else
+            {
+                builder.AppendRange(s.AsSpan());
+            }
+        }
+
+        /// <summary>
+        /// Appends the string expression of the value to the back of the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of the value.</typeparam>
+        /// <param name="builder">The collection builder to add a string to.</param>
+        /// <param name="value">The value the string expression of which is added to <paramref name="builder"/>.</param>
+        /// <param name="estimatedStringLength">The estimated length of a string to add.</param>
+        /// <param name="format">A span containing the characters that represent a standard or custom format string that defines the acceptable format for the destination collection.</param>
+        /// <param name="provider">An optional object that supplies culture-specific formatting information for the destination collection.</param>
+        public static void AppendFormatted<T>(ref this CollectionBuilder<char> builder, T value, int estimatedStringLength = MinInitialReserveLength, ReadOnlySpan<char> format = default, IFormatProvider? provider = null)
+        {
+            if (value is ISpanFormattable valueSpanFormattable)
+            {
+                int charsWritten;
+                int destLength = Math.Max(estimatedStringLength, MinInitialReserveLength);
+
+                while (!valueSpanFormattable.TryFormat(builder.ReserveRange(destLength), out charsWritten, format, provider))
+                {
+                    builder.RemoveRange(destLength);
+                    destLength = checked(destLength << 1);
+                }
+
+                builder.RemoveRange(destLength - charsWritten);
+                return;
+            }
+            else if (value is IFormattable valueFormattable)
+            {
+                builder.AppendLiteral(valueFormattable.ToString(format.ToString(), provider));
+                return;
+            }
+
+            builder.AppendLiteral(value?.ToString());
+            return;
+        }
+
         /// <summary>
         /// Creates a <see cref="Deque{T}"/> from the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
