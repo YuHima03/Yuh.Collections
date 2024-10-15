@@ -1,11 +1,104 @@
 ﻿using System.Runtime.CompilerServices;
 using Xunit.Abstractions;
+using Yuh.Collections.Tests.Helpers;
 
 namespace Yuh.Collections.Tests
 {
     public class DoubleEndedListTest(ITestOutputHelper @out)
     {
         private readonly ITestOutputHelper _out = @out;
+
+        public static IEnumerable<object[]> PushCountTestData => [[0], [256], [1024], [4096]];
+
+        public static IEnumerable<object[]> PushAndPopCountTestData
+            => PushCountTestData
+                .Select(x => (int)x[0])
+                .Select(
+                    x => Enumerable.Distinct([0, x / 4, x / 2, x]).Select<int, object[]>(y => [x, y])
+                )
+                .Aggregate<IEnumerable<object[]>, IEnumerable<object[]>>([], (val, res) => res.Concat(val));
+
+        public static IEnumerable<object[]> PushRangeTestData => EnumerableHelper.Permutations([0, 256, 4096]).Select<int[], object[]>(x => [x]);
+
+        [Theory]
+        [MemberData(nameof(PushAndPopCountTestData))]
+        public void PopBackTest(int pushCount, int popCount)
+        {
+            DoubleEndedList<int> list = new(Enumerable.Range(0, pushCount));
+            for (int i = 0; i < popCount; i++)
+            {
+                _ = list.PopBack();
+            }
+            Assert.Equal(Enumerable.Range(0, pushCount - popCount), list);
+        }
+
+        [Theory]
+        [MemberData(nameof(PushAndPopCountTestData))]
+        public void PopFrontTest(int pushCount, int popCount)
+        {
+            DoubleEndedList<int> list = new(Enumerable.Range(0, pushCount));
+            for (int i = 0; i < popCount; i++)
+            {
+                _ = list.PopFront();
+            }
+            Assert.Equal(Enumerable.Range(popCount, pushCount - popCount), list);
+        }
+
+        [Theory]
+        [MemberData(nameof(PushRangeTestData))]
+        public void PushBackRangeTest(IEnumerable<int> counts)
+        {
+            IEnumerable<int> enumerable = [];
+            DoubleEndedList<int> list = [];
+            foreach (int c in counts)
+            {
+                var range = Enumerable.Range(0, c);
+                enumerable = enumerable.Concat(range);
+                list.PushBackRange(range);
+            }
+            Assert.Equal(enumerable, list);
+        }
+
+        [Theory]
+        [MemberData(nameof(PushRangeTestData))]
+        public void PushFrontRangeTest(IEnumerable<int> counts)
+        {
+            IEnumerable<int> enumerable = [];
+            DoubleEndedList<int> list = [];
+            foreach (int c in counts)
+            {
+                var range = Enumerable.Range(0, c);
+                enumerable = range.Concat(enumerable);
+                list.PushFrontRange(range);
+            }
+            Assert.Equal(enumerable, list);
+        }
+
+        [Theory]
+        [MemberData(nameof(PushCountTestData))]
+        public void PushBackTest(int count)
+        {
+            var enumerable = Enumerable.Range(0, count);
+            DoubleEndedList<int> list = [];
+            foreach (var n in enumerable)
+            {
+                list.PushBack(n);
+            }
+            Assert.Equal(enumerable, list);
+        }
+
+        [Theory]
+        [MemberData(nameof(PushCountTestData))]
+        public void PushFrontTest(int count)
+        {
+            var enumerable = Enumerable.Range(0, count);
+            DoubleEndedList<int> list = [];
+            foreach (var n in enumerable)
+            {
+                list.PushFront(n);
+            }
+            Assert.Equal(enumerable.Reverse(), list);
+        }
 
         [Fact]
         public void GrowTest()
