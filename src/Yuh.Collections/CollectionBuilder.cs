@@ -6,16 +6,9 @@ namespace Yuh.Collections
 {
     internal static class CollectionBuilderConstants
     {
-        internal const int MaxArrayLengthFromArrayPool = 1024 * 1024;
-
-#if NET8_0_OR_GREATER
-        internal const int MinArrayLengthFromArrayPool = 2048;
-#elif NET7_0_OR_GREATER
-        internal const int MinArrayLengthFromArrayPool = 512;
-#else
-        internal const int MinArrayLengthFromArrayPool = 128;
-#endif
-
+        internal const int MaxArraySizeFromArrayPool = 1 << 27;
+        internal const int MinArraySizeFromArrayPool = 1 << 11;
+        internal const int MaxArraySizeFromStack = 1 << 10;
         internal const int MinSegmentLength = 16;
         internal const int SegmentsContainerLength = 27;
 
@@ -284,18 +277,12 @@ namespace Yuh.Collections
 
         private static T[] AllocateNewArray(int length)
         {
-            if (length < CollectionBuilderConstants.MinArrayLengthFromArrayPool)
+            return checked(sizeof(T) * length) switch
             {
-                return new T[length];
-            }
-            else if (length <= CollectionBuilderConstants.MaxArrayLengthFromArrayPool)
-            {
-                return ArrayPool<T>.Shared.Rent(length);
-            }
-            else
-            {
-                return GC.AllocateUninitializedArray<T>(length);
-            }
+                < CollectionBuilderConstants.MinArraySizeFromArrayPool => new T[length],
+                <= CollectionBuilderConstants.MaxArraySizeFromArrayPool => ArrayPool<T>.Shared.Rent(length),
+                _ => GC.AllocateUninitializedArray<T>(length)
+            };
         }
 
         /// <summary>
@@ -457,7 +444,7 @@ namespace Yuh.Collections
             var currentSegment = Interlocked.Exchange(ref _segments[_segmentsCount - 1], null!);
 
             if (_countInCurrentSegment != 0)
-            { 
+            {
                 CollectionHelpers.ClearIfReferenceOrContainsReferences(_currentSegment);
             }
 
@@ -560,7 +547,7 @@ namespace Yuh.Collections
 
         private static void ReturnIfArrayIsFromArrayPool(T[] array)
         {
-            if ((uint)(array.Length - CollectionBuilderConstants.MinArrayLengthFromArrayPool) <= (CollectionBuilderConstants.MaxArrayLengthFromArrayPool - CollectionBuilderConstants.MinArrayLengthFromArrayPool))
+            if ((uint)(checked(sizeof(T) * array.Length) - CollectionBuilderConstants.MinArraySizeFromArrayPool) <= (CollectionBuilderConstants.MaxArraySizeFromArrayPool - CollectionBuilderConstants.MinArraySizeFromArrayPool))
             {
                 ArrayPool<T>.Shared.Return(array);
             }
