@@ -164,6 +164,7 @@ namespace Yuh.Collections
             {
                 Resize(0, c.Count);
                 c.CopyTo(_items, 0);
+                _count = c.Count;
             }
             else
             {
