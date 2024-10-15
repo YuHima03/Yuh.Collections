@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Yuh.Collections
 {
-    internal static class CollectionBuilder
+    internal static class CollectionBuilderConstants
     {
         internal const int MaxArrayLengthFromArrayPool = 1024 * 1024;
 
@@ -40,14 +40,14 @@ namespace Yuh.Collections
         private int _countInCurrentSegment = 0;
         private Span<T> _currentSegment = [];
         private bool _growIsNeeded = true;
-        private int _nextSegmentLength = CollectionBuilder.MinSegmentLength;
+        private int _nextSegmentLength = CollectionBuilderConstants.MinSegmentLength;
         private int _segmentsCount = 0; // in the range [0, 27]
         private fixed int _segmentsLength[32]; // set the length 32 for SIMD operations
 
 #if NET8_0_OR_GREATER
-        private CollectionBuilder.Array27<T[]> _segments;
+        private CollectionBuilderConstants.Array27<T[]> _segments;
 #else
-        private readonly T[][] _segmentsArray = new T[CollectionBuilder.SegmentsContainerLength][];
+        private readonly T[][] _segmentsArray = new T[CollectionBuilderConstants.SegmentsContainerLength][];
         private readonly Span<T[]> _segments;
 #endif
 
@@ -77,7 +77,7 @@ namespace Yuh.Collections
         /// <param name="firstSegmentLength">The number of elements that can be contained in the first segment.</param>
         public CollectionBuilder(int firstSegmentLength) : this()
         {
-            if (firstSegmentLength < CollectionBuilder.MinSegmentLength || Array.MaxLength < firstSegmentLength)
+            if (firstSegmentLength < CollectionBuilderConstants.MinSegmentLength || Array.MaxLength < firstSegmentLength)
             {
                 ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(firstSegmentLength), "The value is less than the minimum length of a segment, or greater than the maximum length of an array.");
             }
@@ -284,11 +284,11 @@ namespace Yuh.Collections
 
         private static T[] AllocateNewArray(int length)
         {
-            if (length < CollectionBuilder.MinArrayLengthFromArrayPool)
+            if (length < CollectionBuilderConstants.MinArrayLengthFromArrayPool)
             {
                 return new T[length];
             }
-            else if (length <= CollectionBuilder.MaxArrayLengthFromArrayPool)
+            else if (length <= CollectionBuilderConstants.MaxArrayLengthFromArrayPool)
             {
                 return ArrayPool<T>.Shared.Rent(length);
             }
@@ -323,7 +323,7 @@ namespace Yuh.Collections
             int remainsCount = _count;
             ref T destRef = ref MemoryMarshal.GetReference(destination);
 
-            for (int i = 0; i < CollectionBuilder.SegmentsContainerLength; i++)
+            for (int i = 0; i < CollectionBuilderConstants.SegmentsContainerLength; i++)
             {
                 var segment = GetSegmentAt(i);
 
@@ -420,7 +420,7 @@ namespace Yuh.Collections
         /// <param name="length"></param>
         private void GrowExact(int length)
         {
-            if (_segmentsCount == CollectionBuilder.SegmentsContainerLength)
+            if (_segmentsCount == CollectionBuilderConstants.SegmentsContainerLength)
             {
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
@@ -560,7 +560,7 @@ namespace Yuh.Collections
 
         private static void ReturnIfArrayIsFromArrayPool(T[] array)
         {
-            if ((uint)(array.Length - CollectionBuilder.MinArrayLengthFromArrayPool) <= (CollectionBuilder.MaxArrayLengthFromArrayPool - CollectionBuilder.MinArrayLengthFromArrayPool))
+            if ((uint)(array.Length - CollectionBuilderConstants.MinArrayLengthFromArrayPool) <= (CollectionBuilderConstants.MaxArrayLengthFromArrayPool - CollectionBuilderConstants.MinArrayLengthFromArrayPool))
             {
                 ArrayPool<T>.Shared.Return(array);
             }
