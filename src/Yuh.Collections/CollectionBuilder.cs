@@ -333,21 +333,22 @@ namespace Yuh.Collections
 
             int remainsCount = _count;
             ref T destRef = ref MemoryMarshal.GetReference(destination);
+            var segments = _segments[.._segmentsCount];
 
-            for (int i = 0; i < CollectionBuilderConstants.SegmentsContainerLength; i++)
+            for (int i = 0; i < segments.Length; i++)
             {
-                var segment = GetSegmentAt(i);
+                var seg = segments[i].AsSpan()[.._segmentsLength[i]];
 
-                if (remainsCount <= segment.Length)
+                if (remainsCount <= seg.Length)
                 {
-                    MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(segment), remainsCount)
+                    MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(seg), remainsCount)
                         .CopyTo(MemoryMarshal.CreateSpan(ref destRef, remainsCount));
                     break;
                 }
 
-                segment.CopyTo(MemoryMarshal.CreateSpan(ref destRef, segment.Length));
-                destRef = ref Unsafe.Add(ref Unsafe.AsRef(in destRef), segment.Length);
-                remainsCount -= segment.Length;
+                seg.CopyTo(MemoryMarshal.CreateSpan(ref destRef, seg.Length));
+                destRef = ref Unsafe.Add(ref Unsafe.AsRef(in destRef), seg.Length);
+                remainsCount -= seg.Length;
             }
         }
 
@@ -411,9 +412,10 @@ namespace Yuh.Collections
         public readonly int GetAllocatedCapacity()
         {
             int capacity = 0;
-            for (int i = 0; i < _segmentsCount; i++)
+            var segments = _segments[.._segmentsCount];
+            for (int i = 0; i < segments.Length; i++)
             {
-                capacity += _segments[i].Length;
+                capacity += segments[i].Length;
             }
             return capacity;
         }
