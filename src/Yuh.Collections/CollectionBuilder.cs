@@ -35,7 +35,7 @@ namespace Yuh.Collections
         private bool _growIsNeeded = true;
         private int _nextSegmentLength = CollectionBuilderConstants.MinSegmentLength;
         private int _segmentsCount = 0; // in the range [0, 27]
-        private fixed int _segmentsLength[32]; // set the length 32 for SIMD operations
+        private fixed int _segmentsLength[CollectionBuilderConstants.SegmentsContainerLength];
         private readonly bool _useArrayPool = true;
 
 #if NET8_0_OR_GREATER
@@ -296,13 +296,13 @@ namespace Yuh.Collections
         {
             if (_useArrayPool)
             {
-            return checked(Unsafe.SizeOf<T>() * length) switch
-            {
-                < CollectionBuilderConstants.MinArraySizeFromArrayPool => new T[length],
-                <= CollectionBuilderConstants.MaxArraySizeFromArrayPool => ArrayPool<T>.Shared.Rent(length),
-                _ => GC.AllocateUninitializedArray<T>(length)
-            };
-        }
+                return checked(Unsafe.SizeOf<T>() * length) switch
+                {
+                    < CollectionBuilderConstants.MinArraySizeFromArrayPool => new T[length],
+                    <= CollectionBuilderConstants.MaxArraySizeFromArrayPool => ArrayPool<T>.Shared.Rent(length),
+                    _ => GC.AllocateUninitializedArray<T>(length)
+                };
+            }
             else
             {
                 return GC.AllocateUninitializedArray<T>(length);
@@ -357,8 +357,8 @@ namespace Yuh.Collections
         {
             if (!_useArrayPool)
             {
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
                     var segments = _segments[.._segmentsCount];
                     for (int i = 0; i < segments.Length; i++)
                     {
@@ -376,13 +376,13 @@ namespace Yuh.Collections
                         T[] s = segments[i];
                         s.AsSpan()[.._segmentsLength[i]].Clear();
                         ReturnIfArrayIsFromArrayPool(s);
+                    }
                 }
-            }
-            else
-            {
+                else
+                {
                     var segments = _segments[.._segmentsCount];
                     for (int i = 0; i < segments.Length; i++)
-                {
+                    {
                         ReturnIfArrayIsFromArrayPool(segments[i]);
                     }
                 }
