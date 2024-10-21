@@ -277,7 +277,7 @@ namespace Yuh.Collections
 
         private static T[] AllocateNewArray(int length)
         {
-            return checked(sizeof(T) * length) switch
+            return checked(Unsafe.SizeOf<T>() * length) switch
             {
                 < CollectionBuilderConstants.MinArraySizeFromArrayPool => new T[length],
                 <= CollectionBuilderConstants.MaxArraySizeFromArrayPool => ArrayPool<T>.Shared.Rent(length),
@@ -547,7 +547,7 @@ namespace Yuh.Collections
 
         private static void ReturnIfArrayIsFromArrayPool(T[] array)
         {
-            if ((uint)(checked(sizeof(T) * array.Length) - CollectionBuilderConstants.MinArraySizeFromArrayPool) <= (CollectionBuilderConstants.MaxArraySizeFromArrayPool - CollectionBuilderConstants.MinArraySizeFromArrayPool))
+            if ((uint)(checked(Unsafe.SizeOf<T>() * array.Length) - CollectionBuilderConstants.MinArraySizeFromArrayPool) <= (CollectionBuilderConstants.MaxArraySizeFromArrayPool - CollectionBuilderConstants.MinArraySizeFromArrayPool))
             {
                 ArrayPool<T>.Shared.Return(array);
             }
