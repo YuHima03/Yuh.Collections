@@ -36,6 +36,7 @@ namespace Yuh.Collections
         private int _nextSegmentLength = CollectionBuilderConstants.MinSegmentLength;
         private int _segmentsCount = 0; // in the range [0, 27]
         private fixed int _segmentsLength[32]; // set the length 32 for SIMD operations
+        private readonly bool _useArrayPool = true;
 
 #if NET8_0_OR_GREATER
         private CollectionBuilderConstants.Array27<T[]> _segments;
@@ -65,10 +66,26 @@ namespace Yuh.Collections
         }
 
         /// <summary>
-        /// Initializes a collection builder whose first segment can contain exactly specified number of elements.
+        /// Initializes a collection builder which can/never use <see cref="ArrayPool{T}"/>.
+        /// </summary>
+        /// <param name="useArrayPool">
+        /// Whether the collection builder can use arrays from <see cref="ArrayPool{T}"/>.
+        /// If <see langword="false"/>, it never use <see cref="ArrayPool{T}"/>.
+        /// </param>
+        public CollectionBuilder(bool useArrayPool) : this()
+        {
+            _useArrayPool = useArrayPool;
+        }
+
+        /// <summary>
+        /// Initializes a collection builder which can/never use <see cref="ArrayPool{T}"/> and whose first segment can contain exactly specified number of elements.
         /// </summary>
         /// <param name="firstSegmentLength">The number of elements that can be contained in the first segment.</param>
-        public CollectionBuilder(int firstSegmentLength) : this()
+        /// <param name="useArrayPool">
+        /// Whether the collection builder can use arrays from <see cref="ArrayPool{T}"/>.
+        /// If <see langword="false"/>, it never use <see cref="ArrayPool{T}"/>.
+        /// </param>
+        public CollectionBuilder(int firstSegmentLength, bool useArrayPool = true) : this(useArrayPool)
         {
             if (firstSegmentLength < CollectionBuilderConstants.MinSegmentLength || Array.MaxLength < firstSegmentLength)
             {
@@ -275,14 +292,21 @@ namespace Yuh.Collections
             }
         }
 
-        private static T[] AllocateNewArray(int length)
+        private readonly T[] AllocateNewArray(int length)
         {
+            if (_useArrayPool)
+            {
             return checked(Unsafe.SizeOf<T>() * length) switch
             {
                 < CollectionBuilderConstants.MinArraySizeFromArrayPool => new T[length],
                 <= CollectionBuilderConstants.MaxArraySizeFromArrayPool => ArrayPool<T>.Shared.Rent(length),
                 _ => GC.AllocateUninitializedArray<T>(length)
             };
+        }
+            else
+            {
+                return GC.AllocateUninitializedArray<T>(length);
+            }
         }
 
         /// <summary>
@@ -330,19 +354,36 @@ namespace Yuh.Collections
         /// <inheritdoc cref="IDisposable.Dispose"/>
         public readonly void Dispose()
         {
+            if (!_useArrayPool)
+            {
             if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
             {
-                for (int i = 0; i < _segmentsCount; i++)
-                {
-                    GetSegmentAt(i).Clear();
-                    ReturnIfArrayIsFromArrayPool(_segments[i]);
+                    var segments = _segments[.._segmentsCount];
+                    for (int i = 0; i < segments.Length; i++)
+                    {
+                        segments[i].AsSpan()[.._segmentsLength[i]].Clear();
+                    }
                 }
             }
             else
             {
-                for (int i = 0; i < _segmentsCount; i++)
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
                 {
-                    ReturnIfArrayIsFromArrayPool(_segments[i]);
+                    var segments = _segments[.._segmentsCount];
+                    for (int i = 0; i < segments.Length; i++)
+                    {
+                        T[] s = segments[i];
+                        s.AsSpan()[.._segmentsLength[i]].Clear();
+                        ReturnIfArrayIsFromArrayPool(s);
+                }
+            }
+            else
+            {
+                    var segments = _segments[.._segmentsCount];
+                    for (int i = 0; i < segments.Length; i++)
+                {
+                        ReturnIfArrayIsFromArrayPool(segments[i]);
+                    }
                 }
             }
         }
@@ -545,9 +586,9 @@ namespace Yuh.Collections
             return range;
         }
 
-        private static void ReturnIfArrayIsFromArrayPool(T[] array)
+        private readonly void ReturnIfArrayIsFromArrayPool(T[] array)
         {
-            if ((uint)(checked(Unsafe.SizeOf<T>() * array.Length) - CollectionBuilderConstants.MinArraySizeFromArrayPool) <= (CollectionBuilderConstants.MaxArraySizeFromArrayPool - CollectionBuilderConstants.MinArraySizeFromArrayPool))
+            if (_useArrayPool && (uint)(checked(Unsafe.SizeOf<T>() * array.Length) - CollectionBuilderConstants.MinArraySizeFromArrayPool) <= (CollectionBuilderConstants.MaxArraySizeFromArrayPool - CollectionBuilderConstants.MinArraySizeFromArrayPool))
             {
                 ArrayPool<T>.Shared.Return(array);
             }
