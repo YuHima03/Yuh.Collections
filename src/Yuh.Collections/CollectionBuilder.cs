@@ -16,9 +16,7 @@ namespace Yuh.Collections
         [InlineArray(SegmentsContainerLength)]
         internal struct Array27<T>
         {
-#pragma warning disable IDE0051, IDE0044
-            private T _value;
-#pragma warning restore IDE0051, IDE0044
+            public T Value;
         }
 #endif
     }
