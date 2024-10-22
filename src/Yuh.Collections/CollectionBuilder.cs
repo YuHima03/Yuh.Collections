@@ -6,14 +6,14 @@ namespace Yuh.Collections
 {
     internal static class CollectionBuilderConstants
     {
+        internal const int MaxSegmentCount = 27;
         internal const int MaxArraySizeFromArrayPool = 1 << 27;
         internal const int MinArraySizeFromArrayPool = 1 << 11;
         internal const int MaxArraySizeFromStack = 1 << 10;
         internal const int MinSegmentLength = 16;
-        internal const int SegmentsContainerLength = 27;
 
 #if NET8_0_OR_GREATER
-        [InlineArray(SegmentsContainerLength)]
+        [InlineArray(MaxSegmentCount)]
         internal struct InternalArray<T>
         {
             public T Value;
