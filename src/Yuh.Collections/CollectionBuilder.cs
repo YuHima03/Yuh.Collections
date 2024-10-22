@@ -25,7 +25,10 @@ namespace Yuh.Collections
     /// Represents a temporary collection that is used to build new collections.
     /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
-    public unsafe ref struct CollectionBuilder<T> // : IDisposable
+    public unsafe ref struct CollectionBuilder<T>
+#if NET9_0_OR_GREATER
+        : IEnumerable<T>, IReadOnlyCollection<T>
+#endif
     {
         
 
