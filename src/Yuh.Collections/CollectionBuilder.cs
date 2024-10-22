@@ -14,7 +14,7 @@ namespace Yuh.Collections
 
 #if NET8_0_OR_GREATER
         [InlineArray(SegmentsContainerLength)]
-        internal struct Array27<T>
+        internal struct InternalArray<T>
         {
             public T Value;
         }
