@@ -98,7 +98,7 @@ namespace Yuh.Collections
         public readonly int Count => throw new NotImplementedException();
 
         /// <summary>
-        /// Gets the number of elements that can be added without resizing the <see cref="CollectionBuilder{T}"/>.
+        /// Gets the number of elements that can be added without allocating a new segment array.
         /// </summary>
         public readonly int RemainingCapacity => throw new NotImplementedException();
 
