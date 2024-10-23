@@ -30,7 +30,67 @@ namespace Yuh.Collections
         : IEnumerable<T>, IReadOnlyCollection<T>
 #endif
     {
+        /// <summary>
+        /// The span over allocated segments.
+        /// </summary>
+        /// <remarks>
+        /// The length of the span is equal to <see cref="_segmentCount"/>.
+        /// </remarks>
+        private ReadOnlySpan<T[]> _allocatedSegments = [];
         
+        /// <summary>
+        /// The number of elements contained in the collection.
+        /// </summary>
+        private int _count = 0;
+
+        /// <summary>
+        /// The number of elements 
+        /// </summary>
+        private int _countInCurrentSegment = 0;
+
+        /// <summary>
+        /// Current segment to stack elements.
+        /// </summary>
+        private Span<T> _currentSegment = [];
+
+        /// <summary>
+        /// Whether to allocate a new segment in the next addition operation.
+        /// If <see langword="true"/>, the collection builder allocates a new segment and uses it.
+        /// </summary>
+        private bool _growIsNeeded = true;
+
+        /// <summary>
+        /// The minimum length of segment allocated in the next allocation.
+        /// </summary>
+        private int _nextSegmentLength = CollectionBuilderConstants.MinSegmentLength;
+
+        /// <summary>
+        /// The number of segments contained in the collection builder.
+        /// </summary>
+        /// <remarks>
+        /// It is ensured that the value is not negative and less than <see cref="CollectionBuilderConstants.MaxSegmentCount"/>, the maximum number of segments that may be contained in the collection builder.
+        /// </remarks>
+        private int _segmentCount = 0;
+
+        /// <summary>
+        /// The length of segments.
+        /// </summary>
+        private unsafe fixed int _segmentLength[CollectionBuilderConstants.MaxSegmentCount];
+
+        /// <summary>
+        /// Sequence of <typeparamref name="T"/>[] that has fixed capacity.
+        /// </summary>
+#if NET8_0_OR_GREATER
+        private CollectionBuilderConstants.InternalArray<T[]> _segments;
+#else
+        private readonly T[][] _segments = new T[CollectionBuilderConstants.MaxSegmentCount][];
+#endif
+
+        /// <summary>
+        /// Whether to use array pool.
+        /// If <see langword="false"/>, the collection builder never use arrays from <see cref="ArrayPool{T}"/>.
+        /// </summary>
+        private readonly bool _usesArrayPool = true;
 
         /// <summary>
         /// Gets the number of elements contained in the <see cref="CollectionBuilder{T}"/>.
