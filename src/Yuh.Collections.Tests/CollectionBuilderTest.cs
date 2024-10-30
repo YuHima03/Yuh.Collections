@@ -5,7 +5,7 @@ namespace Yuh.Collections.Tests
 {
     public class CollectionBuilderTest()
     {
-        private const int TestEnumerableCount = 128;
+        private const int TestEnumerableCount = 160;
         private const int InsertionCount = 512;
         private const int TotalItemsCount = TestEnumerableCount * InsertionCount;
 
