@@ -254,32 +254,6 @@ namespace Yuh.Collections
         /// <summary>
         /// Adds elements in an <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
-        /// <param name="items">An <see cref="IEnumerable{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
-        public void AppendRange(IEnumerable<T> items)
-        {
-            ArgumentNullException.ThrowIfNull(items);
-
-            if (items is T[] array)
-            {
-                AppendRange(array.AsSpan());
-            }
-            else if (items is List<T> list)
-            {
-                AppendRange(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(list));
-            }
-            else if (items is ICollection<T> collection)
-            {
-                AppendICollectionRangeInternal(collection);
-            }
-            else
-            {
-                AppendIEnumerableRangeInternal(items);
-            }
-        }
-
-        /// <summary>
-        /// Adds elements in an <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
-        /// </summary>
         /// <remarks>
         /// This implementation assumes that <paramref name="items"/> is NOT <see cref="ICollection{T}"/> and thus doesn't check if it is.
         /// </remarks>
@@ -337,6 +311,32 @@ namespace Yuh.Collections
                 _growIsNeeded = true;
             }
             _countInCurrentSegment = countInCurrentSegment;
+        }
+
+        /// <summary>
+        /// Adds elements in an <see cref="IEnumerable{T}"/> to the back of the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <param name="items">An <see cref="IEnumerable{T}"/> whose elements are copied to the <see cref="CollectionBuilder{T}"/>.</param>
+        public void AppendRange(IEnumerable<T> items)
+        {
+            ArgumentNullException.ThrowIfNull(items);
+
+            if (items is T[] array)
+            {
+                AppendRange(array.AsSpan());
+            }
+            else if (items is List<T> list)
+            {
+                AppendRange(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(list));
+            }
+            else if (items is ICollection<T> collection)
+            {
+                AppendICollectionRangeInternal(collection);
+            }
+            else
+            {
+                AppendIEnumerableRangeInternal(items);
+            }
         }
 
         /// <summary>
