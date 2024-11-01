@@ -674,7 +674,6 @@ namespace Yuh.Collections
             }
 
             var countInCurrentSegment = _countInCurrentSegment;
-
             if (length <= countInCurrentSegment)
             {
                 if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
@@ -691,8 +690,52 @@ namespace Yuh.Collections
             }
             else
             {
-                ThrowHelpers.ThrowException();
+                RemoveLargeRangeInternal(length);
+                return;
             }
+        }
+
+        private void RemoveLargeRangeInternal(int length)
+        {
+            Span<T[]> segments = _segments;
+            int segmentCount = _segmentCount;
+            Span<int> segmentLength = _segmentLength;
+            int countInCurrentSegment = _countInCurrentSegment;
+            T[] currentSegmentArray = segments.UnsafeAccess(segmentCount - 1);
+            Span<T> currentSegment = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment);
+
+            while (countInCurrentSegment < length)
+            {
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    currentSegment.Clear();
+                }
+                if (_usesArrayPool)
+                {
+                    ReturnRentedArray(currentSegmentArray);
+                }
+
+                segmentCount--;
+                segments.UnsafeAccess(segmentCount) = [];
+                segmentLength.UnsafeAccess(segmentCount) = 0;
+
+                length -= countInCurrentSegment;
+                countInCurrentSegment = segmentLength.UnsafeAccess(segmentCount - 1);
+                currentSegmentArray = segments.UnsafeAccess(segmentCount - 1);
+                currentSegment = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(currentSegmentArray), countInCurrentSegment);
+            }
+
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            {
+                MemoryMarshal.CreateSpan(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), countInCurrentSegment - length),
+                    length
+                ).Clear();
+            }
+
+            _currentSegment = currentSegment;
+            _countInCurrentSegment = countInCurrentSegment - length;
+            _growIsNeeded = false;
         }
 
         /// <summary>
