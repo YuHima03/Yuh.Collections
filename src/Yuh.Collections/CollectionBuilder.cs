@@ -226,7 +226,7 @@ namespace Yuh.Collections
             }
 
             using var enumerator = items.GetEnumerator();
-            if (!enumerator.MoveNext())
+            if (!enumerator.MoveNext()) // If `items` is empty.
             {
                 return;
             }
