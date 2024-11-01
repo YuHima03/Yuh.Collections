@@ -78,7 +78,11 @@ namespace Yuh.Collections
         /// <summary>
         /// The length of segments.
         /// </summary>
-        private unsafe fixed int _segmentLength[CollectionBuilderConstants.MaxSegmentCount];
+#if NET8_0_OR_GREATER
+        private CollectionBuilderConstants.InternalArray<int> _segmentLength;
+#else
+        private readonly int[] _segmentLength = new int[CollectionBuilderConstants.MaxSegmentCount];
+#endif
 
         /// <summary>
         /// Sequence of <typeparamref name="T"/>[] that has fixed capacity.
@@ -103,7 +107,7 @@ namespace Yuh.Collections
         /// <summary>
         /// Gets the number of elements that can be added without allocating a new segment array.
         /// </summary>
-        public readonly unsafe int RemainingCapacity
+        public readonly int RemainingCapacity
         {
             get
             {
@@ -112,11 +116,8 @@ namespace Yuh.Collections
                 {
                     return 0;
                 }
-                fixed (void* lens = _segmentLength)
-                {
-                    Debug.Assert((uint)(segmentCount - 1) < CollectionBuilderConstants.MaxSegmentCount, ThrowHelpers.M_IndexOutOfRange);
-                    return Unsafe.Read<int>(Unsafe.Add<int>(lens, segmentCount - 1)) - _countInCurrentSegment;
-                }
+                ReadOnlySpan<int> segmentLength = _segmentLength;
+                return segmentLength.UnsafeAccess(segmentCount - 1) - _countInCurrentSegment;
             }
         }
 
@@ -181,7 +182,7 @@ namespace Yuh.Collections
             AppendICollectionRangeInternal(items);
         }
 
-        private unsafe void AppendICollectionRangeInternal(ICollection<T> items)
+        private void AppendICollectionRangeInternal(ICollection<T> items)
         {
             var itemsLength = items.Count;
             if (itemsLength == 0)
@@ -418,7 +419,7 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="destination"></param>
         /// <exception cref="ArgumentException"><paramref name="destination"/> doesn't have enough space to accommodate elements copied.</exception>
-        public unsafe readonly void CopyTo(Span<T> destination)
+        public readonly void CopyTo(Span<T> destination)
         {
             int count = _count;
             if (count == 0)
@@ -432,56 +433,51 @@ namespace Yuh.Collections
             CopyToInternal(destination);
         }
 
-        private unsafe readonly void CopyToInternal(Span<T> destination)
+        private readonly void CopyToInternal(Span<T> destination)
         {
             ref T destinationRef = ref MemoryMarshal.GetReference(destination);
             int remainsCount = _count;
-            ReadOnlySpan<T[]> segments = _allocatedSegments;
             int segmentCount = _segmentCount;
+            ReadOnlySpan<T[]> segments = _allocatedSegments;
+            ReadOnlySpan<int> segmentLength = _segmentLength;
 
-            fixed (void* lens = _segmentLength)
+            for (int i = 0; i < segments.Length; i++)
             {
-                Debug.Assert((uint)segmentCount <= CollectionBuilderConstants.MaxSegmentCount, "Invalid segment count.");
-                ReadOnlySpan<int> segmentLength = MemoryMarshal.CreateSpan(ref Unsafe.AsRef<int>(lens), segmentCount);
-
-                for (int i = 0; i < segments.Length; i++)
+                int srcLen = segmentLength.UnsafeAccess(i);
+                if (srcLen == 0)
                 {
-                    int srcLen = segmentLength.UnsafeAccess(i);
-                    if (srcLen == 0)
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    Debug.Assert((uint)srcLen <= segments[i].Length, "Tried to create too long span or negative-length span.");
-                    Debug.Assert(
-                        (ulong)Unsafe.ByteOffset(ref destinationRef, ref Unsafe.Add(ref MemoryMarshal.GetReference(destination), destination.Length)).ToInt64() >= (ulong)(Math.Min(srcLen, remainsCount) * Unsafe.SizeOf<T>()),
-                        "The remaining capacity of destination span is less than the number of elements to copy."
-                    );
+                Debug.Assert((uint)srcLen <= segments[i].Length, "Tried to create too long span or negative-length span.");
+                Debug.Assert(
+                    (ulong)Unsafe.ByteOffset(ref destinationRef, ref Unsafe.Add(ref MemoryMarshal.GetReference(destination), destination.Length)).ToInt64() >= (ulong)(Math.Min(srcLen, remainsCount) * Unsafe.SizeOf<T>()),
+                    "The remaining capacity of destination span is less than the number of elements to copy."
+                );
 
-                    ReadOnlySpan<T> src;
-                    if (remainsCount <= srcLen)
-                    {
-                        src = MemoryMarshal.CreateReadOnlySpan(
-                            ref MemoryMarshal.GetArrayDataReference(segments[i]),
-                            remainsCount
-                        );
-                        src.CopyTo(MemoryMarshal.CreateSpan(ref destinationRef, remainsCount));
-                        break;
-                    }
-
+                ReadOnlySpan<T> src;
+                if (remainsCount <= srcLen)
+                {
                     src = MemoryMarshal.CreateReadOnlySpan(
                         ref MemoryMarshal.GetArrayDataReference(segments[i]),
-                        srcLen
+                        remainsCount
                     );
-                    src.CopyTo(MemoryMarshal.CreateSpan(ref destinationRef, srcLen));
-                    remainsCount -= srcLen;
-                    destinationRef = ref Unsafe.Add(ref destinationRef, srcLen);
+                    src.CopyTo(MemoryMarshal.CreateSpan(ref destinationRef, remainsCount));
+                    break;
                 }
+
+                src = MemoryMarshal.CreateReadOnlySpan(
+                    ref MemoryMarshal.GetArrayDataReference(segments[i]),
+                    srcLen
+                );
+                src.CopyTo(MemoryMarshal.CreateSpan(ref destinationRef, srcLen));
+                remainsCount -= srcLen;
+                destinationRef = ref Unsafe.Add(ref destinationRef, srcLen);
             }
         }
 
         /// <inheritdoc cref="IDisposable.Dispose"/>
-        public readonly unsafe void Dispose()
+        public readonly void Dispose()
         {
             var usesArrayPool = _usesArrayPool;
             var isTRef = RuntimeHelpers.IsReferenceOrContainsReferences<T>();
@@ -497,50 +493,46 @@ namespace Yuh.Collections
             }
 
             var segments = _allocatedSegments;
-            fixed (void* lens = _segmentLength)
-            {
-                Debug.Assert((uint)segmentCount <= CollectionBuilderConstants.MaxSegmentCount, "Tried to create too long span or negative-length span.");
-                var segmentLength = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef<int>(lens), segmentCount);
+            ReadOnlySpan<int> segmentLength = _segmentLength;
 
-                if (usesArrayPool)
-                {
-                    if (isTRef)
-                    {
-                        for (int i = 0; i < segments.Length; i++)
-                        {
-                            var segArray = segments[i];
-                            var seg = MemoryMarshal.CreateSpan(
-                                ref MemoryMarshal.GetArrayDataReference(segments[i]),
-                                segmentLength.UnsafeAccess(i)
-                            );
-                            seg.Clear();
-                            ReturnRentedArray(segArray);
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < segments.Length; i++)
-                        {
-                            var segArray = segments[i];
-                            ReturnRentedArray(segArray);
-                        }
-                    }
-                }
-                else // In this case, `isTRef` is always true.
+            if (usesArrayPool)
+            {
+                if (isTRef)
                 {
                     for (int i = 0; i < segments.Length; i++)
                     {
+                        var segArray = segments[i];
                         var seg = MemoryMarshal.CreateSpan(
                             ref MemoryMarshal.GetArrayDataReference(segments[i]),
                             segmentLength.UnsafeAccess(i)
                         );
                         seg.Clear();
+                        ReturnRentedArray(segArray);
                     }
+                }
+                else
+                {
+                    for (int i = 0; i < segments.Length; i++)
+                    {
+                        var segArray = segments[i];
+                        ReturnRentedArray(segArray);
+                    }
+                }
+            }
+            else // In this case, `isTRef` is always true.
+            {
+                for (int i = 0; i < segments.Length; i++)
+                {
+                    var seg = MemoryMarshal.CreateSpan(
+                        ref MemoryMarshal.GetArrayDataReference(segments[i]),
+                        segmentLength.UnsafeAccess(i)
+                    );
+                    seg.Clear();
                 }
             }
         }
 
-        private unsafe void ExpandCurrentSegment(int minimumLength)
+        private void ExpandCurrentSegment(int minimumLength)
         {
             var segmentCount = _segmentCount;
             if (segmentCount == 0)
@@ -588,10 +580,8 @@ namespace Yuh.Collections
             segments.UnsafeAccess(segmentCount - 1) = newSegmentArray;
             _currentSegment = newSegment;
 
-            fixed (void* lens = _segmentLength)
-            {
-                Unsafe.Write(Unsafe.Add<int>(lens, segmentCount - 1), newSegment.Length);
-            }
+            Span<int> segmentLength = _segmentLength;
+            segmentLength.UnsafeAccess(segmentCount - 1) = newSegment.Length;
         }
 
 
@@ -599,7 +589,7 @@ namespace Yuh.Collections
         /// Returns the total length of segments contained in the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
         /// <returns>The total length of segments contained in the <see cref="CollectionBuilder{T}"/>.</returns>
-        public readonly unsafe int GetAllocatedCapacity()
+        public readonly int GetAllocatedCapacity()
         {
             var segmentCount = _segmentCount;
             if (segmentCount == 0)
@@ -611,16 +601,13 @@ namespace Yuh.Collections
                 return _segmentLength[0];
             }
 
-            fixed (void* lens = _segmentLength)
+            ReadOnlySpan<int> segmentLength = _segmentLength;
+            int capacity = 0;
+            for (int i = 0; i < segmentLength.Length; i++)
             {
-                var segmentLength = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef<int>(lens), _segmentCount);
-                int capacity = 0;
-                for (int i = 0; i < segmentLength.Length; i++)
-                {
-                    capacity += segmentLength[i];
-                }
-                return capacity;
+                capacity += segmentLength[i];
             }
+            return capacity;
         }
 
         /// <summary>
@@ -643,7 +630,7 @@ namespace Yuh.Collections
         /// Allocates new buffer that can accommodate at least specified number of elements.
         /// </summary>
         /// <param name="length"></param>
-        private unsafe void GrowExact(int length)
+        private void GrowExact(int length)
         {
             int segmentCount = _segmentCount;
             if (segmentCount == CollectionBuilderConstants.MaxSegmentCount)
@@ -666,10 +653,8 @@ namespace Yuh.Collections
             segments.UnsafeAccess(segmentCount) = newSegmentArray;
 
             // _segmentLength[segmentCount] = newSegment.Length;
-            fixed (void* lens = _segmentLength)
-            {
-                Unsafe.Write(Unsafe.Add<int>(lens, segmentCount), newSegment.Length);
-            }
+            Span<int> segmentLength = _segmentLength;
+            segmentLength.UnsafeAccess(segmentCount) = newSegment.Length;
         }
 
         /// <summary>
@@ -677,7 +662,7 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="length">The number of elements to remove from the <see cref="CollectionBuilder{T}"/>.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/> is negative or greater than <see cref="Count"/>.</exception>
-        public unsafe void RemoveRange(int length)
+        public void RemoveRange(int length)
         {
             if (length == 0)
             {
@@ -768,7 +753,7 @@ namespace Yuh.Collections
         /// Ensures that the current segment has enough space to accommodate specified length of items and reserves contiguous memory region over the range.
         /// </summary>
         /// <param name="length"></param>
-        private unsafe void Reserve(int length)
+        private void Reserve(int length)
         {
             var countInCurrentSegment = _countInCurrentSegment;
 
@@ -791,10 +776,8 @@ namespace Yuh.Collections
                     }
                     else
                     {
-                        fixed (void* lens = _segmentLength)
-                        {
-                            Unsafe.Write(Unsafe.Add<int>(lens, _segmentCount - 1), countInCurrentSegment);
-                        }
+                        Span<int> segmentLength = _segmentLength;
+                        segmentLength.UnsafeAccess(_segmentCount - 1) = countInCurrentSegment;
                         GrowExact(Math.Max(length, nextSegmentLength));
                     }
                 }
