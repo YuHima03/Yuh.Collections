@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Yuh.Collections.Helpers;
@@ -97,7 +98,7 @@ namespace Yuh.Collections
         /// <summary>
         /// Gets the number of elements contained in the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
-        public readonly int Count => throw new NotImplementedException();
+        public readonly int Count => _count;
 
         /// <summary>
         /// Gets the number of elements that can be added without allocating a new segment array.
@@ -193,62 +194,11 @@ namespace Yuh.Collections
                 return;
             }
 
-            if (_growIsNeeded)
-            {
-                Grow(itemsLength);
-                items.CopyTo(_allocatedSegments.UnsafeAccess(_segmentCount - 1), 0);
-                _count += itemsLength;
-
-                //
-                // It is ensured that item count in `_currentSegment` is equal to `itemsLength`.
-                //
-                if (itemsLength == _currentSegment.Length)
-                {
-                    _growIsNeeded = true;
-                }
-                _countInCurrentSegment = itemsLength;
-                return;
-            }
-
-            var currentSegment = _currentSegment;
-            var countInCurrentSegment = _countInCurrentSegment;
-
-            if (itemsLength <= currentSegment.Length - countInCurrentSegment)
-            {
-                items.CopyTo(_allocatedSegments.UnsafeAccess(_segmentCount - 1), countInCurrentSegment);
-                countInCurrentSegment += itemsLength;
-            }
-            else
-            {
-                var nextSegmentLength = ComputeNextSegmentLength();
-                var neededLength = countInCurrentSegment + itemsLength;
-
-                if (countInCurrentSegment < nextSegmentLength && neededLength < checked(currentSegment.Length + nextSegmentLength))
-                {
-                    ExpandCurrentSegment(neededLength);
-                    items.CopyTo(_allocatedSegments.UnsafeAccess(_segmentCount - 1), countInCurrentSegment);
-                    countInCurrentSegment += itemsLength;
-                }
-                else
-                {
-                    fixed (void* lens = _segmentLength)
-                    {
-                        Unsafe.Write(Unsafe.Add<int>(lens, _segmentCount - 1), countInCurrentSegment);
-                    }
-                    GrowExact(Math.Max(itemsLength, nextSegmentLength));
-                    currentSegment = _currentSegment;
-
-                    items.CopyTo(_allocatedSegments.UnsafeAccess(_segmentCount - 1), 0);
-                    countInCurrentSegment = itemsLength;
-                }
-            }
-
-            _count += itemsLength;
-            if (currentSegment.Length == countInCurrentSegment)
-            {
-                _growIsNeeded = true;
-            }
-            _countInCurrentSegment = countInCurrentSegment;
+            Reserve(itemsLength);
+            items.CopyTo(
+                _allocatedSegments.UnsafeAccess(_segmentCount - 1),
+                _countInCurrentSegment - itemsLength
+            );
         }
 
         /// <summary>
@@ -644,13 +594,33 @@ namespace Yuh.Collections
             }
         }
 
+
         /// <summary>
-        /// Returns the number of elements that can be contained in the <see cref="CollectionBuilder{T}"/> without allocate new internal array.
+        /// Returns the total length of segments contained in the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
-        /// <returns>The number of elements that can be contained in the <see cref="CollectionBuilder{T}"/> without allocating new internal array.</returns>
-        public readonly int GetAllocatedCapacity()
+        /// <returns>The total length of segments contained in the <see cref="CollectionBuilder{T}"/>.</returns>
+        public readonly unsafe int GetAllocatedCapacity()
         {
-            throw new NotImplementedException();
+            var segmentCount = _segmentCount;
+            if (segmentCount == 0)
+            {
+                return 0;
+            }
+            else if (segmentCount == 1)
+            {
+                return _segmentLength[0];
+            }
+
+            fixed (void* lens = _segmentLength)
+            {
+                var segmentLength = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef<int>(lens), _segmentCount);
+                int capacity = 0;
+                for (int i = 0; i < segmentLength.Length; i++)
+                {
+                    capacity += segmentLength[i];
+                }
+                return capacity;
+            }
         }
 
         /// <summary>
@@ -707,9 +677,37 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="length">The number of elements to remove from the <see cref="CollectionBuilder{T}"/>.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/> is negative or greater than <see cref="Count"/>.</exception>
-        public void RemoveRange(int length)
+        public unsafe void RemoveRange(int length)
         {
-            throw new NotImplementedException();
+            if (length == 0)
+            {
+                return;
+            }
+            if ((uint)length >= _count)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(length), "The value is negative or greater than the number of elements contained in the collection builder.");
+            }
+
+            var countInCurrentSegment = _countInCurrentSegment;
+
+            if (length <= countInCurrentSegment)
+            {
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    MemoryMarshal.CreateSpan(
+                        ref Unsafe.Add(ref MemoryMarshal.GetReference(_currentSegment), countInCurrentSegment - length),
+                        length
+                    ).Clear();
+                }
+                _count -= length;
+                _countInCurrentSegment -= length;
+                _growIsNeeded = false;
+                return;
+            }
+            else
+            {
+                ThrowHelpers.ThrowException();
+            }
         }
 
         /// <summary>
@@ -718,6 +716,107 @@ namespace Yuh.Collections
         /// <param name="length">The number of elements that the reserved memory region can exactly accommodate.</param>
         /// <returns>The span over the reserved memory region.</returns>
         public Span<T> ReserveRange(int length)
+        {
+            if (length == 0)
+            {
+                return [];
+            }
+
+            Reserve(length);
+            Debug.Assert(checked(_countInCurrentSegment + length) <= _currentSegment.Length);
+            return MemoryMarshal.CreateSpan(
+                ref Unsafe.Add(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment),
+                length
+            );
+        }
+
+        /// <summary>
+        /// Reserves specified length of contiguous memory region from the back of the <see cref="CollectionBuilder{T}"/> and returns a span over the region.
+        /// </summary>
+        /// <param name="length">The number of elements that the reserved memory region can exactly accommodates.</param>
+        /// <returns>A span over the reserved memory region.</returns>
+        /// <exception cref="NotImplementedException"></exception>
+#if NET7_0_OR_GREATER
+        [UnscopedRef]
+#endif
+        public Span<T> ReserveSpan(int length)
+        {
+            if (length == 0)
+            {
+                return [];
+            }
+            else if (length == 1)
+            {
+                Append(default!);
+#if NET7_0_OR_GREATER
+                return new Span<T>(ref _currentSegment.UnsafeAccess(_countInCurrentSegment - 1));
+#else
+                return MemoryMarshal.CreateSpan(ref _currentSegment.UnsafeAccess(_countInCurrentSegment - 1), 1);
+#endif
+            }
+            else
+            {
+                Reserve(length);
+                return MemoryMarshal.CreateSpan(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment - length),
+                    length
+                );
+            }
+        }
+
+        /// <summary>
+        /// Ensures that the current segment has enough space to accommodate specified length of items and reserves contiguous memory region over the range.
+        /// </summary>
+        /// <param name="length"></param>
+        private unsafe void Reserve(int length)
+        {
+            var countInCurrentSegment = _countInCurrentSegment;
+
+            if (_growIsNeeded)
+            {
+                Grow(length);
+            }
+            else
+            {
+                var currentSegment = _currentSegment;
+
+                if (currentSegment.Length - countInCurrentSegment < length)
+                {
+                    var nextSegmentLength = ComputeNextSegmentLength();
+                    var neededLength = countInCurrentSegment + length;
+
+                    if (countInCurrentSegment < nextSegmentLength && neededLength < checked(currentSegment.Length + nextSegmentLength))
+                    {
+                        ExpandCurrentSegment(neededLength);
+                    }
+                    else
+                    {
+                        fixed (void* lens = _segmentLength)
+                        {
+                            Unsafe.Write(Unsafe.Add<int>(lens, _segmentCount - 1), countInCurrentSegment);
+                        }
+                        GrowExact(Math.Max(length, nextSegmentLength));
+                    }
+                }
+            }
+
+            _count += length;
+            countInCurrentSegment = (_countInCurrentSegment += length);
+            if (_currentSegment.Length == countInCurrentSegment)
+            {
+                _growIsNeeded = true;
+            }
+        }
+
+        /// <summary>
+        /// Reserves specified length of memory from the back of the <see cref="CollectionBuilder{T}"/> and returns a span over the region.
+        /// </summary>
+        /// <remarks>
+        /// The reserved memory consists of contiguous regions.
+        /// </remarks>
+        /// <param name="length">The number of elements that the reserved memory can exactly accommodates.</param>
+        /// <exception cref="NotImplementedException"></exception>
+        public void ReserveSpanSequence(int length)
         {
             throw new NotImplementedException();
         }
