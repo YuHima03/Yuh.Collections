@@ -882,5 +882,69 @@ namespace Yuh.Collections
             CopyTo(array.AsSpan());
             return array;
         }
+
+        public struct Segments : IRefList<T>
+        {
+            /// <summary>
+            /// Number of elements in segments.
+            /// </summary>
+#if NET8_0_OR_GREATER
+            private CollectionBuilderConstants.InternalArray<int> _countInSegment;
+#else
+            private readonly int[] _countInSegment;
+#endif
+
+            /// <summary>
+            /// Sequence of <typeparamref name="T"/>[] that has fixed capacity.
+            /// </summary>
+#if NET8_0_OR_GREATER
+            private CollectionBuilderConstants.InternalArray<T[]> _segments;
+#else
+            private readonly T[][] _segments;
+#endif
+
+            /// <summary>
+            /// The number of segments contained in the collection builder.
+            /// </summary>
+            /// <remarks>
+            /// It is ensured that the value is not negative and less than <see cref="CollectionBuilderConstants.MaxSegmentCount"/>, the maximum number of segments that may be contained in the collection builder.
+            /// </remarks>
+            private int _segmentCount;
+
+            public readonly int Count => _segmentCount;
+
+            public readonly Span<T> this[int index]
+            {
+                get
+                {
+                    if ((uint)index >= _segmentCount)
+                    {
+                        ThrowHelpers.ThrowIndexOutOfRangeException();
+                    }
+                    ReadOnlySpan<T[]> segments = _segments;
+                    ReadOnlySpan<int> counts = _countInSegment;
+                    return MemoryMarshal.CreateSpan(
+                        ref MemoryMarshal.GetArrayDataReference(segments.UnsafeAccess(index)),
+                        counts.UnsafeAccess(index)
+                    );
+                }
+            }
+
+#if NET8_0_OR_GREATER
+            private Segments(CollectionBuilderConstants.InternalArray<T[]> segments, CollectionBuilderConstants.InternalArray<int> countInSegment, int segmentCount)
+            {
+                _countInSegment = countInSegment;
+                _segments = segments;
+                _segmentCount = segmentCount;
+            }
+#else
+            private Segments(T[][] segments, int[] countInSegment, int segmentCount)
+            {
+                _countInSegment = countInSegment;
+                _segments = segments;
+                _segmentCount = segmentCount;
+            }
+#endif
+        }
     }
 }
