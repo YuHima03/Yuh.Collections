@@ -904,20 +904,17 @@ namespace Yuh.Collections
 #endif
 
             /// <summary>
-            /// The number of segments contained in the collection builder.
+            /// The number of segments contained in a collection builder.
             /// </summary>
-            /// <remarks>
-            /// It is ensured that the value is not negative and less than <see cref="CollectionBuilderConstants.MaxSegmentCount"/>, the maximum number of segments that may be contained in the collection builder.
-            /// </remarks>
-            private int _segmentCount;
+            public readonly int Count;
 
-            public readonly int Count => _segmentCount;
+            readonly int IRefList<T>.Count => Count;
 
             public readonly Span<T> this[int index]
             {
                 get
                 {
-                    if ((uint)index >= _segmentCount)
+                    if ((uint)index >= Count)
                     {
                         ThrowHelpers.ThrowIndexOutOfRangeException();
                     }
@@ -935,14 +932,14 @@ namespace Yuh.Collections
             {
                 _countInSegment = countInSegment;
                 _segments = segments;
-                _segmentCount = segmentCount;
+                Count = segmentCount;
             }
 #else
             private Segments(T[][] segments, int[] countInSegment, int segmentCount)
             {
                 _countInSegment = countInSegment;
                 _segments = segments;
-                _segmentCount = segmentCount;
+                Count = segmentCount;
             }
 #endif
         }
