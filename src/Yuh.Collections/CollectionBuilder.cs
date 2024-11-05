@@ -373,6 +373,69 @@ namespace Yuh.Collections
             return;
         }
 
+        /// <summary>
+        /// Create sequence of span over the collection builder with a buffer.
+        /// </summary>
+        /// <returns>A <see cref="SpanSequence{TElement, TSegmentList}"/> over the collection builder.</returns>
+        public readonly SpanSequence<T, Segments> AsSpanSequence()
+        {
+            var bufferArray = new int[_segmentCount];
+            return AsSpanSequenceInternal(bufferArray);
+        }
+
+        /// <summary>
+        /// Create sequence of span over the collection builder with a buffer.
+        /// </summary>
+        /// <param name="buffer">
+        /// <para>A span whose length is equal to or greater than the number of segments contained in the collection builder.</para>
+        /// <para>Recommended: 27-length span.</para>
+        /// </param>
+        /// <returns>A <see cref="SpanSequence{TElement, TSegmentList}"/> over the collection builder.</returns>
+        public readonly SpanSequence<T, Segments> AsSpanSequence(Span<int> buffer)
+        {
+            var segmentCount = _segmentCount;
+            if (segmentCount == buffer.Length)
+            {
+                return AsSpanSequenceInternal(buffer);
+            }
+            else if (segmentCount < buffer.Length)
+            {
+                return AsSpanSequenceInternal(MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(buffer), segmentCount));
+            }
+            else
+            {
+                var bufferArray = new int[segmentCount];
+                return AsSpanSequenceInternal(bufferArray.AsSpan());
+            }
+        }
+
+        /// <summary>
+        /// Create sequence of span over the collection builder with a buffer.
+        /// </summary>
+        /// <param name="countBefore">A span whose length is equal to <see cref="_segmentCount"/>.</param>
+        /// <returns>A <see cref="SpanSequence{TElement, TSegmentList}"/> over the collection builder.</returns>
+        private readonly SpanSequence<T, Segments> AsSpanSequenceInternal(Span<int> countBefore)
+        {
+            var segmentCount = _segmentCount;
+            if (segmentCount == 0)
+            {
+                return SpanSequence<T, Segments>.Empty;
+            }
+
+            var countInSegment = _segmentLength;
+            Segments segments = new(_segments, countInSegment, segmentCount);
+
+            Span<int> countInSegment_Span = countInSegment;
+            int countSum = 0;
+            for (int i = 0; i < segmentCount; i++)
+            {
+                countBefore.UnsafeAccess(i) = countSum;
+                countSum += countInSegment_Span.UnsafeAccess(i);
+            }
+
+            return new(segments, countBefore);
+        }
+
         private readonly int ComputeNextSegmentLength()
         {
             int segmentCount = _segmentCount;
