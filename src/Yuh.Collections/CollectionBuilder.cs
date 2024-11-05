@@ -928,14 +928,14 @@ namespace Yuh.Collections
             }
 
 #if NET8_0_OR_GREATER
-            private Segments(CollectionBuilderConstants.InternalArray<T[]> segments, CollectionBuilderConstants.InternalArray<int> countInSegment, int segmentCount)
+            internal Segments(CollectionBuilderConstants.InternalArray<T[]> segments, CollectionBuilderConstants.InternalArray<int> countInSegment, int segmentCount)
             {
                 _countInSegment = countInSegment;
                 _segments = segments;
                 Count = segmentCount;
             }
 #else
-            private Segments(T[][] segments, int[] countInSegment, int segmentCount)
+            internal Segments(T[][] segments, int[] countInSegment, int segmentCount)
             {
                 _countInSegment = countInSegment;
                 _segments = segments;
