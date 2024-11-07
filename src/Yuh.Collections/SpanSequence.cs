@@ -34,6 +34,15 @@ namespace Yuh.Collections
             }
         }
 
+        public readonly SpanSequence<TElement, TSegmentList> this[Range range]
+        {
+            get
+            {
+                var (offset, length) = range.GetOffsetAndLength(Length);
+                return SliceInternal(offset, length);
+            }
+        }
+
         public SpanSequence(TSegmentList segments, Span<int> countBefore) : this()
         {
             if (segments.Count != countBefore.Length)
