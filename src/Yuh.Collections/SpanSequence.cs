@@ -86,5 +86,22 @@ namespace Yuh.Collections
 
             return (l, index - countBefore.UnsafeAccess(l));
         }
+
+        public readonly SpanSequence<TElement, TSegmentList> Slice(int index)
+        {
+
+        }
+
+        public readonly SpanSequence<TElement, TSegmentList> Slice(int index, int length)
+        {
+
+        }
+
+        private readonly SpanSequence<TElement, TSegmentList> SliceInternal(int index, int length)
+        {
+            var begin = GetLocation(index);
+            var end = GetLocation(index + length);
+
+        }
     }
 }
