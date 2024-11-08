@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yuh.Collections", "src\Yuh.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yuh.Collections.Tests", "src\Yuh.Collections.Tests\Yuh.Collections.Tests.csproj", "{2756E196-E0FD-4B0E-B17B-A7129FE81C71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yuh.Collections.Views", "src\Yuh.Collections.Views\Yuh.Collections.Views.csproj", "{5F07EED2-445A-4A14-8EED-84396C584C35}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yuh.Collections.Views", "src\Yuh.Collections.Views\Yuh.Collections.Views.csproj", "{5F07EED2-445A-4A14-8EED-84396C584C35}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
