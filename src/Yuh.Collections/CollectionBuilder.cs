@@ -433,7 +433,7 @@ namespace Yuh.Collections
                 countSum += countInSegment_Span.UnsafeAccess(i);
             }
 
-            return new(segments, countBefore);
+            return new(segments, countBefore, 0);
         }
 
         private readonly int ComputeNextSegmentLength()

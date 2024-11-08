@@ -62,7 +62,7 @@ namespace Yuh.Collections
                 _indexOffset = MemoryMarshal.GetReference(countBefore); // _countBefore[0]
                 Length = countBefore.Last() + segments[^1].Length;
             }
-            }
+        }
 
         private SpanSequence(TSegmentList segments, Span<int> countBefore, int segmentOffset, int indexOffset, int length) : this()
         {
@@ -113,12 +113,24 @@ namespace Yuh.Collections
 
         public readonly SpanSequence<TElement, TSegmentList> Slice(int index)
         {
-
+            if (index == 0)
+            {
+                return this;
+            }
+            if ((uint)Length < (uint)index)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
+            }
+            return SliceInternal(index, Length - index);
         }
 
         public readonly SpanSequence<TElement, TSegmentList> Slice(int index, int length)
         {
-
+            if ((uint)Length <= (uint)index || (uint)(Length - index) < (uint)length)
+            {
+                ThrowHelpers.ThrowArgumentException("The range is out of the collection.", string.Join(',', nameof(index), nameof(length)));
+            }
+            return SliceInternal(index, length);
         }
 
         private readonly SpanSequence<TElement, TSegmentList> SliceInternal(int index, int length)
@@ -126,6 +138,15 @@ namespace Yuh.Collections
             var begin = GetLocation(index);
             var end = GetLocation(index + length);
 
+            ref var countBeforeFirstRef = ref Unsafe.Add(ref MemoryMarshal.GetReference(_countBefore), begin.SegmentIndex - _segmentOffset);
+
+            return new SpanSequence<TElement, TSegmentList>(
+                segments: _segments,
+                countBefore: MemoryMarshal.CreateSpan(ref countBeforeFirstRef, end.SegmentIndex - begin.SegmentIndex + 1),
+                segmentOffset: begin.SegmentIndex,
+                indexOffset: countBeforeFirstRef,
+                length: length
+            );
         }
     }
 }
