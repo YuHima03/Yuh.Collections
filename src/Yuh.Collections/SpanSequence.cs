@@ -15,6 +15,8 @@ namespace Yuh.Collections
 
         private readonly int _indexOffset = 0;
 
+        private readonly int _segmentOffset = 0;
+
         private readonly TSegmentList _segments;
 
         public readonly int Length = 0;
@@ -43,13 +45,14 @@ namespace Yuh.Collections
             }
         }
 
-        public SpanSequence(TSegmentList segments, Span<int> countBefore) : this()
+        public SpanSequence(TSegmentList segments, Span<int> countBefore, int segmentOffset) : this()
         {
-            if (segments.Count != countBefore.Length)
+            if (segments.Count - segmentOffset < countBefore.Length)
             {
-                ThrowHelpers.ThrowArgumentException("The number of elements of two collections must be equal.", string.Join(',', nameof(segments), nameof(countBefore)));
+                ThrowHelpers.ThrowArgumentException("`countBefore` represents invalid range.", string.Join(',', nameof(segments), nameof(countBefore), nameof(segmentOffset)));
             }
             _countBefore = countBefore;
+            _segmentOffset = segmentOffset;
             _segments = segments;
 
             if (!_countBefore.IsEmpty)
@@ -75,7 +78,7 @@ namespace Yuh.Collections
             var countBeforeLast = countBefore.Last();
             if (countBeforeLast <= index)
             {
-                return (segmentCount - 1, index - countBeforeLast);
+                return (segmentCount - 1 + _segmentOffset, index - countBeforeLast);
             }
 
             int l = 0, r = segmentCount - 1; // countBefore[l] <= index < countBefore[r]
@@ -93,7 +96,7 @@ namespace Yuh.Collections
                 }
             }
 
-            return (l, index - countBefore.UnsafeAccess(l));
+            return (l + _segmentOffset, index - countBefore.UnsafeAccess(l));
         }
 
         public readonly SpanSequence<TElement, TSegmentList> Slice(int index)
