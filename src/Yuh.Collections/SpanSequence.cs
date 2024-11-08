@@ -81,7 +81,7 @@ namespace Yuh.Collections
             int l = 0, r = segmentCount - 1; // countBefore[l] <= index < countBefore[r]
             while (l + 1 != r)
             {
-                int m = (l + r) >> 1;
+                int m = l + ((r - l) >> 1);
                 var cb = countBefore.UnsafeAccess(m);
                 if (cb <= index)
                 {
