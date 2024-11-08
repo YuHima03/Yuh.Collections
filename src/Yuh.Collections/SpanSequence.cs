@@ -85,11 +85,11 @@ namespace Yuh.Collections
                 var cb = countBefore.UnsafeAccess(m);
                 if (cb <= index)
                 {
-                    l = cb;
+                    l = m;
                 }
                 else
                 {
-                    r = cb;
+                    r = m;
                 }
             }
 
