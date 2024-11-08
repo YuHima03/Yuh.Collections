@@ -57,7 +57,9 @@ namespace Yuh.Collections
 
             if (!_countBefore.IsEmpty)
             {
-                _indexOffset = MemoryMarshal.GetReference(_countBefore); // _countBefore[0]
+                _indexOffset = MemoryMarshal.GetReference(countBefore); // _countBefore[0]
+                Length = countBefore.Last() + segments[^1].Length;
+            }
             }
         }
 
