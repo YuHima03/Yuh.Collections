@@ -63,6 +63,14 @@ namespace Yuh.Collections
                 Length = countBefore.Last() + segments[^1].Length;
             }
             }
+
+        private SpanSequence(TSegmentList segments, Span<int> countBefore, int segmentOffset, int indexOffset, int length) : this()
+        {
+            _countBefore = countBefore;
+            _indexOffset = indexOffset;
+            _segmentOffset = segmentOffset;
+            _segments = segments;
+            Length = length;
         }
 
         /// <summary>
