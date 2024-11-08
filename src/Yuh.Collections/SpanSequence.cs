@@ -23,6 +23,8 @@ namespace Yuh.Collections
 
         public static SpanSequence<TElement, TSegmentList> Empty => default;
 
+        public readonly ref TElement this[Index index] => ref this[index.GetOffset(Length)];
+
         public readonly ref TElement this[int index]
         {
             get
