@@ -73,6 +73,45 @@ namespace Yuh.Collections
             Length = length;
         }
 
+        public readonly void CopyTo(Span<TElement> destination)
+        {
+            if (Length == 0)
+            {
+                return;
+            }
+            if (destination.Length < Length)
+            {
+                ThrowHelpers.ThrowArgumentException("The destination span doesn't have enough space to accommodate elements of the collection.");
+            }
+            CopyToInternal(destination);
+        }
+
+        /// <summary>
+        /// Copies elements of the <see cref="SpanSequence{TElement, TSegmentList}"/> to the specified span.
+        /// </summary>
+        /// <remarks>
+        /// This method does NOT validate the length of <paramref name="destination"/>.
+        /// </remarks>
+        /// <param name="destination">A span to copy to.</param>
+        private readonly void CopyToInternal(Span<TElement> destination)
+        {
+            var segmentOffset = _segmentOffset;
+            var end = _segmentOffset + _countBefore.Length;
+
+            ref TElement destRef = ref MemoryMarshal.GetReference(destination);
+
+            for (int i = segmentOffset; i < end; i++)
+            {
+                var src = _segments[i];
+                var srcLen = src.Length;
+                src.CopyTo(MemoryMarshal.CreateSpan(
+                    ref destRef,
+                    srcLen
+                ));
+                destRef = ref Unsafe.Add(ref destRef, srcLen);
+            }
+        }
+
         /// <summary>
         /// Returns a pair of index that indicates the element at the specified index in the collection.
         /// </summary>
