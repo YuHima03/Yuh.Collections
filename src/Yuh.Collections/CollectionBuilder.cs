@@ -135,12 +135,28 @@ namespace Yuh.Collections
             _allocatedSegments = MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetArrayDataReference(_segments), 0);
 #endif
         }
+        
+        /// <summary>
+         /// Initializes a collection builder which can/never use <see cref="ArrayPool{T}"/>.
+         /// </summary>
+         /// <param name="usesArrayPool">
+         /// Whether the collection builder can use arrays from <see cref="ArrayPool{T}"/>.
+         /// If <see langword="false"/>, it never use <see cref="ArrayPool{T}"/>.
+         /// </param>
+        public CollectionBuilder(bool usesArrayPool) : this()
+        {
+            _usesArrayPool = usesArrayPool;
+        }
 
         /// <summary>
         /// Initializes a collection builder whose first segment can contain exactly specified number of elements.
         /// </summary>
         /// <param name="firstSegmentLength">The number of elements that can be contained in the first segment.</param>
-        public CollectionBuilder(int firstSegmentLength) : this()
+        /// <param name="usesArrayPool">
+        /// Whether the collection builder can use arrays from <see cref="ArrayPool{T}"/>.
+        /// If <see langword="false"/>, it never use <see cref="ArrayPool{T}"/>.
+        /// </param>
+        public CollectionBuilder(int firstSegmentLength, bool usesArrayPool = true) : this(usesArrayPool)
         {
             _nextSegmentLength = Math.Max(firstSegmentLength, CollectionBuilderConstants.MinSegmentLength);
         }
