@@ -34,14 +34,6 @@ namespace Yuh.Collections
 #endif
     {
         /// <summary>
-        /// The span over allocated segments.
-        /// </summary>
-        /// <remarks>
-        /// The length of the span is equal to <see cref="_segmentCount"/>.
-        /// </remarks>
-        private ReadOnlySpan<T[]> _allocatedSegments;
-
-        /// <summary>
         /// The number of elements contained in the collection.
         /// </summary>
         private int _count = 0;
@@ -99,6 +91,13 @@ namespace Yuh.Collections
         /// </summary>
         private readonly bool _usesArrayPool = true;
 
+        private readonly ReadOnlySpan<T[]> AllocatedSegments
+#if NET8_0_OR_GREATER
+            => MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference((ReadOnlySpan<T[]>)_segments), _segmentCount);
+#else
+            => MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetArrayDataReference(_segments), _segmentCount);
+#endif
+
         /// <summary>
         /// Gets the number of elements contained in the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
@@ -124,25 +123,15 @@ namespace Yuh.Collections
         /// <summary>
         /// Initializes a collection builder whose fields are set to default value.
         /// </summary>
-        public CollectionBuilder()
-        {
-            // If `_allocatedSegments` is set to default empty span, NullReferenceException will be thrown because the span has null reference.
-            // So, the initializer assigns 0-length span that has reference to `_segments` field below.
-#if NET8_0_OR_GREATER
-            ReadOnlySpan<T[]> segments = _segments;
-            _allocatedSegments = MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(segments), 0);
-#else
-            _allocatedSegments = MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetArrayDataReference(_segments), 0);
-#endif
-        }
-        
+        public CollectionBuilder() { }
+
         /// <summary>
-         /// Initializes a collection builder which can/never use <see cref="ArrayPool{T}"/>.
-         /// </summary>
-         /// <param name="usesArrayPool">
-         /// Whether the collection builder can use arrays from <see cref="ArrayPool{T}"/>.
-         /// If <see langword="false"/>, it never use <see cref="ArrayPool{T}"/>.
-         /// </param>
+        /// Initializes a collection builder which can/never use <see cref="ArrayPool{T}"/>.
+        /// </summary>
+        /// <param name="usesArrayPool">
+        /// Whether the collection builder can use arrays from <see cref="ArrayPool{T}"/>.
+        /// If <see langword="false"/>, it never use <see cref="ArrayPool{T}"/>.
+        /// </param>
         public CollectionBuilder(bool usesArrayPool) : this()
         {
             _usesArrayPool = usesArrayPool;
@@ -212,8 +201,9 @@ namespace Yuh.Collections
             }
 
             Reserve(itemsLength);
+            var allocatedSegments = AllocatedSegments;
             items.CopyTo(
-                _allocatedSegments.UnsafeAccess(_segmentCount - 1),
+                allocatedSegments.UnsafeAccess(_segmentCount - 1),
                 _countInCurrentSegment - itemsLength
             );
         }
@@ -517,7 +507,7 @@ namespace Yuh.Collections
             ref T destinationRef = ref MemoryMarshal.GetReference(destination);
             int remainsCount = _count;
             int segmentCount = _segmentCount;
-            ReadOnlySpan<T[]> segments = _allocatedSegments;
+            ReadOnlySpan<T[]> segments = AllocatedSegments;
             ReadOnlySpan<int> segmentLength = _segmentLength;
 
             for (int i = 0; i < segments.Length; i++)
@@ -571,7 +561,7 @@ namespace Yuh.Collections
                 return;
             }
 
-            var segments = _allocatedSegments;
+            var segments = AllocatedSegments;
             ReadOnlySpan<int> segmentLength = _segmentLength;
 
             if (usesArrayPool)
@@ -721,7 +711,6 @@ namespace Yuh.Collections
             var newSegment = newSegmentArray.AsSpan();
 
             Debug.Assert((uint)segmentCount < CollectionBuilderConstants.MaxSegmentCount, "Invalid segment count.");
-            _allocatedSegments = MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(_allocatedSegments), segmentCount + 1);
             _countInCurrentSegment = 0;
             _currentSegment = newSegment;
             _growIsNeeded = false;
