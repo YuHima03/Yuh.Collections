@@ -35,7 +35,6 @@ namespace Yuh.Collections
         private bool _growIsNeeded = true;
         private int _nextSegmentLength = CollectionBuilderConstants.MinSegmentLength;
         private int _segmentsCount = 0; // in the range [0, 27]
-        private fixed int _segmentsLength[32]; // set the length 32 for SIMD operations
 
 #if NET8_0_OR_GREATER
         private CollectionBuilderConstants.Array27<T[]> _segments;
