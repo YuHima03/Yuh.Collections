@@ -29,13 +29,43 @@ namespace Yuh.Collections
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     public unsafe ref struct CollectionBuilder<T> // : IDisposable
     {
+        /// <summary>
+        /// The number of elements contained in the collection.
+        /// </summary>
         private int _count = 0;
-        private int _countInCurrentSegment = 0;
-        private Span<T> _currentSegment = [];
-        private bool _growIsNeeded = true;
-        private int _nextSegmentLength = CollectionBuilderConstants.MinSegmentLength;
-        private int _segmentsCount = 0; // in the range [0, 27]
 
+        /// <summary>
+        /// The number of elements 
+        /// </summary>
+        private int _countInCurrentSegment = 0;
+
+        /// <summary>
+        /// Current segment to stack elements.
+        /// </summary>
+        private Span<T> _currentSegment = [];
+
+        /// <summary>
+        /// Whether to allocate a new segment in the next addition operation.
+        /// If <see langword="true"/>, the collection builder allocates a new segment and uses it.
+        /// </summary>
+        private bool _growIsNeeded = true;
+
+        /// <summary>
+        /// The minimum length of segment allocated in the next allocation.
+        /// </summary>
+        private int _nextSegmentLength = CollectionBuilderConstants.MinSegmentLength;
+
+        /// <summary>
+        /// The number of segments contained in the collection builder.
+        /// </summary>
+        /// <remarks>
+        /// It is ensured that the value is not negative and less than <see cref="CollectionBuilderConstants.SegmentsContainerLength"/>, the maximum number of segments that may be contained in the collection builder.
+        /// </remarks>
+        private int _segmentsCount = 0;
+
+        /// <summary>
+        /// Sequence of <typeparamref name="T"/>[] that has fixed capacity.
+        /// </summary>
 #if NET8_0_OR_GREATER
         private CollectionBuilderConstants.Array27<T[]> _segments;
 #else
