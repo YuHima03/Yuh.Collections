@@ -10,10 +10,10 @@ namespace Yuh.Collections
         internal const int MinArraySizeFromArrayPool = 1 << 11;
         internal const int MaxArraySizeFromStack = 1 << 10;
         internal const int MinSegmentLength = 16;
-        internal const int SegmentsContainerLength = 27;
+        internal const int MaxSegmentCount = 27;
 
 #if NET8_0_OR_GREATER
-        [InlineArray(SegmentsContainerLength)]
+        [InlineArray(MaxSegmentCount)]
         internal struct Array27<T>
         {
 #pragma warning disable IDE0051, IDE0044
@@ -59,7 +59,7 @@ namespace Yuh.Collections
         /// The number of segments contained in the collection builder.
         /// </summary>
         /// <remarks>
-        /// It is ensured that the value is not negative and less than <see cref="CollectionBuilderConstants.SegmentsContainerLength"/>, the maximum number of segments that may be contained in the collection builder.
+        /// It is ensured that the value is not negative and less than <see cref="CollectionBuilderConstants.MaxSegmentCount"/>, the maximum number of segments that may be contained in the collection builder.
         /// </remarks>
         private int _segmentsCount = 0;
 
@@ -69,7 +69,7 @@ namespace Yuh.Collections
 #if NET8_0_OR_GREATER
         private CollectionBuilderConstants.Array27<T[]> _segments;
 #else
-        private readonly T[][] _segmentsArray = new T[CollectionBuilderConstants.SegmentsContainerLength][];
+        private readonly T[][] _segmentsArray = new T[CollectionBuilderConstants.MaxSegmentCount][];
         private readonly Span<T[]> _segments;
 #endif
 
@@ -339,7 +339,7 @@ namespace Yuh.Collections
             int remainsCount = _count;
             ref T destRef = ref MemoryMarshal.GetReference(destination);
 
-            for (int i = 0; i < CollectionBuilderConstants.SegmentsContainerLength; i++)
+            for (int i = 0; i < CollectionBuilderConstants.MaxSegmentCount; i++)
             {
                 var segment = GetSegmentAt(i);
 
@@ -436,7 +436,7 @@ namespace Yuh.Collections
         /// <param name="length"></param>
         private void GrowExact(int length)
         {
-            if (_segmentsCount == CollectionBuilderConstants.SegmentsContainerLength)
+            if (_segmentsCount == CollectionBuilderConstants.MaxSegmentCount)
             {
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
