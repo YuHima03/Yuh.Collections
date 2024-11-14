@@ -71,12 +71,17 @@ namespace Yuh.Collections.Tests
             using CollectionBuilder<int> builder = new();
             List<int> list = new(TotalItemsCount);
 
-            var span = TestEnumerable.ToArray().AsSpan();
+            var testArray = TestEnumerable.ToArray();
+            var testSpan = TestEnumerable.ToArray().AsSpan();
 
             foreach (var _ in Enumerable.Range(0, InsertionCount))
             {
-                builder.AppendRange(span);
-                list.AddRange(span);
+                builder.AppendRange(testSpan);
+#if NET8_0_OR_GREATER
+                list.AddRange(testSpan);
+#else
+                list.AddRange(testArray);
+#endif
             }
 
             Assert.Equal(list, builder.ToArray());
