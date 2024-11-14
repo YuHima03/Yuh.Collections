@@ -187,5 +187,12 @@ namespace Yuh.Collections
                 length: length
             );
         }
+
+        public readonly TElement[] ToArray()
+        {
+            TElement[] array = GC.AllocateUninitializedArray<TElement>(Length);
+            CopyToInternal(array.AsSpan());
+            return array;
+        }
     }
 }
