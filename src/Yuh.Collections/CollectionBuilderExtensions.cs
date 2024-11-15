@@ -10,7 +10,7 @@ namespace Yuh.Collections
     /// </summary>
     public static class CollectionBuilderExtensions
     {
-        private const int MinInitialReserveLength = 32;
+        private const int DefaultReserveLength = 32;
 
         /// <summary>
         /// Appends a string to the back of the <see cref="CollectionBuilder{T}"/>.
@@ -45,12 +45,12 @@ namespace Yuh.Collections
         /// <param name="estimatedStringLength">The estimated length of a string to add.</param>
         /// <param name="format">A span containing the characters that represent a standard or custom format string that defines the acceptable format for the destination collection.</param>
         /// <param name="provider">An optional object that supplies culture-specific formatting information for the destination collection.</param>
-        public static void AppendFormatted<T>(ref this CollectionBuilder<char> builder, T value, int estimatedStringLength = MinInitialReserveLength, ReadOnlySpan<char> format = default, IFormatProvider? provider = null)
+        public static void AppendFormatted<T>(ref this CollectionBuilder<char> builder, T value, int estimatedStringLength = DefaultReserveLength, ReadOnlySpan<char> format = default, IFormatProvider? provider = null)
         {
             if (value is ISpanFormattable valueSpanFormattable)
             {
                 int charsWritten;
-                int destLength = Math.Max(estimatedStringLength, MinInitialReserveLength);
+                int destLength = Math.Max(estimatedStringLength, DefaultReserveLength);
 
                 while (!valueSpanFormattable.TryFormat(builder.ReserveRange(destLength), out charsWritten, format, provider))
                 {
