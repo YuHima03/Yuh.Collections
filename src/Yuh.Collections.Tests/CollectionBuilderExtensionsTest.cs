@@ -11,7 +11,7 @@
             builder.AppendRange("qux\n".AsSpan());
             builder.AppendRange("The quick brown fox jumps over the lazy dog.".AsSpan());
 
-            Assert.True(builder.ToBasicString() == "foo\nbar\nqux\nThe quick brown fox jumps over the lazy dog.");
+            Assert.Equal("foo\nbar\nqux\nThe quick brown fox jumps over the lazy dog.", builder.ToBasicString());
         }
     }
 }
