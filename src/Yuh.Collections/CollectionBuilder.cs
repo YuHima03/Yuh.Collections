@@ -611,9 +611,17 @@ namespace Yuh.Collections
         /// <returns>An array which contains elements copied from the <see cref="CollectionBuilder{T}"/>.</returns>
         public readonly T[] ToArray()
         {
-            if (_count == 0)
+            T[] array;
+            switch (_segmentsCount)
             {
+                case 0:
                 return [];
+                case 1:
+                    return MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(_segments[0]), _count).ToArray();
+                default:
+                    array = GC.AllocateUninitializedArray<T>(_count);
+                    CopyTo(array.AsSpan());
+                    return array;
             }
         }
 
