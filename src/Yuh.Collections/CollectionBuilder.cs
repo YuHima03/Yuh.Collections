@@ -358,6 +358,7 @@ namespace Yuh.Collections
             {
                 return;
             }
+
             if (destination.Length < _count)
             {
                 ThrowHelpers.ThrowArgumentException("The destination span doesn't have enough space to accommodate elements in this collection.", nameof(destination));
@@ -368,6 +369,7 @@ namespace Yuh.Collections
                 MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(_currentSegment), _count).CopyTo(destination);
                 return;
             }
+            CopyToInternal(destination);
         }
 
         private readonly void CopyToInternal(Span<T> destination)
@@ -375,7 +377,7 @@ namespace Yuh.Collections
             Debug.Assert(_count <= destination.Length, "The destination span doesn't have enough space to accommodate elements contained in the collection builder.");
 
             switch (_segmentsCount)
-                {
+            {
                 case 1:
                     _currentSegment[.._countInCurrentSegment].CopyTo(destination);
                     return;
@@ -384,7 +386,7 @@ namespace Yuh.Collections
                     firstSegment.CopyTo(destination);
                     _currentSegment[.._countInCurrentSegment].CopyTo(destination[firstSegment.Length..]);
                     return;
-                }
+            }
 
             var allocatedSegments = AllocatedSegments;
             ref T destRef = ref MemoryMarshal.GetReference(destination);
@@ -627,18 +629,18 @@ namespace Yuh.Collections
             {
                 var minimumSegmentLength = countInCurrentSegment + length;
                 if (minimumSegmentLength <= currentSegment.Length)
-            {
-                range = MemoryMarshal.CreateSpan(
-                    ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), countInCurrentSegment),
-                    length
-                );
-            }
+                {
+                    range = MemoryMarshal.CreateSpan(
+                        ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), countInCurrentSegment),
+                        length
+                    );
+                }
                 else
-            {
+                {
                     ExpandCurrentSegment(minimumSegmentLength);
                     currentSegment = _currentSegment;
                     range = currentSegment.Slice(countInCurrentSegment, length);
-            }
+                }
             }
 
             _count += length;
@@ -664,7 +666,7 @@ namespace Yuh.Collections
             switch (_segmentsCount)
             {
                 case 0:
-                return [];
+                    return [];
                 case 1:
                     return MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(_segments[0]), _count).ToArray();
                 default:
