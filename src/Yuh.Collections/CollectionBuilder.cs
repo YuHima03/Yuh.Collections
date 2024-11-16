@@ -615,10 +615,40 @@ namespace Yuh.Collections
             {
                 return [];
             }
+        }
 
-            var array = GC.AllocateUninitializedArray<T>(_count);
-            CopyTo(array.AsSpan());
-            return array;
+        /// <summary>
+        /// Represents a read-only collection that has at most two segments.
+        /// </summary>
+        public readonly ref struct SegmentPair()
+        {
+            /// <summary>
+            /// The number of segments contained in the collection.
+            /// </summary>
+            public readonly int Count = 0;
+
+            /// <summary>
+            /// A span over the first segment of the collection.
+            /// </summary>
+            public readonly Span<T> FirstSegment = [];
+
+            /// <summary>
+            /// A span over the last segment of the collection.
+            /// </summary>
+            public readonly Span<T> LastSegment = [];
+
+            internal SegmentPair(Span<T> span1) : this()
+            {
+                Count = 1;
+                FirstSegment = span1;
+            }
+
+            internal SegmentPair(Span<T> span1, Span<T> span2) : this()
+            {
+                Count = 2;
+                FirstSegment = span1;
+                LastSegment = span2;
+            }
         }
     }
 }
