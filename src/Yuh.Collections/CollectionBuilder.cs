@@ -153,8 +153,7 @@ namespace Yuh.Collections
             else if (_growIsNeeded)
             {
                 Grow(itemsCount);
-                var allocatedSegments = AllocatedSegments;
-                items.CopyTo(allocatedSegments.Last(), 0);
+                items.CopyTo(AllocatedSegments[^1], 0);
 
                 _count += itemsCount;
                 _growIsNeeded = (_currentSegment.Length == (_countInCurrentSegment = itemsCount));
@@ -166,8 +165,7 @@ namespace Yuh.Collections
 
             if (itemsCount <= currentSegment.Length - countInCurrentSegment)
             {
-                var allocatedSegments = AllocatedSegments;
-                items.CopyTo(allocatedSegments.Last(), countInCurrentSegment);
+                items.CopyTo(AllocatedSegments[^1], countInCurrentSegment);
 
                 _count += itemsCount;
                 _growIsNeeded = (currentSegment.Length == (_countInCurrentSegment = countInCurrentSegment + itemsCount));
@@ -181,8 +179,7 @@ namespace Yuh.Collections
                 if (countInCurrentSegment < nextSegmentLength && neededLength < checked(currentSegment.Length + nextSegmentLength))
                 {
                     ExpandCurrentSegment(neededLength);
-                    var allocatedSegments = AllocatedSegments;
-                    items.CopyTo(allocatedSegments.Last(), countInCurrentSegment);
+                    items.CopyTo(AllocatedSegments[^1], countInCurrentSegment);
 
                     _count += itemsCount;
                     _growIsNeeded = (_currentSegment.Length == (_countInCurrentSegment = neededLength));
@@ -516,8 +513,7 @@ namespace Yuh.Collections
 
             ReturnIfArrayIsFromArrayPool(currentSegment);
             _segmentsCount--;
-            var allocatedSegments = AllocatedSegments;
-            _currentSegment = allocatedSegments.Last();
+            _currentSegment = AllocatedSegments[^1];
             _countInCurrentSegment = _currentSegment.Length;
             _growIsNeeded = true;
             return;
