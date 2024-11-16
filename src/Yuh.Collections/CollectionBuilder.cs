@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -367,26 +368,36 @@ namespace Yuh.Collections
                 MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(_currentSegment), _count).CopyTo(destination);
                 return;
             }
+        }
 
-            int remainsCount = _count;
-            ref T destRef = ref MemoryMarshal.GetReference(destination);
+        private readonly void CopyToInternal(Span<T> destination)
+        {
+            Debug.Assert(_count <= destination.Length, "The destination span doesn't have enough space to accommodate elements contained in the collection builder.");
 
-            var allocatedSegments = AllocatedSegments;
-
-            foreach (var segmentArray in allocatedSegments)
-            {
-                var segment = segmentArray.AsSpan();
-                if (remainsCount <= segment.Length)
+            switch (_segmentsCount)
                 {
-                    MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(segment), remainsCount)
-                        .CopyTo(MemoryMarshal.CreateSpan(ref destRef, remainsCount));
+                case 1:
+                    _currentSegment[.._countInCurrentSegment].CopyTo(destination);
+                    return;
+                case 2:
+                    var firstSegment = _segments[0];
+                    firstSegment.CopyTo(destination);
+                    _currentSegment[.._countInCurrentSegment].CopyTo(destination[firstSegment.Length..]);
                     return;
                 }
 
+            var allocatedSegments = AllocatedSegments;
+            ref T destRef = ref MemoryMarshal.GetReference(destination);
+
+            for (int i = 0; i < allocatedSegments.Length - 1; i++)
+            {
+                var segment = allocatedSegments[i].AsSpan();
                 segment.CopyTo(MemoryMarshal.CreateSpan(ref destRef, segment.Length));
-                destRef = ref Unsafe.Add(ref Unsafe.AsRef(in destRef), segment.Length);
-                remainsCount -= segment.Length;
+                destRef = ref Unsafe.Add(ref destRef, segment.Length);
             }
+
+            var countInLastSegment = _countInCurrentSegment;
+            allocatedSegments[^1].AsSpan()[..countInLastSegment].CopyTo(MemoryMarshal.CreateSpan(ref destRef, countInLastSegment));
         }
 
         /// <inheritdoc cref="IDisposable.Dispose"/>
