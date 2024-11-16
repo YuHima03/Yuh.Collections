@@ -548,6 +548,45 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Reserves the specified length of memory region from the back of the <see cref="CollectionBuilder{T}"/> and returns a <see cref="SegmentPair"/> that has spans over reserved memory regions.
+        /// </summary>
+        /// <param name="length">A number of elements that reserved memory regions can exactly accommodate.</param>
+        /// <returns>A <see cref="SegmentPair"/> over the reserved memory regions.</returns>
+        public SegmentPair ReserveSegmentedRange(int length)
+        {
+            Span<T> currentSegment;
+
+            if (_growIsNeeded)
+            {
+                Grow(length);
+                currentSegment = _currentSegment;
+                _count += length;
+                _growIsNeeded = (currentSegment.Length == (_countInCurrentSegment += length));
+                return new SegmentPair(currentSegment[..length]);
+            }
+
+            currentSegment = _currentSegment;
+            var countInCurrentSegment = _countInCurrentSegment;
+            var minimumLengthOfNextSegment = length - (currentSegment.Length - countInCurrentSegment);
+
+            if (minimumLengthOfNextSegment <= 0)
+            {
+                _count += length;
+                _growIsNeeded = (currentSegment.Length == (_countInCurrentSegment = countInCurrentSegment + length));
+                return new SegmentPair(currentSegment.Slice(countInCurrentSegment, length));
+            }
+            else
+            {
+                Grow(minimumLengthOfNextSegment);
+                var prevSegment = currentSegment;
+                currentSegment = _currentSegment;
+                _count += length;
+                _growIsNeeded = (currentSegment.Length == (_countInCurrentSegment = minimumLengthOfNextSegment));
+                return new SegmentPair(prevSegment[countInCurrentSegment..], currentSegment[..minimumLengthOfNextSegment]);
+            }
+        }
+
+        /// <summary>
         /// Reserves the specified length of memory region from the back of the <see cref="CollectionBuilder{T}"/> and returns the span over the region.
         /// </summary>
         /// <param name="length">The number of elements that the reserved memory region can exactly accommodate.</param>
