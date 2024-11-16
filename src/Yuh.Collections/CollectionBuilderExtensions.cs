@@ -10,7 +10,7 @@ namespace Yuh.Collections
     /// </summary>
     public static class CollectionBuilderExtensions
     {
-        private const int MinInitialReserveLength = 32;
+        private const int DefaultReserveLength = 32;
 
         /// <summary>
         /// Appends a string to the back of the <see cref="CollectionBuilder{T}"/>.
@@ -45,19 +45,39 @@ namespace Yuh.Collections
         /// <param name="estimatedStringLength">The estimated length of a string to add.</param>
         /// <param name="format">A span containing the characters that represent a standard or custom format string that defines the acceptable format for the destination collection.</param>
         /// <param name="provider">An optional object that supplies culture-specific formatting information for the destination collection.</param>
-        public static void AppendFormatted<T>(ref this CollectionBuilder<char> builder, T value, int estimatedStringLength = MinInitialReserveLength, ReadOnlySpan<char> format = default, IFormatProvider? provider = null)
+        public static void AppendFormatted<T>(ref this CollectionBuilder<char> builder, T value, int estimatedStringLength = DefaultReserveLength, ReadOnlySpan<char> format = default, IFormatProvider? provider = null)
         {
             if (value is ISpanFormattable valueSpanFormattable)
             {
                 int charsWritten;
-                int destLength = Math.Max(estimatedStringLength, MinInitialReserveLength);
+                int destLength = (estimatedStringLength <= 0) ? 1 : estimatedStringLength;
 
-                while (!valueSpanFormattable.TryFormat(builder.ReserveRange(destLength), out charsWritten, format, provider))
+                if (destLength <= 512)
+                {
+                    int totalAllocatedCharLength = 0;
+                    do
+                    {
+#pragma warning disable CA2014
+                        Span<char> destination = stackalloc char[destLength];
+#pragma warning restore CA2014
+                        if (valueSpanFormattable.TryFormat(destination, out charsWritten, format, provider))
+                        {
+                            builder.AppendRange(destination[..charsWritten]);
+                            return;
+                        }
+                        totalAllocatedCharLength += destLength;
+                        destLength = checked(destLength << 1);
+                    }
+                    while (destLength <= 512 - totalAllocatedCharLength);
+                }
+
+                var reserved = builder.ReserveRange(destLength);
+                while (!valueSpanFormattable.TryFormat(reserved, out charsWritten, format, provider))
                 {
                     builder.RemoveRange(destLength);
                     destLength = checked(destLength << 1);
+                    reserved = builder.ReserveRange(destLength);
                 }
-
                 builder.RemoveRange(destLength - charsWritten);
                 return;
             }
@@ -141,13 +161,13 @@ namespace Yuh.Collections
         public static string ToBasicString(in this CollectionBuilder<char> builder)
         {
             int length = builder.Count;
-            if (length <= 1024)
+            if (length <= 512)
             {
                 Span<char> chars = stackalloc char[length];
                 builder.CopyTo(chars);
                 return new(chars);
             }
-            else if (length <= 1024 * 1024)
+            else if (length <= (1 << 25))
             {
                 var charsArray = ArrayPool<char>.Shared.Rent(length);
                 var chars = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(charsArray), length);
@@ -172,13 +192,13 @@ namespace Yuh.Collections
         {
             int length = builder.Count;
             StringBuilder sb = new(length);
-            if (length <= 1024)
+            if (length <= 512)
             {
                 Span<char> chars = stackalloc char[length];
                 builder.CopyTo(chars);
                 return sb.Append(chars);
             }
-            else if (length <= 1024 * 1024)
+            else if (length <= (1 << 25))
             {
                 var charsArray = ArrayPool<char>.Shared.Rent(length);
                 var chars = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(charsArray), length);
