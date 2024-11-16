@@ -569,31 +569,30 @@ namespace Yuh.Collections
             if (_growIsNeeded)
             {
                 Grow(length);
-                range = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_currentSegment), length);
+                currentSegment = _currentSegment;
+                countInCurrentSegment = 0;
+                range = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(currentSegment), length);
             }
-            else if (length <= currentSegment.Length - countInCurrentSegment)
+            else
+            {
+                var minimumSegmentLength = countInCurrentSegment + length;
+                if (minimumSegmentLength <= currentSegment.Length)
             {
                 range = MemoryMarshal.CreateSpan(
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), countInCurrentSegment),
                     length
                 );
             }
-            else if (countInCurrentSegment < _nextSegmentLength && countInCurrentSegment + length < checked(currentSegment.Length + _nextSegmentLength))
+                else
             {
-                ExpandCurrentSegment(countInCurrentSegment + length);
-                range = MemoryMarshal.CreateSpan(
-                    ref Unsafe.Add(ref MemoryMarshal.GetReference(_currentSegment), countInCurrentSegment),
-                    length
-                );
+                    ExpandCurrentSegment(minimumSegmentLength);
+                    currentSegment = _currentSegment;
+                    range = currentSegment.Slice(countInCurrentSegment, length);
             }
-            else
-            {
-                throw new NotImplementedException();
             }
 
             _count += length;
-            _countInCurrentSegment += length;
-            _growIsNeeded = (_countInCurrentSegment == _currentSegment.Length);
+            _growIsNeeded = (currentSegment.Length == (_countInCurrentSegment = countInCurrentSegment + length));
             return range;
         }
 
