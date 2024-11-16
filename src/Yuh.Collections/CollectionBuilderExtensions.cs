@@ -161,13 +161,13 @@ namespace Yuh.Collections
         public static string ToBasicString(in this CollectionBuilder<char> builder)
         {
             int length = builder.Count;
-            if (length <= 1024)
+            if (length <= 512)
             {
                 Span<char> chars = stackalloc char[length];
                 builder.CopyTo(chars);
                 return new(chars);
             }
-            else if (length <= 1024 * 1024)
+            else if (length <= (1 << 25))
             {
                 var charsArray = ArrayPool<char>.Shared.Rent(length);
                 var chars = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(charsArray), length);
@@ -192,13 +192,13 @@ namespace Yuh.Collections
         {
             int length = builder.Count;
             StringBuilder sb = new(length);
-            if (length <= 1024)
+            if (length <= 512)
             {
                 Span<char> chars = stackalloc char[length];
                 builder.CopyTo(chars);
                 return sb.Append(chars);
             }
-            else if (length <= 1024 * 1024)
+            else if (length <= (1 << 25))
             {
                 var charsArray = ArrayPool<char>.Shared.Rent(length);
                 var chars = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(charsArray), length);
