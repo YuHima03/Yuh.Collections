@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Collections;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -28,7 +29,7 @@ namespace Yuh.Collections
     /// Represents a temporary collection that is used to build new collections.
     /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
-    public unsafe ref struct CollectionBuilder<T> // : IDisposable
+    public unsafe ref struct CollectionBuilder<T> : IDisposable, IEnumerable<T>
     {
         /// <summary>
         /// The number of elements contained in the collection.
@@ -448,6 +449,48 @@ namespace Yuh.Collections
             }
             return capacity;
         }
+
+        private readonly IEnumerable<T> GetEnumerableForIteration()
+        {
+            var segments = AllocatedSegments;
+            if (segments.IsEmpty)
+            {
+                return [];
+            }
+            if (segments.Length == 1)
+            {
+                return GetSlicedEnumerable(segments[0], _countInCurrentSegment);
+            }
+
+            IEnumerable<T> enumerable = segments[0];
+            for (int i = 1; i < segments.Length - 1; i++)
+            {
+                enumerable = enumerable.Concat(segments[i]);
+            }
+            return enumerable.Concat(GetSlicedEnumerable(segments[^1], _countInCurrentSegment));
+
+            static IEnumerable<T> GetSlicedEnumerable(T[] array, int count)
+            {
+                if (count == 0)
+                {
+                    return [];
+                }
+                else if (array.Length == count)
+                {
+                    return array;
+                }
+                return new ArraySegment<T>(array, 0, count);
+            }
+        }
+
+        public readonly Enumerator GetEnumerator()
+        {
+            return new Enumerator(AllocatedSegments, _count);
+        }
+
+        readonly IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerableForIteration().GetEnumerator();
+
+        readonly IEnumerator IEnumerable.GetEnumerator() => GetEnumerableForIteration().GetEnumerator();
 
         /// <summary>
         /// Allocates new buffer than can accommodate at least <see cref="_nextSegmentLength"/> elements.
