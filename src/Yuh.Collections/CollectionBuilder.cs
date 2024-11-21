@@ -672,6 +672,56 @@ namespace Yuh.Collections
             }
         }
 
+        public ref struct Enumerator(ReadOnlySpan<T[]> segments, int count) : IEnumerator<T>
+        {
+            private readonly int _count = count;
+            private ReadOnlySpan<T> _currentSegment = [];
+            private int _enumeratedCount = -1;
+            private int _index = -1;
+            private int _segmentIndex = -1;
+            private ReadOnlySpan<T[]> _segments = segments;
+
+            public readonly T Current => _currentSegment[_index];
+
+            readonly object IEnumerator.Current => Current;
+
+            public void Dispose()
+            {
+                Reset();
+                _segments = [];
+            }
+
+            public bool MoveNext()
+            {
+                var enumeratedCount = ++_enumeratedCount;
+                switch (enumeratedCount - _count)
+                {
+                    case 0:
+                        _currentSegment = [];
+                        _index = -1;
+                        _segmentIndex = -1;
+                        return false;
+                    case > 0:
+                        return false;
+                }
+
+                if (++_index == _currentSegment.Length)
+                {
+                    _index = 0;
+                    _currentSegment = _segments[++_segmentIndex].AsSpan();
+                }
+                return true;
+            }
+
+            public void Reset()
+            {
+                _currentSegment = [];
+                _enumeratedCount = -1;
+                _index = -1;
+                _segmentIndex = -1;
+            }
+        }
+
         /// <summary>
         /// Represents a read-only collection that has at most two segments.
         /// </summary>
