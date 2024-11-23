@@ -16,8 +16,8 @@ on:
           - "net9.0"
 
 jobs:
-  build:
-
+  build_and_test:
+    name: Build & Test (${{ github.event.inputs.target_framework }})
     runs-on: ubuntu-latest
 
     steps:
