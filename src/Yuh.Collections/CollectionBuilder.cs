@@ -228,7 +228,6 @@ namespace Yuh.Collections
         {
             int countInCurrentSegment = _countInCurrentSegment;
             var currentSegment = _currentSegment;
-            ref T destRef = ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), countInCurrentSegment);
 
             foreach (var item in items)
             {
@@ -239,17 +238,14 @@ namespace Yuh.Collections
                     Grow();
                     countInCurrentSegment = 0;
                     currentSegment = _currentSegment;
-                    destRef = ref MemoryMarshal.GetReference(currentSegment);
                 }
 
-                destRef = item;
-                destRef = ref Unsafe.Add(ref destRef, 1);
+                Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), countInCurrentSegment) = item;
                 countInCurrentSegment++;
             }
 
             _count += countInCurrentSegment - _countInCurrentSegment;
-            _countInCurrentSegment = countInCurrentSegment;
-            _growIsNeeded = (countInCurrentSegment == currentSegment.Length);
+            _growIsNeeded = (currentSegment.Length == (_countInCurrentSegment = countInCurrentSegment));
         }
 
         /// <summary>
