@@ -6,70 +6,58 @@ namespace Yuh.Collections.Tests
 {
     public class CollectionBuilderTest()
     {
-        private const int TestEnumerableCount = 128;
-        private const int InsertionCount = 512;
-        private const int TotalItemsCount = TestEnumerableCount * InsertionCount;
-
-        private static IEnumerable<int> TestEnumerable => Enumerable.Range(0, TestEnumerableCount);
-
         public static TheoryData<int[][]> TestIntEnumerable => [
             [.. Enumerable.Repeat<int[]>([], 256)],
             [.. Enumerable.Range(0, 1024).Select<int, int[]>(i => [i])],
             [.. Enumerable.Repeat(Enumerable.Range(0, 128).ToArray(), 512)]
         ];
 
-        [Fact]
-        public void AddTest()
+        [Theory]
+        [MemberData(nameof(TestIntEnumerable))]
+        public void AppendTest(int[][] items)
         {
             using CollectionBuilder<int> builder = new();
-            List<int> list = new(TotalItemsCount);
+            int[] expected = [.. items.Flatten()];
 
-            var enumerable = TestEnumerable;
-
-            foreach (var _ in Enumerable.Range(0, InsertionCount))
+            foreach (var array in items)
             {
-                foreach (var num in TestEnumerable)
+                foreach (var v in array)
                 {
-                    builder.Append(num);
-                    list.Add(num);
+                    builder.Append(v);
                 }
             }
 
-            Assert.Equal(list, builder.ToArray());
+            Assert.Equal(expected, builder.ToArray());
         }
 
-        [Fact]
-        public void AddIEnumerableRangeTest()
+        [Theory]
+        [MemberData(nameof(TestIntEnumerable))]
+        public void AppendIEnumerableRangeTest(int[][] items)
         {
             using CollectionBuilder<int> builder = new();
-            List<int> list = new(TotalItemsCount);
+            int[] expected = [.. items.Flatten()];
 
-            var enumerable = TestEnumerable;
-
-            foreach (var _ in Enumerable.Range(0, InsertionCount))
+            foreach (var array in items)
             {
-                builder.AppendIEnumerableRange(enumerable);
-                list.AddRange(enumerable);
+                builder.AppendIEnumerableRange(array);
             }
 
-            Assert.Equal(list, builder.ToArray());
+            Assert.Equal(expected, builder.ToArray());
         }
 
-        [Fact]
-        public void AddICollectionRangeTest()
+        [Theory]
+        [MemberData(nameof(TestIntEnumerable))]
+        public void AppendICollectionRangeTest(int[][] items)
         {
             using CollectionBuilder<int> builder = new();
-            List<int> list = new(TotalItemsCount);
+            int[] expected = [.. items.Flatten()];
 
-            var collection = (ICollection<int>)TestEnumerable.ToArray();
-
-            foreach (var _ in Enumerable.Range(0, InsertionCount))
+            foreach (var array in items)
             {
-                builder.AppendICollectionRange(collection);
-                list.AddRange(collection);
+                builder.AppendICollectionRange(array);
             }
 
-            Assert.Equal(list, builder.ToArray());
+            Assert.Equal(expected, builder.ToArray());
         }
 
         [Theory]
@@ -94,7 +82,7 @@ namespace Yuh.Collections.Tests
             StringBuilder sb = new();
 
             var endl = Environment.NewLine;
-            foreach (var _ in Enumerable.Range(0, InsertionCount))
+            foreach (var _ in Enumerable.Range(0, 512))
             {
                 var now = DateTime.Now;
                 builder.AppendFormatted(now);
