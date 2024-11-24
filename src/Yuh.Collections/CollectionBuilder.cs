@@ -674,7 +674,7 @@ namespace Yuh.Collections
                     return MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(_segments[0]), _count).ToArray();
                 default:
                     array = GC.AllocateUninitializedArray<T>(_count);
-                    CopyTo(array.AsSpan());
+                    CopyToInternal(array.AsSpan());
                     return array;
             }
         }
