@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using Yuh.Collections.Tests.Helpers;
 
 namespace Yuh.Collections.Tests
 {
@@ -10,6 +11,12 @@ namespace Yuh.Collections.Tests
         private const int TotalItemsCount = TestEnumerableCount * InsertionCount;
 
         private static IEnumerable<int> TestEnumerable => Enumerable.Range(0, TestEnumerableCount);
+
+        public static TheoryData<int[][]> TestIntEnumerable => [
+            [.. Enumerable.Repeat<int[]>([], 256)],
+            [.. Enumerable.Range(0, 1024).Select<int, int[]>(i => [i])],
+            [.. Enumerable.Repeat(Enumerable.Range(0, 128).ToArray(), 512)]
+        ];
 
         [Fact]
         public void AddTest()
@@ -65,26 +72,19 @@ namespace Yuh.Collections.Tests
             Assert.Equal(list, builder.ToArray());
         }
 
-        [Fact]
-        public void AddSpanRangeTest()
+        [Theory]
+        [MemberData(nameof(TestIntEnumerable))]
+        public void AppendSpanRangeTest(int[][] items)
         {
             using CollectionBuilder<int> builder = new();
-            List<int> list = new(TotalItemsCount);
+            int[] expected = [.. items.Flatten()];
 
-            var testArray = TestEnumerable.ToArray();
-            var testSpan = TestEnumerable.ToArray().AsSpan();
-
-            foreach (var _ in Enumerable.Range(0, InsertionCount))
+            foreach (var array in items)
             {
-                builder.AppendRange(testSpan);
-#if NET8_0_OR_GREATER
-                list.AddRange(testSpan);
-#else
-                list.AddRange(testArray);
-#endif
+                builder.AppendRange(array.AsSpan());
             }
 
-            Assert.Equal(list, builder.ToArray());
+            Assert.Equal(expected, builder.ToArray());
         }
 
         [Fact]
