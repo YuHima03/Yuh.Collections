@@ -116,16 +116,24 @@ namespace Yuh.Collections
         /// <exception cref="Exception">The <see cref="CollectionBuilder{T}"/> is already full.</exception>
         public void Append(T item)
         {
-            if (_count == Array.MaxLength)
+            if (_growIsNeeded)
             {
-                ThrowHelpers.ThrowException("This collection is already full.");
+                Grow();
             }
 
-            GrowIfNeeded();
-            _currentSegment[_countInCurrentSegment] = item;
+            var currentSegment = _currentSegment;
+            var countInCurrentSegment = _countInCurrentSegment++;
+            currentSegment[countInCurrentSegment] = item;
+
+            if (countInCurrentSegment + 1 == currentSegment.Length)
+            {
+                _growIsNeeded = true;
+            }
             _count++;
-            _countInCurrentSegment++;
-            _growIsNeeded = (_countInCurrentSegment == _currentSegment.Length);
+
+            //
+            // NOTE: `_countInCurrentSegment` is incremented above, so we don't have to assign `countInCurrentSegment + 1` to it.
+            //
         }
 
         /// <summary>
