@@ -470,19 +470,24 @@ namespace Yuh.Collections
         /// <param name="length"></param>
         private void GrowExact(int length)
         {
-            if (_segmentCount == CollectionBuilderConstants.MaxSegmentCount)
+            int segmentCount = _segmentCount;
+            if (segmentCount == CollectionBuilderConstants.MaxSegmentCount)
             {
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
 
-            var newSegment = AllocateNewArray(length);
-            _segments[_segmentCount] = newSegment;
+            T[] newSegmentArray = _usesArrayPool ? RentArray(length) : GC.AllocateUninitializedArray<T>(length);
+            var newSegment = newSegmentArray.AsSpan();
 
+            Debug.Assert((uint)segmentCount < CollectionBuilderConstants.MaxSegmentCount, "Invalid segment count.");
             _countInCurrentSegment = 0;
-            _currentSegment = newSegment.AsSpan();
+            _currentSegment = newSegment;
             _growIsNeeded = false;
-            _nextSegmentLength <<= 1;
-            _segmentCount++;
+            _nextSegmentLength = checked(_nextSegmentLength << 1);
+            _segmentCount = segmentCount + 1;
+
+            Span<T[]> segments = _segments;
+            segments[segmentCount] = newSegmentArray;
         }
 
         private void RemoveCurrentSegment()
