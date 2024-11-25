@@ -74,6 +74,12 @@ namespace Yuh.Collections
         private readonly Span<T[]> _segments;
 #endif
 
+        /// <summary>
+        /// Whether to use array pool.
+        /// If <see langword="false"/>, the collection builder never use arrays from <see cref="ArrayPool{T}"/>.
+        /// </summary>
+        private readonly bool _usesArrayPool = true;
+
         private readonly ReadOnlySpan<T[]> AllocatedSegments => MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference((ReadOnlySpan<T[]>)_segments), _segmentsCount);
 
         /// <summary>
