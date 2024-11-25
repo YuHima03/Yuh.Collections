@@ -291,7 +291,7 @@ namespace Yuh.Collections
                 if (itemsLength == currentSegment.Length)
                 {
                     _growIsNeeded = true;
-            }
+                }
                 _countInCurrentSegment = itemsLength;
                 return;
             }
@@ -324,8 +324,8 @@ namespace Yuh.Collections
                 _growIsNeeded = true;
             }
             _countInCurrentSegment = countInCurrentSegment;
-                return;
-            }
+            return;
+        }
 
         private static T[] AllocateNewArray(int length)
         {
@@ -477,18 +477,6 @@ namespace Yuh.Collections
             _growIsNeeded = false;
             _nextSegmentLength <<= 1;
             _segmentsCount++;
-        }
-
-        /// <summary>
-        /// If grow is needed, allocates new buffer than can accommodate at least <see cref="_nextSegmentLength"/> elements.
-        /// </summary>
-        private void GrowIfNeeded()
-        {
-            if (_growIsNeeded)
-            {
-                Grow();
-                _growIsNeeded = false;
-            }
         }
 
         private void RemoveCurrentSegment()
