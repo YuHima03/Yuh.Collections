@@ -173,7 +173,7 @@ namespace Yuh.Collections
             }
             else
             {
-                var nextSegmentLength = ComputeNextSegmentLength();
+                var nextSegmentLength = _nextSegmentLength;
                 var neededLength = countInCurrentSegment + itemsCount;
 
                 if (countInCurrentSegment < nextSegmentLength && neededLength < checked(currentSegment.Length + nextSegmentLength))
@@ -327,27 +327,6 @@ namespace Yuh.Collections
                 <= CollectionBuilderConstants.MaxArraySizeFromArrayPool => ArrayPool<T>.Shared.Rent(length),
                 _ => GC.AllocateUninitializedArray<T>(length)
             };
-        }
-
-        private readonly int ComputeNextSegmentLength()
-        {
-            int segmentCount = _segmentsCount;
-            int nextSegmentLength = _nextSegmentLength;
-            if (segmentCount == 0)
-            {
-                return nextSegmentLength;
-            }
-
-            int currentSegmentMinimumLength = unchecked((int)((uint)nextSegmentLength >> 1));
-            int nextSegmentAdditionalLength = currentSegmentMinimumLength - _countInCurrentSegment;
-            if (nextSegmentAdditionalLength <= 0)
-            {
-                return nextSegmentLength;
-            }
-            else
-            {
-                return checked(nextSegmentLength + nextSegmentAdditionalLength);
-            }
         }
 
         /// <summary>
