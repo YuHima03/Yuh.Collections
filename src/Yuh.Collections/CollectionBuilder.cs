@@ -545,6 +545,21 @@ namespace Yuh.Collections
         }
 
         /// <summary>
+        /// Rent an array from <see cref="ArrayPool{T}"/>.
+        /// </summary>
+        /// <param name="length">A number of elements that the rented array can at least accommodate.</param>
+        /// <returns>A rented array that can accommodate at least specified number of elements.</returns>
+        private static T[] RentArray(int length)
+        {
+            var size = Unsafe.SizeOf<T>() * length;
+            if ((uint)(size - CollectionBuilderConstants.MinArraySizeFromArrayPool) <= (CollectionBuilderConstants.MaxArraySizeFromArrayPool - CollectionBuilderConstants.MinArraySizeFromArrayPool))
+            {
+                return ArrayPool<T>.Shared.Rent(length);
+            }
+            return GC.AllocateUninitializedArray<T>(length);
+        }
+
+        /// <summary>
         /// Reserves the specified length of memory region from the back of the <see cref="CollectionBuilder{T}"/> and returns a <see cref="SegmentPair"/> that has spans over reserved memory regions.
         /// </summary>
         /// <param name="length">A number of elements that reserved memory regions can exactly accommodate.</param>
@@ -630,6 +645,21 @@ namespace Yuh.Collections
             _count += length;
             _growIsNeeded = (currentSegment.Length == (_countInCurrentSegment = countInCurrentSegment + length));
             return range;
+        }
+
+        /// <summary>
+        /// Returns the array to <see cref="ArrayPool{T}.Shared"/> if the size of the array meets condition.
+        /// </summary>
+        /// <param name="array">An array to return.</param>
+        private static void ReturnRentedArray(T[] array)
+        {
+            var size = Unsafe.SizeOf<T>() * array.Length;
+
+            // The condition below is same as `CollectionBuilderConstants.MinArraySizeFromArrayPool <= size && size <= CollectionBuilderConstants.MaxArraySizeFromArrayPool`.
+            if ((uint)(size - CollectionBuilderConstants.MinArraySizeFromArrayPool) <= (CollectionBuilderConstants.MaxArraySizeFromArrayPool - CollectionBuilderConstants.MinArraySizeFromArrayPool))
+            {
+                ArrayPool<T>.Shared.Return(array);
+            }
         }
 
         private static void ReturnIfArrayIsFromArrayPool(T[] array)
