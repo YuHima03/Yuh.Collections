@@ -438,19 +438,44 @@ namespace Yuh.Collections
             _segmentCount = 0;
         }
 
-        private void ExpandCurrentSegment(int length)
+#if NET8_0_OR_GREATER
+        private void ExpandCurrentSegment(int minimumLength)
+#else
+        private readonly void ExpandCurrentSegment(int minimumLength)
+#endif
         {
-            var newSegment = AllocateNewArray(Math.Max(length, checked(_currentSegment.Length << 1)));
-            var newSegmentSpan = newSegment.AsSpan();
-            var oldSegment = Interlocked.Exchange(ref _segments[_segmentCount - 1], newSegment);
+            Debug.Assert(_segmentCount != 0, "The collection builder must has at least one segment.");
+            Debug.Assert(_currentSegment.Length < minimumLength, "The parameter `minimumLength` must be greater than the length of the current segment.");
 
-            var copySource = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment);
-            copySource.CopyTo(newSegmentSpan);
+            ref var currentSegmentRef = ref _segments[_segmentCount - 1];
+            var countInCurrentSegment = _countInCurrentSegment;
 
-            CollectionHelpers.ClearIfReferenceOrContainsReferences(copySource);
-            ReturnIfArrayIsFromArrayPool(oldSegment);
+            if (countInCurrentSegment == 0)
+            {
+                if (_usesArrayPool)
+                {
+                    ReturnRentedArray(currentSegmentRef);
+                    currentSegmentRef = RentArray(minimumLength);
+                }
+                else
+                {
+                    currentSegmentRef = GC.AllocateUninitializedArray<T>(minimumLength);
+                }
+                return;
+            }
 
-            _currentSegment = newSegmentSpan;
+            T[] newSegment = AllocateNewArray(minimumLength);
+            Array.Copy(currentSegmentRef, newSegment, countInCurrentSegment);
+
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            {
+                Array.Clear(currentSegmentRef, 0, countInCurrentSegment);
+            }
+            if (_usesArrayPool)
+            {
+                ReturnRentedArray(currentSegmentRef);
+            }
+            currentSegmentRef = newSegment;
         }
 
         /// <summary>
