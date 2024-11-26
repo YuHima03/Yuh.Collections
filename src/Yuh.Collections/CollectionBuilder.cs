@@ -333,13 +333,12 @@ namespace Yuh.Collections
             return;
         }
 
-        private static T[] AllocateNewArray(int length)
+        private readonly T[] AllocateNewArray(int length)
         {
-            return checked(Unsafe.SizeOf<T>() * length) switch
+            return _usesArrayPool switch
             {
-                < CollectionBuilderConstants.MinArraySizeFromArrayPool => new T[length],
-                <= CollectionBuilderConstants.MaxArraySizeFromArrayPool => ArrayPool<T>.Shared.Rent(length),
-                _ => GC.AllocateUninitializedArray<T>(length)
+                true => RentArray(length),
+                false => GC.AllocateUninitializedArray<T>(length)
             };
         }
 
