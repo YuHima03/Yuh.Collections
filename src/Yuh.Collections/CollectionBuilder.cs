@@ -534,28 +534,6 @@ namespace Yuh.Collections
             segments[segmentCount] = newSegmentArray;
         }
 
-        private void RemoveCurrentSegment()
-        {
-            if (_segmentCount == 0)
-            {
-                return;
-            }
-
-            var currentSegment = Interlocked.Exchange(ref _segments[_segmentCount - 1], null!);
-
-            if (_countInCurrentSegment != 0)
-            {
-                CollectionHelpers.ClearIfReferenceOrContainsReferences(_currentSegment);
-            }
-
-            ReturnIfArrayIsFromArrayPool(currentSegment);
-            _segmentCount--;
-            _currentSegment = AllocatedSegments[^1];
-            _countInCurrentSegment = _currentSegment.Length;
-            _growIsNeeded = true;
-            return;
-        }
-
         /// <summary>
         /// Removes specified number of elements from the end of the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
@@ -567,29 +545,67 @@ namespace Yuh.Collections
             {
                 return;
             }
-            if ((uint)length > _count)
+            if ((uint)length >= _count)
             {
-                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(length), "The value is negative or greater than the number of elements in the collection builder.");
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(length), "The value is negative or greater than the number of elements contained in the collection builder.");
             }
-            else if (length > _countInCurrentSegment)
+
+            var countInCurrentSegment = _countInCurrentSegment;
+            if (length <= countInCurrentSegment)
             {
-                length -= _countInCurrentSegment;
-                RemoveCurrentSegment();
-                RemoveRange(length);
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    MemoryMarshal.CreateSpan(
+                        ref Unsafe.Add(ref MemoryMarshal.GetReference(_currentSegment), countInCurrentSegment - length),
+                        length
+                    ).Clear();
+                }
+                _count -= length;
+                _countInCurrentSegment = countInCurrentSegment - length;
+                _growIsNeeded = false;
+            return;
+        }
+            else
+            {
+                RemoveLargeRangeInternal(length);
                 return;
             }
+        }
 
-            _count -= length;
-            var countInCurrentSegment = (_countInCurrentSegment -= length);
-            _growIsNeeded = false; // It is ensured that `_countInCurrentSegment` is less than `_currentSegment.Length` because `length` is positive.
+        private void RemoveLargeRangeInternal(int length)
+        {
+            Span<T[]> segments = _segments;
+            var segmentCount = _segmentCount;
+            ref T[] currentSegmentRef = ref segments[segmentCount - 1];
+            var countInCurrentSegment = _countInCurrentSegment;
 
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            var isTRef = RuntimeHelpers.IsReferenceOrContainsReferences<T>();
+
+            while (countInCurrentSegment < length)
             {
-                var removedRange = MemoryMarshal.CreateSpan(
-                    ref Unsafe.Add(ref MemoryMarshal.GetReference(_currentSegment), countInCurrentSegment),
-                    length
-                );
-                removedRange.Clear();
+                if (isTRef)
+            {
+                    Array.Clear(currentSegmentRef, 0, countInCurrentSegment);
+            }
+                if (_usesArrayPool)
+            {
+                    ReturnRentedArray(currentSegmentRef);
+            }
+                currentSegmentRef = [];
+
+                segmentCount--;
+                length -= countInCurrentSegment;
+                currentSegmentRef = ref segments[segmentCount - 1];
+                countInCurrentSegment = currentSegmentRef.Length;
+            }
+
+            _countInCurrentSegment = (countInCurrentSegment -= length);
+            _count -= length;
+            _growIsNeeded = false;
+
+            if (isTRef)
+            {
+                Array.Clear(currentSegmentRef, countInCurrentSegment - length, length);
             }
         }
 
