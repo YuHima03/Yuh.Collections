@@ -495,7 +495,7 @@ namespace Yuh.Collections
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
 
-            T[] newSegmentArray = _usesArrayPool ? RentArray(length) : GC.AllocateUninitializedArray<T>(length);
+            T[] newSegmentArray = AllocateNewArray(length);
             var newSegment = newSegmentArray.AsSpan();
 
             Debug.Assert((uint)segmentCount < CollectionBuilderConstants.MaxSegmentCount, "Invalid segment count.");
