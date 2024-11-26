@@ -399,24 +399,44 @@ namespace Yuh.Collections
         }
 
         /// <inheritdoc cref="IDisposable.Dispose"/>
-        public readonly void Dispose()
+        public void Dispose()
         {
-            var allocatedSegments = AllocatedSegments;
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            var segmentCount = _segmentCount;
+            if (segmentCount != 0)
             {
-                foreach (var segmentArray in allocatedSegments)
+                Span<T[]> segments = _segments[.._segmentCount];
+                switch ((_usesArrayPool, RuntimeHelpers.IsReferenceOrContainsReferences<T>()))
                 {
-                    Array.Clear(segmentArray);
-                    ReturnIfArrayIsFromArrayPool(segmentArray);
+                    case (true, true):
+                        for (int i = 0; i < segments.Length; i++)
+                        {
+                            var seg = segments[i];
+                            Array.Clear(seg);
+                            ReturnRentedArray(seg);
                 }
+                        break;
+                    case (true, false):
+                        for (int i = 0; i < segments.Length; i++)
+                        {
+                            ReturnRentedArray(segments[i]);
             }
-            else
+                        break;
+                    case (false, true):
+                        for (int i = 0; i < segments.Length; i++)
             {
-                foreach (var segmentArray in allocatedSegments)
-                {
-                    ReturnIfArrayIsFromArrayPool(segmentArray);
+                            Array.Clear(segments[i]);
                 }
+                        break;
             }
+                segments.Clear();
+        }
+
+            _count = 0;
+            _countInCurrentSegment = 0;
+            _currentSegment = [];
+            _growIsNeeded = false;
+            _nextSegmentLength = 0;
+            _segmentCount = 0;
         }
 
         private void ExpandCurrentSegment(int length)
