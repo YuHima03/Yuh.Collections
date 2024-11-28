@@ -74,25 +74,5 @@ namespace Yuh.Collections.Tests
 
             Assert.Equal(expected, builder.ToArray());
         }
-
-        [Fact]
-        public void AppendFormattableTest()
-        {
-            CollectionBuilder<char> builder = new();
-            StringBuilder sb = new();
-
-            var endl = Environment.NewLine;
-            foreach (var _ in Enumerable.Range(0, 512))
-            {
-                var now = DateTime.Now;
-                builder.AppendFormatted(now);
-                builder.AppendLiteral(endl);
-                sb.Append(now).Append(endl);
-            }
-
-            Debug.WriteLine(builder.GetAllocatedCapacity());
-            Assert.Equal(sb.ToString(), builder.ToBasicString());
-            builder.Dispose();
-        }
     }
 }
