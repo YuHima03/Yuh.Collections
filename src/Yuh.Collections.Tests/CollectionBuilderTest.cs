@@ -1,17 +1,12 @@
-﻿using Yuh.Collections.Tests.Helpers;
+﻿using Yuh.Collections.Tests.DataProviders;
+using Yuh.Collections.Tests.Helpers;
 
 namespace Yuh.Collections.Tests
 {
     public class CollectionBuilderTest()
     {
-        public static TheoryData<int[][]> TestIntEnumerable => [
-            [.. Enumerable.Repeat<int[]>([], 256)],
-            [.. Enumerable.Range(0, 1024).Select<int, int[]>(i => [i])],
-            [.. Enumerable.Repeat(Enumerable.Range(0, 128).ToArray(), 512)]
-        ];
-
         [Theory]
-        [MemberData(nameof(TestIntEnumerable))]
+        [ClassData(typeof(SegmentedIntArrayData))]
         public void AppendTest(int[][] items)
         {
             using CollectionBuilder<int> builder = new();
@@ -29,7 +24,7 @@ namespace Yuh.Collections.Tests
         }
 
         [Theory]
-        [MemberData(nameof(TestIntEnumerable))]
+        [ClassData(typeof(SegmentedIntArrayData))]
         public void AppendIEnumerableRangeTest(int[][] items)
         {
             using CollectionBuilder<int> builder = new();
@@ -44,7 +39,7 @@ namespace Yuh.Collections.Tests
         }
 
         [Theory]
-        [MemberData(nameof(TestIntEnumerable))]
+        [ClassData(typeof(SegmentedIntArrayData))]
         public void AppendICollectionRangeTest(int[][] items)
         {
             using CollectionBuilder<int> builder = new();
@@ -59,7 +54,7 @@ namespace Yuh.Collections.Tests
         }
 
         [Theory]
-        [MemberData(nameof(TestIntEnumerable))]
+        [ClassData(typeof(SegmentedIntArrayData))]
         public void AppendSpanRangeTest(int[][] items)
         {
             using CollectionBuilder<int> builder = new();
@@ -74,7 +69,7 @@ namespace Yuh.Collections.Tests
         }
 
         [Theory]
-        [MemberData(nameof(TestArrays))]
+        [ClassData(typeof(IntArrayData))]
         public void EnumeratorTest(int[] array)
         {
             CollectionBuilder<int> builder = new();
@@ -91,7 +86,7 @@ namespace Yuh.Collections.Tests
 
 #if NET9_0_OR_GREATER
         [Theory]
-        [MemberData(nameof(TestArrays))]
+        [ClassData(typeof(IntArrayData))]
         public void IGenericEnumerableTest(int[] array)
         {
             CollectionBuilder<int> builder = new();
@@ -112,7 +107,7 @@ namespace Yuh.Collections.Tests
         }
 
         [Theory]
-        [MemberData(nameof(TestArrays))]
+        [ClassData(typeof(IntArrayData))]
         public void IEnumerableTest(int[] array)
         {
             CollectionBuilder<int> builder = new();
@@ -120,7 +115,7 @@ namespace Yuh.Collections.Tests
 
             Test(array, builder);
 
-            static void Test<T, U>(U[] expected, T actually) where T : IEnumerable, allows ref struct
+            static void Test<T, U>(U[] expected, T actually) where T : IEnumerable<U>, allows ref struct
             {
                 var enumerator = actually.GetEnumerator();
                 for (int i = 0; i < expected.Length; i++)
