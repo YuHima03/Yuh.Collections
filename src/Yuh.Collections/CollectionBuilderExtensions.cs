@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using SysCollectionsMarshal = System.Runtime.InteropServices.CollectionsMarshal;
@@ -136,7 +137,7 @@ namespace Yuh.Collections
             SysCollectionsMarshal.SetCount(list, length);
             builder.CopyTo(SysCollectionsMarshal.AsSpan(list));
 #else
-            if (length <= 1024 * 1024)
+            if (Unsafe.SizeOf<T>() * length <= (1 << 26))
             {
                 T[] values = ArrayPool<T>.Shared.Rent(capacity);
                 builder.CopyTo(values.AsSpan());
