@@ -117,9 +117,7 @@ namespace Yuh.Collections
             int head = (capacity - length) >> 1;
             T[] values = new T[capacity];
 
-            builder.CopyTo(
-                MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(values), head)
-            );
+            builder.CopyTo(values.AsSpan()[head..]);
             return new(values, head, length);
         }
 
