@@ -412,23 +412,23 @@ namespace Yuh.Collections
                             var seg = segments[i];
                             Array.Clear(seg);
                             ReturnRentedArray(seg);
-                }
+                        }
                         break;
                     case (true, false):
                         for (int i = 0; i < segments.Length; i++)
                         {
                             ReturnRentedArray(segments[i]);
-            }
+                        }
                         break;
                     case (false, true):
                         for (int i = 0; i < segments.Length; i++)
-            {
+                        {
                             Array.Clear(segments[i]);
-                }
+                        }
                         break;
-            }
+                }
                 segments.Clear();
-        }
+            }
 
             _count = 0;
             _countInCurrentSegment = 0;
@@ -484,12 +484,12 @@ namespace Yuh.Collections
         /// <returns>The number of elements that can be contained in the <see cref="CollectionBuilder{T}"/> without allocating new internal array.</returns>
         public readonly int GetAllocatedCapacity()
         {
-            int capacity = 0;
-            for (int i = 0; i < _segmentCount; i++)
+            int segmentCount = _segmentCount;
+            if (segmentCount == 0)
             {
-                capacity += _segments[i].Length;
+                return 0;
             }
-            return capacity;
+            return _count - _countInCurrentSegment + _segments[segmentCount - 1].Length;
         }
 
         /// <summary>
@@ -563,8 +563,8 @@ namespace Yuh.Collections
                 _count -= length;
                 _countInCurrentSegment = countInCurrentSegment - length;
                 _growIsNeeded = false;
-            return;
-        }
+                return;
+            }
             else
             {
                 RemoveLargeRangeInternal(length);
@@ -584,13 +584,13 @@ namespace Yuh.Collections
             while (countInCurrentSegment < length)
             {
                 if (isTRef)
-            {
+                {
                     Array.Clear(currentSegmentRef, 0, countInCurrentSegment);
-            }
+                }
                 if (_usesArrayPool)
-            {
+                {
                     ReturnRentedArray(currentSegmentRef);
-            }
+                }
                 currentSegmentRef = [];
 
                 segmentCount--;
@@ -722,14 +722,6 @@ namespace Yuh.Collections
 
             // The condition below is same as `CollectionBuilderConstants.MinArraySizeFromArrayPool <= size && size <= CollectionBuilderConstants.MaxArraySizeFromArrayPool`.
             if ((uint)(size - CollectionBuilderConstants.MinArraySizeFromArrayPool) <= (CollectionBuilderConstants.MaxArraySizeFromArrayPool - CollectionBuilderConstants.MinArraySizeFromArrayPool))
-            {
-                ArrayPool<T>.Shared.Return(array);
-            }
-        }
-
-        private static void ReturnIfArrayIsFromArrayPool(T[] array)
-        {
-            if ((uint)(checked(Unsafe.SizeOf<T>() * array.Length) - CollectionBuilderConstants.MinArraySizeFromArrayPool) <= (CollectionBuilderConstants.MaxArraySizeFromArrayPool - CollectionBuilderConstants.MinArraySizeFromArrayPool))
             {
                 ArrayPool<T>.Shared.Return(array);
             }
