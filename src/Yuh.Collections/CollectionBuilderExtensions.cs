@@ -140,7 +140,7 @@ namespace Yuh.Collections
             {
                 T[] values = ArrayPool<T>.Shared.Rent(capacity);
                 builder.CopyTo(values.AsSpan());
-                list.AddRange(values);
+                list.AddRange(new ArraySegment<T>(values, 0, length));
                 ArrayPool<T>.Shared.Return(values);
             }
             else
