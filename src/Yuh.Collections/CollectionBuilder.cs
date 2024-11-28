@@ -62,7 +62,7 @@ namespace Yuh.Collections
         /// <remarks>
         /// It is ensured that the value is not negative and less than <see cref="CollectionBuilderConstants.MaxSegmentCount"/>, the maximum number of segments that may be contained in the collection builder.
         /// </remarks>
-        private int _segmentsCount = 0;
+        private int _segmentCount = 0;
 
         /// <summary>
         /// Sequence of <typeparamref name="T"/>[] that has fixed capacity.
@@ -74,7 +74,13 @@ namespace Yuh.Collections
         private readonly Span<T[]> _segments;
 #endif
 
-        private readonly ReadOnlySpan<T[]> AllocatedSegments => MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference((ReadOnlySpan<T[]>)_segments), _segmentsCount);
+        /// <summary>
+        /// Whether to use array pool.
+        /// If <see langword="false"/>, the collection builder never use arrays from <see cref="ArrayPool{T}"/>.
+        /// </summary>
+        private readonly bool _usesArrayPool = true;
+
+        private readonly ReadOnlySpan<T[]> AllocatedSegments => MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference((ReadOnlySpan<T[]>)_segments), _segmentCount);
 
         /// <summary>
         /// Gets the number of elements contained in the <see cref="CollectionBuilder{T}"/>.
@@ -116,16 +122,24 @@ namespace Yuh.Collections
         /// <exception cref="Exception">The <see cref="CollectionBuilder{T}"/> is already full.</exception>
         public void Append(T item)
         {
-            if (_count == Array.MaxLength)
+            if (_growIsNeeded)
             {
-                ThrowHelpers.ThrowException("This collection is already full.");
+                Grow();
             }
 
-            GrowIfNeeded();
-            _currentSegment[_countInCurrentSegment] = item;
+            var currentSegment = _currentSegment;
+            var countInCurrentSegment = _countInCurrentSegment++;
+            currentSegment[countInCurrentSegment] = item;
+
+            if (countInCurrentSegment + 1 == currentSegment.Length)
+            {
+                _growIsNeeded = true;
+            }
             _count++;
-            _countInCurrentSegment++;
-            _growIsNeeded = (_countInCurrentSegment == _currentSegment.Length);
+
+            //
+            // NOTE: `_countInCurrentSegment` is incremented above, so we don't have to assign `countInCurrentSegment + 1` to it.
+            //
         }
 
         /// <summary>
@@ -173,7 +187,7 @@ namespace Yuh.Collections
             }
             else
             {
-                var nextSegmentLength = ComputeNextSegmentLength();
+                var nextSegmentLength = _nextSegmentLength;
                 var neededLength = countInCurrentSegment + itemsCount;
 
                 if (countInCurrentSegment < nextSegmentLength && neededLength < checked(currentSegment.Length + nextSegmentLength))
@@ -228,7 +242,6 @@ namespace Yuh.Collections
         {
             int countInCurrentSegment = _countInCurrentSegment;
             var currentSegment = _currentSegment;
-            ref T destRef = ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), countInCurrentSegment);
 
             foreach (var item in items)
             {
@@ -239,17 +252,14 @@ namespace Yuh.Collections
                     Grow();
                     countInCurrentSegment = 0;
                     currentSegment = _currentSegment;
-                    destRef = ref MemoryMarshal.GetReference(currentSegment);
                 }
 
-                destRef = item;
-                destRef = ref Unsafe.Add(ref destRef, 1);
+                Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), countInCurrentSegment) = item;
                 countInCurrentSegment++;
             }
 
             _count += countInCurrentSegment - _countInCurrentSegment;
-            _countInCurrentSegment = countInCurrentSegment;
-            _growIsNeeded = (countInCurrentSegment == currentSegment.Length);
+            _growIsNeeded = (currentSegment.Length == (_countInCurrentSegment = countInCurrentSegment));
         }
 
         /// <summary>
@@ -259,89 +269,77 @@ namespace Yuh.Collections
         /// <exception cref="ArgumentException">The <see cref="CollectionBuilder{T}"/> doesn't have enough space to accommodate elements contained in <paramref name="items"/>.</exception>
         public void AppendRange(scoped ReadOnlySpan<T> items)
         {
-            if (items.Length == 0)
+            int itemsLength = items.Length;
+            if (itemsLength == 0)
             {
                 return;
             }
-            else if (items.Length == 1)
+            else if (itemsLength == 1)
             {
                 Append(items[0]);
                 return;
             }
-            if (items.Length > Array.MaxLength - _count) // use this way to avoid overflow
+
+            Span<T> currentSegment;
+            int countInCurrentSegment;
+
+            if (_growIsNeeded)
             {
-                ThrowHelpers.ThrowArgumentException("This collection doesn't have enough space to accommodate elements of the specified span.", nameof(items));
+                Grow(itemsLength);
+
+                currentSegment = _currentSegment;
+                items.CopyTo(currentSegment);
+                _count += itemsLength;
+
+                //
+                // It is ensured that item count in `_currentSegment` is equal to `itemsLength`.
+                //
+                if (itemsLength == currentSegment.Length)
+                {
+                    _growIsNeeded = true;
+                }
+                _countInCurrentSegment = itemsLength;
+                return;
             }
 
-            var currentSegment = _currentSegment;
+            currentSegment = _currentSegment;
+            countInCurrentSegment = _countInCurrentSegment;
 
-            if (_countInCurrentSegment + items.Length <= currentSegment.Length)
+            int remainingCapacityInCurrentSegment = currentSegment.Length - countInCurrentSegment;
+
+            if (itemsLength <= remainingCapacityInCurrentSegment)
             {
-                items.CopyTo(MemoryMarshal.CreateSpan(
-                    ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), _countInCurrentSegment),
-                    items.Length
-                ));
-                _count += items.Length;
-                _countInCurrentSegment += items.Length;
-                _growIsNeeded = (_countInCurrentSegment == currentSegment.Length);
-                return;
+                items.CopyTo(currentSegment[countInCurrentSegment..]);
+                countInCurrentSegment += itemsLength;
             }
             else
             {
-                ref var itemsRef = ref MemoryMarshal.GetReference(items);
+                items[..remainingCapacityInCurrentSegment].CopyTo(currentSegment[countInCurrentSegment..]);
 
-                var source1 = MemoryMarshal.CreateReadOnlySpan(ref itemsRef, currentSegment.Length - _countInCurrentSegment);
-                source1.CopyTo(MemoryMarshal.CreateSpan(
-                    ref Unsafe.Add(ref MemoryMarshal.GetReference(currentSegment), _countInCurrentSegment),
-                    source1.Length
-                ));
-
-                var source2 = MemoryMarshal.CreateReadOnlySpan(
-                    ref Unsafe.Add(ref itemsRef, source1.Length),
-                    items.Length - source1.Length
-                );
-
-                Grow(source2.Length);
+                var nextSegmentMinimumLength = itemsLength - remainingCapacityInCurrentSegment;
+                Grow(nextSegmentMinimumLength);
                 currentSegment = _currentSegment;
 
-                source2.CopyTo(MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(currentSegment), source2.Length));
-
-                _count += items.Length;
-                _countInCurrentSegment += source2.Length;
-                _growIsNeeded = (_countInCurrentSegment == currentSegment.Length);
-                return;
+                items[remainingCapacityInCurrentSegment..].CopyTo(currentSegment);
+                countInCurrentSegment = nextSegmentMinimumLength;
             }
+            _count += itemsLength;
+
+            if (countInCurrentSegment == currentSegment.Length)
+            {
+                _growIsNeeded = true;
+            }
+            _countInCurrentSegment = countInCurrentSegment;
+            return;
         }
 
-        private static T[] AllocateNewArray(int length)
+        private readonly T[] AllocateNewArray(int length)
         {
-            return checked(Unsafe.SizeOf<T>() * length) switch
+            return _usesArrayPool switch
             {
-                < CollectionBuilderConstants.MinArraySizeFromArrayPool => new T[length],
-                <= CollectionBuilderConstants.MaxArraySizeFromArrayPool => ArrayPool<T>.Shared.Rent(length),
-                _ => GC.AllocateUninitializedArray<T>(length)
+                true => RentArray(length),
+                false => GC.AllocateUninitializedArray<T>(length)
             };
-        }
-
-        private readonly int ComputeNextSegmentLength()
-        {
-            int segmentCount = _segmentsCount;
-            int nextSegmentLength = _nextSegmentLength;
-            if (segmentCount == 0)
-            {
-                return nextSegmentLength;
-            }
-
-            int currentSegmentMinimumLength = unchecked((int)((uint)nextSegmentLength >> 1));
-            int nextSegmentAdditionalLength = currentSegmentMinimumLength - _countInCurrentSegment;
-            if (nextSegmentAdditionalLength <= 0)
-            {
-                return nextSegmentLength;
-            }
-            else
-            {
-                return checked(nextSegmentLength + nextSegmentAdditionalLength);
-            }
         }
 
         /// <summary>
@@ -361,7 +359,7 @@ namespace Yuh.Collections
                 ThrowHelpers.ThrowArgumentException("The destination span doesn't have enough space to accommodate elements in this collection.", nameof(destination));
             }
 
-            if (_segmentsCount == 1)
+            if (_segmentCount == 1)
             {
                 MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(_currentSegment), _count).CopyTo(destination);
                 return;
@@ -373,7 +371,7 @@ namespace Yuh.Collections
         {
             Debug.Assert(_count <= destination.Length, "The destination span doesn't have enough space to accommodate elements contained in the collection builder.");
 
-            switch (_segmentsCount)
+            switch (_segmentCount)
             {
                 case 1:
                     _currentSegment[.._countInCurrentSegment].CopyTo(destination);
@@ -400,39 +398,84 @@ namespace Yuh.Collections
         }
 
         /// <inheritdoc cref="IDisposable.Dispose"/>
-        public readonly void Dispose()
+        public void Dispose()
         {
-            var allocatedSegments = AllocatedSegments;
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            var segmentCount = _segmentCount;
+            if (segmentCount != 0)
             {
-                foreach (var segmentArray in allocatedSegments)
+                Span<T[]> segments = _segments[.._segmentCount];
+                switch ((_usesArrayPool, RuntimeHelpers.IsReferenceOrContainsReferences<T>()))
                 {
-                    Array.Clear(segmentArray);
-                    ReturnIfArrayIsFromArrayPool(segmentArray);
+                    case (true, true):
+                        for (int i = 0; i < segments.Length; i++)
+                        {
+                            var seg = segments[i];
+                            Array.Clear(seg);
+                            ReturnRentedArray(seg);
+                        }
+                        break;
+                    case (true, false):
+                        for (int i = 0; i < segments.Length; i++)
+                        {
+                            ReturnRentedArray(segments[i]);
+                        }
+                        break;
+                    case (false, true):
+                        for (int i = 0; i < segments.Length; i++)
+                        {
+                            Array.Clear(segments[i]);
+                        }
+                        break;
                 }
+                segments.Clear();
             }
-            else
-            {
-                foreach (var segmentArray in allocatedSegments)
-                {
-                    ReturnIfArrayIsFromArrayPool(segmentArray);
-                }
-            }
+
+            _count = 0;
+            _countInCurrentSegment = 0;
+            _currentSegment = [];
+            _growIsNeeded = false;
+            _nextSegmentLength = 0;
+            _segmentCount = 0;
         }
 
-        private void ExpandCurrentSegment(int length)
+#if NET8_0_OR_GREATER
+        private void ExpandCurrentSegment(int minimumLength)
+#else
+        private readonly void ExpandCurrentSegment(int minimumLength)
+#endif
         {
-            var newSegment = AllocateNewArray(Math.Max(length, checked(_currentSegment.Length << 1)));
-            var newSegmentSpan = newSegment.AsSpan();
-            var oldSegment = Interlocked.Exchange(ref _segments[_segmentsCount - 1], newSegment);
+            Debug.Assert(_segmentCount != 0, "The collection builder must has at least one segment.");
+            Debug.Assert(_currentSegment.Length < minimumLength, "The parameter `minimumLength` must be greater than the length of the current segment.");
 
-            var copySource = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_currentSegment), _countInCurrentSegment);
-            copySource.CopyTo(newSegmentSpan);
+            ref var currentSegmentRef = ref _segments[_segmentCount - 1];
+            var countInCurrentSegment = _countInCurrentSegment;
 
-            CollectionHelpers.ClearIfReferenceOrContainsReferences(copySource);
-            ReturnIfArrayIsFromArrayPool(oldSegment);
+            if (countInCurrentSegment == 0)
+            {
+                if (_usesArrayPool)
+                {
+                    ReturnRentedArray(currentSegmentRef);
+                    currentSegmentRef = RentArray(minimumLength);
+                }
+                else
+                {
+                    currentSegmentRef = GC.AllocateUninitializedArray<T>(minimumLength);
+                }
+                return;
+            }
 
-            _currentSegment = newSegmentSpan;
+            T[] newSegment = AllocateNewArray(minimumLength);
+            Array.Copy(currentSegmentRef, newSegment, countInCurrentSegment);
+
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            {
+                Array.Clear(currentSegmentRef, 0, countInCurrentSegment);
+            }
+            if (_usesArrayPool)
+            {
+                ReturnRentedArray(currentSegmentRef);
+            }
+            currentSegmentRef = newSegment;
         }
 
         /// <summary>
@@ -441,12 +484,12 @@ namespace Yuh.Collections
         /// <returns>The number of elements that can be contained in the <see cref="CollectionBuilder{T}"/> without allocating new internal array.</returns>
         public readonly int GetAllocatedCapacity()
         {
-            int capacity = 0;
-            for (int i = 0; i < _segmentsCount; i++)
+            int segmentCount = _segmentCount;
+            if (segmentCount == 0)
             {
-                capacity += _segments[i].Length;
+                return 0;
             }
-            return capacity;
+            return _count - _countInCurrentSegment + _segments[segmentCount - 1].Length;
         }
 
         /// <summary>
@@ -471,52 +514,24 @@ namespace Yuh.Collections
         /// <param name="length"></param>
         private void GrowExact(int length)
         {
-            if (_segmentsCount == CollectionBuilderConstants.MaxSegmentCount)
+            int segmentCount = _segmentCount;
+            if (segmentCount == CollectionBuilderConstants.MaxSegmentCount)
             {
                 ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
             }
 
-            var newSegment = AllocateNewArray(length);
-            _segments[_segmentsCount] = newSegment;
+            T[] newSegmentArray = AllocateNewArray(length);
+            var newSegment = newSegmentArray.AsSpan();
 
+            Debug.Assert((uint)segmentCount < CollectionBuilderConstants.MaxSegmentCount, "Invalid segment count.");
             _countInCurrentSegment = 0;
-            _currentSegment = newSegment.AsSpan();
-            _nextSegmentLength <<= 1;
-            _segmentsCount++;
-        }
+            _currentSegment = newSegment;
+            _growIsNeeded = false;
+            _nextSegmentLength = checked(_nextSegmentLength << 1);
+            _segmentCount = segmentCount + 1;
 
-        /// <summary>
-        /// If grow is needed, allocates new buffer than can accommodate at least <see cref="_nextSegmentLength"/> elements.
-        /// </summary>
-        private void GrowIfNeeded()
-        {
-            if (_growIsNeeded)
-            {
-                Grow();
-                _growIsNeeded = false;
-            }
-        }
-
-        private void RemoveCurrentSegment()
-        {
-            if (_segmentsCount == 0)
-            {
-                return;
-            }
-
-            var currentSegment = Interlocked.Exchange(ref _segments[_segmentsCount - 1], null!);
-
-            if (_countInCurrentSegment != 0)
-            {
-                CollectionHelpers.ClearIfReferenceOrContainsReferences(_currentSegment);
-            }
-
-            ReturnIfArrayIsFromArrayPool(currentSegment);
-            _segmentsCount--;
-            _currentSegment = AllocatedSegments[^1];
-            _countInCurrentSegment = _currentSegment.Length;
-            _growIsNeeded = true;
-            return;
+            Span<T[]> segments = _segments;
+            segments[segmentCount] = newSegmentArray;
         }
 
         /// <summary>
@@ -530,30 +545,83 @@ namespace Yuh.Collections
             {
                 return;
             }
-            if ((uint)length > _count)
+            if ((uint)length >= _count)
             {
-                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(length), "The value is negative or greater than the number of elements in the collection builder.");
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(length), "The value is negative or greater than the number of elements contained in the collection builder.");
             }
-            else if (length > _countInCurrentSegment)
+
+            var countInCurrentSegment = _countInCurrentSegment;
+            if (length <= countInCurrentSegment)
             {
-                length -= _countInCurrentSegment;
-                RemoveCurrentSegment();
-                RemoveRange(length);
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    MemoryMarshal.CreateSpan(
+                        ref Unsafe.Add(ref MemoryMarshal.GetReference(_currentSegment), countInCurrentSegment - length),
+                        length
+                    ).Clear();
+                }
+                _count -= length;
+                _countInCurrentSegment = countInCurrentSegment - length;
+                _growIsNeeded = false;
                 return;
             }
-
-            _count -= length;
-            var countInCurrentSegment = (_countInCurrentSegment -= length);
-            _growIsNeeded = false; // It is ensured that `_countInCurrentSegment` is less than `_currentSegment.Length` because `length` is positive.
-
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+            else
             {
-                var removedRange = MemoryMarshal.CreateSpan(
-                    ref Unsafe.Add(ref MemoryMarshal.GetReference(_currentSegment), countInCurrentSegment),
-                    length
-                );
-                removedRange.Clear();
+                RemoveLargeRangeInternal(length);
+                return;
             }
+        }
+
+        private void RemoveLargeRangeInternal(int length)
+        {
+            Span<T[]> segments = _segments;
+            var segmentCount = _segmentCount;
+            ref T[] currentSegmentRef = ref segments[segmentCount - 1];
+            var countInCurrentSegment = _countInCurrentSegment;
+
+            var isTRef = RuntimeHelpers.IsReferenceOrContainsReferences<T>();
+
+            while (countInCurrentSegment < length)
+            {
+                if (isTRef)
+                {
+                    Array.Clear(currentSegmentRef, 0, countInCurrentSegment);
+                }
+                if (_usesArrayPool)
+                {
+                    ReturnRentedArray(currentSegmentRef);
+                }
+                currentSegmentRef = [];
+
+                segmentCount--;
+                length -= countInCurrentSegment;
+                currentSegmentRef = ref segments[segmentCount - 1];
+                countInCurrentSegment = currentSegmentRef.Length;
+            }
+
+            _countInCurrentSegment = (countInCurrentSegment -= length);
+            _count -= length;
+            _growIsNeeded = false;
+
+            if (isTRef)
+            {
+                Array.Clear(currentSegmentRef, countInCurrentSegment - length, length);
+            }
+        }
+
+        /// <summary>
+        /// Rent an array from <see cref="ArrayPool{T}"/>.
+        /// </summary>
+        /// <param name="length">A number of elements that the rented array can at least accommodate.</param>
+        /// <returns>A rented array that can accommodate at least specified number of elements.</returns>
+        private static T[] RentArray(int length)
+        {
+            var size = Unsafe.SizeOf<T>() * length;
+            if ((uint)(size - CollectionBuilderConstants.MinArraySizeFromArrayPool) <= (CollectionBuilderConstants.MaxArraySizeFromArrayPool - CollectionBuilderConstants.MinArraySizeFromArrayPool))
+            {
+                return ArrayPool<T>.Shared.Rent(length);
+            }
+            return GC.AllocateUninitializedArray<T>(length);
         }
 
         /// <summary>
@@ -644,9 +712,16 @@ namespace Yuh.Collections
             return range;
         }
 
-        private static void ReturnIfArrayIsFromArrayPool(T[] array)
+        /// <summary>
+        /// Returns the array to <see cref="ArrayPool{T}.Shared"/> if the size of the array meets condition.
+        /// </summary>
+        /// <param name="array">An array to return.</param>
+        private static void ReturnRentedArray(T[] array)
         {
-            if ((uint)(checked(Unsafe.SizeOf<T>() * array.Length) - CollectionBuilderConstants.MinArraySizeFromArrayPool) <= (CollectionBuilderConstants.MaxArraySizeFromArrayPool - CollectionBuilderConstants.MinArraySizeFromArrayPool))
+            var size = Unsafe.SizeOf<T>() * array.Length;
+
+            // The condition below is same as `CollectionBuilderConstants.MinArraySizeFromArrayPool <= size && size <= CollectionBuilderConstants.MaxArraySizeFromArrayPool`.
+            if ((uint)(size - CollectionBuilderConstants.MinArraySizeFromArrayPool) <= (CollectionBuilderConstants.MaxArraySizeFromArrayPool - CollectionBuilderConstants.MinArraySizeFromArrayPool))
             {
                 ArrayPool<T>.Shared.Return(array);
             }
@@ -659,7 +734,7 @@ namespace Yuh.Collections
         public readonly T[] ToArray()
         {
             T[] array;
-            switch (_segmentsCount)
+            switch (_segmentCount)
             {
                 case 0:
                     return [];
@@ -667,7 +742,7 @@ namespace Yuh.Collections
                     return MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(_segments[0]), _count).ToArray();
                 default:
                     array = GC.AllocateUninitializedArray<T>(_count);
-                    CopyTo(array.AsSpan());
+                    CopyToInternal(array.AsSpan());
                     return array;
             }
         }
