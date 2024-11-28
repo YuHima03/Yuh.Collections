@@ -793,22 +793,32 @@ namespace Yuh.Collections
         }
 
         public ref struct Enumerator(ReadOnlySpan<T[]> segments, in int count) : IEnumerator<T>
+        public ref struct Enumerator : IEnumerator<T>
         {
-            private readonly int _count = count;
+            private readonly int _count;
             private ReadOnlySpan<T> _currentSegment = [];
             private int _enumeratedCount = -1;
             private int _index = -1;
             private int _segmentIndex = -1;
-            private ReadOnlySpan<T[]> _segments = segments;
+            private ReadOnlySpan<T[]> _segments;
 
 #if NET7_0_OR_GREATER
-            private ref readonly int _countRef = ref count;
+            private ref readonly int _countRef;
 #endif
 
             /// <inheritdoc/>
             public readonly T Current => _currentSegment[_index];
 
             readonly object? IEnumerator.Current => Current;
+
+            internal Enumerator(ReadOnlySpan<T[]> segments, in int count)
+            {
+#if NET7_0_OR_GREATER
+                _countRef = ref count;
+#endif
+                _count = count;
+                _segments = segments;
+            }
 
             public void Dispose()
             {
