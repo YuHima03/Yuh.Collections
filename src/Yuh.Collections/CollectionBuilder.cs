@@ -801,7 +801,7 @@ namespace Yuh.Collections
 
             public readonly T Current => _currentSegment[_index];
 
-            readonly object IEnumerator.Current => Current;
+            readonly object? IEnumerator.Current => Current;
 
             public void Dispose()
             {
