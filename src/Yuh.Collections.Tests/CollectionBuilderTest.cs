@@ -84,6 +84,71 @@ namespace Yuh.Collections.Tests
             Assert.False(enumerator.MoveNext());
         }
 
+#if NET7_0_OR_GREATER
+        public static TheoryData<int[]> NonEmptyIntArrayData => new(IntArrayData.DataSource.Where(Enumerable.Any));
+
+        [Theory]
+        [MemberData(nameof(NonEmptyIntArrayData))]
+        public void EnumeratorAfterCollectionChangedTest(int[] array)
+        {
+            using CollectionBuilder<int> builder = new();
+            builder.AppendRange(array.AsSpan());
+
+            using var enumerator = builder.GetEnumerator();
+            try
+            {
+                builder.AppendRange(array.AsSpan());
+                enumerator.MoveNext();
+            }
+            catch (InvalidOperationException)
+            {
+                return;
+            }
+            Assert.Fail($"MoveNext method of {typeof(CollectionBuilder<>.Enumerator)} structure doesn't throw {nameof(InvalidOperationException)}.");
+        }
+
+        [Theory]
+        [ClassData(typeof(IntArrayData))]
+        public void EnumeratorAfterDisposedTest(int[] array)
+        {
+            using CollectionBuilder<int> builder = new();
+            builder.AppendRange(array.AsSpan());
+
+            var exceptionThrown = false;
+            var enumerator = builder.GetEnumerator();
+            enumerator.Dispose();
+
+            try
+            {
+                enumerator.MoveNext();
+            }
+            catch (Exception)
+            {
+                exceptionThrown = true;
+            }
+            if (!exceptionThrown)
+            {
+                Assert.Fail($"MoveNext method of {typeof(CollectionBuilder<>.Enumerator)} structure doesn't throw an exception after disposed.");
+            }
+
+            exceptionThrown = false;
+            enumerator = builder.GetEnumerator();
+            enumerator.Dispose();
+            try
+            {
+                enumerator.Reset();
+            }
+            catch (Exception)
+            {
+                exceptionThrown = true;
+            }
+            if (!exceptionThrown)
+            {
+                Assert.Fail($"Reset method of {typeof(CollectionBuilder<>.Enumerator)} structure doesn't throw an exception after disposed.");
+            }
+        }
+#endif
+
 #if NET9_0_OR_GREATER
         [Theory]
         [ClassData(typeof(IntArrayData))]
