@@ -23,7 +23,7 @@ namespace Yuh.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void ClearIfReferenceOrContainsReferences<T>(Span<T> span1,  Span<T> span2)
+        internal static void ClearIfReferenceOrContainsReferences<T>(Span<T> span1, Span<T> span2)
         {
             if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
             {

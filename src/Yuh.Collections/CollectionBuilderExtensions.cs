@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using SysCollectionsMarshal = System.Runtime.InteropServices.CollectionsMarshal;
@@ -117,9 +118,7 @@ namespace Yuh.Collections
             int head = (capacity - length) >> 1;
             T[] values = new T[capacity];
 
-            builder.CopyTo(
-                MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(values), head)
-            );
+            builder.CopyTo(values.AsSpan()[head..]);
             return new(values, head, length);
         }
 
@@ -138,11 +137,11 @@ namespace Yuh.Collections
             SysCollectionsMarshal.SetCount(list, length);
             builder.CopyTo(SysCollectionsMarshal.AsSpan(list));
 #else
-            if (length <= 1024 * 1024)
+            if (Unsafe.SizeOf<T>() * length <= (1 << 26))
             {
                 T[] values = ArrayPool<T>.Shared.Rent(capacity);
                 builder.CopyTo(values.AsSpan());
-                list.AddRange(values);
+                list.AddRange(new ArraySegment<T>(values, 0, length));
                 ArrayPool<T>.Shared.Return(values);
             }
             else
