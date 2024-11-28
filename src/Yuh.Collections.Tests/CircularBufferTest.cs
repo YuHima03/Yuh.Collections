@@ -37,7 +37,7 @@ namespace Yuh.Collections.Tests
         {
             StringBuilder sb = new();
 
-            foreach(var v in buffer)
+            foreach (var v in buffer)
             {
                 sb.Append(v?.ToString()).Append('\x20');
             }
