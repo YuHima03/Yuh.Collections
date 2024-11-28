@@ -526,6 +526,10 @@ namespace Yuh.Collections
             }
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <returns>An enumerator that can be used to iterate through the <see cref="CollectionBuilder{T}"/>.</returns>
         public readonly Enumerator GetEnumerator()
         {
 #pragma warning disable CS9084
@@ -792,7 +796,9 @@ namespace Yuh.Collections
             }
         }
 
-        public ref struct Enumerator(ReadOnlySpan<T[]> segments, in int count) : IEnumerator<T>
+        /// <summary>
+        /// An enumerator that can be used to iterate through a <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
         public ref struct Enumerator : IEnumerator<T>
         {
             private readonly int _count;
@@ -820,6 +826,7 @@ namespace Yuh.Collections
                 _segments = segments;
             }
 
+            /// <inheritdoc/>
             public void Dispose()
             {
 #if NET7_0_OR_GREATER
@@ -832,6 +839,7 @@ namespace Yuh.Collections
                 _segments = [];
             }
 
+            /// <inheritdoc/>
             public bool MoveNext()
             {
 #if NET7_0_OR_GREATER
@@ -858,6 +866,7 @@ namespace Yuh.Collections
                 return true;
             }
 
+            /// <inheritdoc/>
             public void Reset()
             {
 #if NET7_0_OR_GREATER
