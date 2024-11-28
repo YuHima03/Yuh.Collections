@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Collections;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -28,7 +29,7 @@ namespace Yuh.Collections
     /// Represents a temporary collection that is used to build new collections.
     /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
-    public unsafe ref struct CollectionBuilder<T> // : IDisposable
+    public unsafe ref struct CollectionBuilder<T> : IDisposable, IEnumerable<T>
     {
         /// <summary>
         /// The number of elements contained in the collection.
@@ -492,6 +493,54 @@ namespace Yuh.Collections
             return _count - _countInCurrentSegment + _segments[segmentCount - 1].Length;
         }
 
+        private readonly IEnumerable<T> GetEnumerableForIteration()
+        {
+            var segments = AllocatedSegments;
+            if (segments.IsEmpty)
+            {
+                return [];
+            }
+            if (segments.Length == 1)
+            {
+                return GetSlicedEnumerable(segments[0], _countInCurrentSegment);
+            }
+
+            IEnumerable<T> enumerable = segments[0];
+            for (int i = 1; i < segments.Length - 1; i++)
+            {
+                enumerable = enumerable.Concat(segments[i]);
+            }
+            return enumerable.Concat(GetSlicedEnumerable(segments[^1], _countInCurrentSegment));
+
+            static IEnumerable<T> GetSlicedEnumerable(T[] array, int count)
+            {
+                if (count == 0)
+                {
+                    return [];
+                }
+                else if (array.Length == count)
+                {
+                    return array;
+                }
+                return new ArraySegment<T>(array, 0, count);
+            }
+        }
+
+        /// <summary>
+        /// Returns an enumerator that iterates through the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <returns>An enumerator that can be used to iterate through the <see cref="CollectionBuilder{T}"/>.</returns>
+        public readonly Enumerator GetEnumerator()
+        {
+#pragma warning disable CS9084
+            return new Enumerator(AllocatedSegments, in _count);
+#pragma warning restore CS9084
+        }
+
+        readonly IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerableForIteration().GetEnumerator();
+
+        readonly IEnumerator IEnumerable.GetEnumerator() => GetEnumerableForIteration().GetEnumerator();
+
         /// <summary>
         /// Allocates new buffer than can accommodate at least <see cref="_nextSegmentLength"/> elements.
         /// </summary>
@@ -745,6 +794,99 @@ namespace Yuh.Collections
                     CopyToInternal(array.AsSpan());
                     return array;
             }
+        }
+
+        /// <summary>
+        /// An enumerator that can be used to iterate through a <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        public ref struct Enumerator : IEnumerator<T>
+        {
+            private readonly int _count;
+            private ReadOnlySpan<T> _currentSegment = [];
+            private int _enumeratedCount = -1;
+            private int _index = -1;
+            private int _segmentIndex = -1;
+            private ReadOnlySpan<T[]> _segments;
+
+#if NET7_0_OR_GREATER
+            private ref readonly int _countRef;
+#endif
+
+            /// <inheritdoc/>
+            public readonly T Current => _currentSegment[_index];
+
+            readonly object? IEnumerator.Current => Current;
+
+            internal Enumerator(ReadOnlySpan<T[]> segments, in int count)
+            {
+#if NET7_0_OR_GREATER
+                _countRef = ref count;
+#endif
+                _count = count;
+                _segments = segments;
+            }
+
+            /// <inheritdoc/>
+            public void Dispose()
+            {
+#if NET7_0_OR_GREATER
+                _countRef = ref Unsafe.AsRef<int>(IntPtr.Zero.ToPointer());
+#endif
+                _currentSegment = [];
+                _enumeratedCount = -1;
+                _index = -1;
+                _segmentIndex = -1;
+                _segments = [];
+            }
+
+            /// <inheritdoc/>
+            public bool MoveNext()
+            {
+#if NET7_0_OR_GREATER
+                ThrowIfCollectionIsChanged();
+#endif
+
+                var enumeratedCount = ++_enumeratedCount;
+                switch (enumeratedCount - _count)
+                {
+                    case 0:
+                        _currentSegment = [];
+                        _index = -1;
+                        _segmentIndex = -1;
+                        return false;
+                    case > 0:
+                        return false;
+                }
+
+                if (++_index == _currentSegment.Length)
+                {
+                    _index = 0;
+                    _currentSegment = _segments[++_segmentIndex].AsSpan();
+                }
+                return true;
+            }
+
+            /// <inheritdoc/>
+            public void Reset()
+            {
+#if NET7_0_OR_GREATER
+                ThrowIfCollectionIsChanged();
+#endif
+                _currentSegment = [];
+                _enumeratedCount = -1;
+                _index = -1;
+                _segmentIndex = -1;
+            }
+
+#if NET7_0_OR_GREATER
+            private readonly void ThrowIfCollectionIsChanged()
+            {
+                if (_countRef != _count)
+                {
+                    ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionModifiedAfterEnumeratorCreated);
+                }
+            }
+#endif
         }
 
         /// <summary>
