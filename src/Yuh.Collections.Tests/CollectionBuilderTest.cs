@@ -94,7 +94,7 @@ namespace Yuh.Collections.Tests
 
             Test(array, builder);
 
-            static void Test<T, U>(U[] expected, T actually) where T : IEnumerable<U>,allows ref struct
+            static void Test<T, U>(U[] expected, T actually) where T : IEnumerable<U>, allows ref struct
             {
                 using var enumerator = actually.GetEnumerator();
                 for (int i = 0; i < expected.Length; i++)
