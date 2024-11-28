@@ -528,7 +528,9 @@ namespace Yuh.Collections
 
         public readonly Enumerator GetEnumerator()
         {
-            return new Enumerator(AllocatedSegments, _count);
+#pragma warning disable CS9084
+            return new Enumerator(AllocatedSegments, in _count);
+#pragma warning restore CS9084
         }
 
         readonly IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerableForIteration().GetEnumerator();
@@ -790,7 +792,7 @@ namespace Yuh.Collections
             }
         }
 
-        public ref struct Enumerator(ReadOnlySpan<T[]> segments, int count) : IEnumerator<T>
+        public ref struct Enumerator(ReadOnlySpan<T[]> segments, in int count) : IEnumerator<T>
         {
             private readonly int _count = count;
             private ReadOnlySpan<T> _currentSegment = [];
@@ -799,18 +801,33 @@ namespace Yuh.Collections
             private int _segmentIndex = -1;
             private ReadOnlySpan<T[]> _segments = segments;
 
+#if NET7_0_OR_GREATER
+            private ref readonly int _countRef = ref count;
+#endif
+
+            /// <inheritdoc/>
             public readonly T Current => _currentSegment[_index];
 
             readonly object? IEnumerator.Current => Current;
 
             public void Dispose()
             {
-                Reset();
+#if NET7_0_OR_GREATER
+                _countRef = ref Unsafe.AsRef<int>(IntPtr.Zero.ToPointer());
+#endif
+                _currentSegment = [];
+                _enumeratedCount = -1;
+                _index = -1;
+                _segmentIndex = -1;
                 _segments = [];
             }
 
             public bool MoveNext()
             {
+#if NET7_0_OR_GREATER
+                ThrowIfCollectionIsChanged();
+#endif
+
                 var enumeratedCount = ++_enumeratedCount;
                 switch (enumeratedCount - _count)
                 {
@@ -833,11 +850,24 @@ namespace Yuh.Collections
 
             public void Reset()
             {
+#if NET7_0_OR_GREATER
+                ThrowIfCollectionIsChanged();
+#endif
                 _currentSegment = [];
                 _enumeratedCount = -1;
                 _index = -1;
                 _segmentIndex = -1;
             }
+
+#if NET7_0_OR_GREATER
+            private readonly void ThrowIfCollectionIsChanged()
+            {
+                if (_countRef != _count)
+                {
+                    ThrowHelpers.ThrowInvalidOperationException(ThrowHelpers.M_CollectionModifiedAfterEnumeratorCreated);
+                }
+            }
+#endif
         }
 
         /// <summary>
