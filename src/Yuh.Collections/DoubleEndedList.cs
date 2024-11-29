@@ -162,8 +162,15 @@ namespace Yuh.Collections
 
             if (collection is ICollection<T> c)
             {
-                Resize(0, c.Count);
+                var count = c.Count;
+                if (count == 0)
+                {
+                    return;
+                }
+
+                Resize(0, count);
                 c.CopyTo(_items, 0);
+                _count = count;
             }
             else
             {
