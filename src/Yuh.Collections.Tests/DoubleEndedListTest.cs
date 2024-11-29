@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using Xunit.Abstractions;
+using Yuh.Collections.Tests.DataProviders;
 
 namespace Yuh.Collections.Tests
 {
@@ -83,6 +84,14 @@ namespace Yuh.Collections.Tests
             OutputHelpers.OutputElements(buffer, _out);
 
             buffer.Clear();
+        }
+
+        [Theory]
+        [ClassData(typeof(IntArrayData))]
+        public void InitializeTest(int[] items)
+        {
+            DoubleEndedList<int> list = new(items as IEnumerable<int>);
+            Assert.Equal(items, list);
         }
 
         [Fact]
