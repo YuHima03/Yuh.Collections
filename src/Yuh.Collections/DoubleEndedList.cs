@@ -226,10 +226,7 @@ namespace Yuh.Collections
         /// Items should not be added or removed from the <see cref="DoubleEndedList{T}"/> while the returned <see cref="ReadOnlySpan{T}"/> is in use.
         /// </remarks>
         /// <returns>The read-only span representation of the <see cref="DoubleEndedList{T}"/>.</returns>
-        public ReadOnlySpan<T> AsReadOnlySpan()
-        {
-            return MemoryMarshal.CreateReadOnlySpan(ref _items[_head], _count);
-        }
+        public ReadOnlySpan<T> AsReadOnlySpan() => AsSpan();
 
         /// <summary>
         /// Creates a new span over the <see cref="DoubleEndedList{T}"/>.
@@ -237,7 +234,12 @@ namespace Yuh.Collections
         /// <returns>The span representation of the <see cref="DoubleEndedList{T}"/>.</returns>
         internal Span<T> AsSpan()
         {
-            return MemoryMarshal.CreateSpan(ref _items[_head], _count);
+            var count = _count;
+            if (_count == 0)
+            {
+                return [];
+            }
+            return _items.AsSpan().Slice(_head, count);
         }
 
         /// <summary>
