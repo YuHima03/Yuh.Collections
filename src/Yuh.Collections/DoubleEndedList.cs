@@ -188,9 +188,14 @@ namespace Yuh.Collections
         /// <param name="span">The span whose elements are copied to the new list.</param>
         public DoubleEndedList(ReadOnlySpan<T> span) : this(span.Length)
         {
+            if (span.IsEmpty)
+            {
+                return;
+            }
+
             span.CopyTo(_items.AsSpan());
-            _head = 0;
             _count = span.Length;
+            _head = 0;
             _version++;
         }
 
