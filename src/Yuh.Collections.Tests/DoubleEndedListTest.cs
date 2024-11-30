@@ -9,7 +9,7 @@ namespace Yuh.Collections.Tests
         public void InitializeTest(int[] items)
         {
             DoubleEndedList<int> list = new(items as IEnumerable<int>);
-            Assert.Equal(items, list);
+            Assert.Equal(items.AsSpan(), list.AsReadOnlySpan());
         }
     }
 }
