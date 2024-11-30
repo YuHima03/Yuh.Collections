@@ -852,6 +852,11 @@ namespace Yuh.Collections
             if (items is ICollection<T> collection)
             {
                 int count = collection.Count;
+                if (count == 0)
+                {
+                    return;
+                }
+
                 int requiredCapacity = _count + count;
 
                 if (requiredCapacity > Array.MaxLength)
@@ -881,6 +886,11 @@ namespace Yuh.Collections
         /// <param name="items">The read-only span whose elements should be added to the end of the <see cref="DoubleEndedList{T}"/>.</param>
         public void PushBackRange(ReadOnlySpan<T> items)
         {
+            if (items.IsEmpty)
+            {
+                return;
+            }
+
             int requiredCapacity = _count + items.Length;
 
             if (requiredCapacity > Array.MaxLength)
@@ -926,6 +936,11 @@ namespace Yuh.Collections
             if (items is ICollection<T> collection)
             {
                 int count = collection.Count;
+                if (count == 0)
+                {
+                    return;
+                }
+
                 int requiredCapacity = _count + count;
 
                 if (requiredCapacity > Array.MaxLength)
@@ -956,6 +971,11 @@ namespace Yuh.Collections
         /// <param name="items">The read-only span whose elements should be added to the front of the <see cref="DoubleEndedList{T}"/>.</param>
         public void PushFrontRange(ReadOnlySpan<T> items)
         {
+            if (items.IsEmpty)
+            {
+                return;
+            }
+
             int count = items.Length;
 
             if (_count + count > Array.MaxLength)
