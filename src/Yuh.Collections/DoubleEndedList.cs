@@ -467,7 +467,13 @@ namespace Yuh.Collections
         /// <returns>The zero-based index of the first occurrence of <paramref name="item"/>, if found; otherwise, <c>-1</c>.</returns>
         public int IndexOf(T item)
         {
-            var idx = Array.IndexOf(_items, item, _head, _count);
+            var count = _count;
+            if (count == 0)
+            {
+                return -1;
+            }
+
+            var idx = Array.IndexOf(_items, item, _head, count);
             return (idx >= 0) ? (idx - _head) : -1;
         }
 
