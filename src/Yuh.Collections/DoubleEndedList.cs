@@ -518,6 +518,10 @@ namespace Yuh.Collections
 
             if (items is ICollection<T> collection)
             {
+                if (collection.Count == 0)
+                {
+                    return;
+                }
                 InsertRangeInternal(index, collection);
             }
             else
