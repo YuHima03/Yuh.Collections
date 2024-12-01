@@ -518,15 +518,26 @@ namespace Yuh.Collections
 
             if (items is ICollection<T> collection)
             {
-                if (collection.Count == 0)
+                var count = collection.Count;
+                if (count == 0)
                 {
                     return;
                 }
-                InsertRangeInternal(index, collection);
+                ReserveRangeForInsertInternal(index, collection.Count);
+                collection.CopyTo(_items, _head + index);
             }
             else
             {
-                InsertRangeInternal(index, System.Runtime.InteropServices.CollectionsMarshal.AsSpan(items.ToList()));
+                using CollectionBuilder<T> builder = new();
+                builder.AppendRange(items);
+
+                var count = builder.Count;
+                if (count == 0)
+                {
+                    return;
+                }
+                ReserveRangeForInsertInternal(index, builder.Count);
+                builder.CopyTo(_items.AsSpan().Slice(_head + index, count));
             }
         }
 
@@ -542,7 +553,13 @@ namespace Yuh.Collections
             {
                 ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
             }
-            InsertRangeInternal(index, items);
+
+            if (items.IsEmpty)
+            {
+                return;
+            }
+            ReserveRangeForInsertInternal(index, items.Length);
+            items.CopyTo(_items.AsSpan().Slice(_head + index, items.Length));
         }
 
         /// <remarks>
