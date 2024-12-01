@@ -1124,6 +1124,51 @@ namespace Yuh.Collections
             _version++;
         }
 
+        private void ReserveRangeForInsertInternal(int index, int length)
+        {
+            Debug.Assert((uint)index < _count, $"Invalid parameter: {nameof(index)}");
+            Debug.Assert(0 <= length && (uint)checked(index + length) < _count, $"Invalid parameter: {nameof(length)}");
+
+            if (length == 0)
+            {
+                return;
+            }
+
+            var count = _count;
+            var head = _head;
+            if (index == 0)
+            {
+                EnsureCapacity(length, 0);
+                _head = head - length;
+            }
+            else if (index == count)
+            {
+                EnsureCapacity(0, length);
+                _count += length;
+            }
+            else if (index < (count >> 1))
+            {
+                EnsureCapacity(length, 0);
+
+                var items = _items.AsSpan();
+                var newHead = head - length;
+                items.Slice(head, index).CopyTo(items.Slice(newHead, index));
+
+                _head = newHead;
+            }
+            else
+            {
+                EnsureCapacity(0, length);
+
+                var items = _items.AsSpan();
+                var copyCnt = count - index;
+                var copyStartIdx = head + index;
+                items.Slice(copyStartIdx, copyCnt).CopyTo(items.Slice(copyStartIdx + length, copyCnt));
+            }
+
+            _count = count + length;
+        }
+
         /// <summary>
         /// Resizes the internal array to the specified size.
         /// </summary>
