@@ -658,7 +658,13 @@ namespace Yuh.Collections
         /// <returns>The zero-based index of the last occurrence of <paramref name="item"/>, if found; otherwise, <c>-1</c>.</returns>
         public int LastIndexOf(T item)
         {
-            var idx = Array.LastIndexOf(_items, item, _head, _count);
+            var count = _count;
+            if (count == 0)
+            {
+                return -1;
+            }
+
+            var idx = Array.LastIndexOf(_items, item, _head + count - 1, count);
             return (idx >= 0) ? (idx - _head) : -1;
         }
 
