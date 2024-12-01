@@ -1,4 +1,5 @@
-﻿using Yuh.Collections.Tests.DataProviders;
+﻿using Xunit.Sdk;
+using Yuh.Collections.Tests.DataProviders;
 using Yuh.Collections.Tests.Helpers;
 
 namespace Yuh.Collections.Tests
@@ -6,6 +7,8 @@ namespace Yuh.Collections.Tests
     public class DoubleEndedListTest
     {
         public static TheoryData<int[]> NonEmptyAndNonSingleIntArrayData => [.. IntArrayData.DataSource.Where(x => x.Length >= 2)];
+
+        public static TheoryData<int[]> ShuffledIntArrayData => [.. IntArrayData.DataSource.Select(x => x.Shuffle(123456).ToArray())];
 
         [Theory]
         [ClassData(typeof(IntArrayData))]
@@ -121,6 +124,147 @@ namespace Yuh.Collections.Tests
                 }
 
                 Assert.Equal(capacity, list.Capacity);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(ShuffledIntArrayData))]
+        public void FindTest(int[] data)
+        {
+            DoubleEndedList<int> list = new(data.Length / 2);
+
+            if (data.Length == 0)
+            {
+                foreach (var n in (NonEmptyAndNonSingleIntArrayData as IEnumerable<int[]>).First())
+                {
+                    Assert.Equal(-1, list.Find(x => x == n));
+                }
+                return;
+            }
+
+            Dictionary<int, int> firstIdx = [];
+            for (int i = 0; i < data.Length; i += 2)
+            {
+                var x = data[i];
+                _ = firstIdx.TryAdd(x, list.Count);
+                list.PushBack(x);
+            }
+
+            foreach (var n in data)
+            {
+                if (firstIdx.TryGetValue(n, out var i))
+                {
+                    Assert.Equal(i, list.Find(x => x == n));
+                }
+                else
+                {
+                    Assert.Equal(-1, list.Find(x => x == n));
+                }
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(ShuffledIntArrayData))]
+        public void FindLastTest(int[] data)
+        {
+            DoubleEndedList<int> list = new(data.Length / 2);
+
+            if (data.Length == 0)
+            {
+                foreach (var n in (NonEmptyAndNonSingleIntArrayData as IEnumerable<int[]>).First())
+                {
+                    Assert.Equal(-1, list.FindLast(x => x == n));
+                }
+            }
+
+            Dictionary<int, Index> lastIdx = [];
+            for (int i = 0; i < data.Length; i += 2)
+            {
+                var x = data[^(i + 1)];
+                _ = lastIdx.TryAdd(x, ^(list.Count + 1));
+                list.PushFront(x);
+            }
+
+            foreach (var n in data)
+            {
+                if (lastIdx.TryGetValue(n, out var i))
+                {
+                    Assert.Equal(i.GetOffset(list.Count), list.FindLast(x => x == n));
+                }
+                else
+                {
+                    Assert.Equal(-1, list.FindLast(x => x == n));
+                }
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(ShuffledIntArrayData))]
+        public void IndexOfTest(int[] data)
+        {
+            DoubleEndedList<int> list = new(data.Length / 2);
+
+            if (data.Length == 0)
+            {
+                foreach (var n in (NonEmptyAndNonSingleIntArrayData as IEnumerable<int[]>).First())
+                {
+                    Assert.Equal(-1, list.IndexOf(n));
+                }
+            }
+
+            Dictionary<int, int> firstIdx = [];
+            for (int i = 0; i < data.Length; i += 2)
+            {
+                var x = data[i];
+                _ = firstIdx.TryAdd(x, list.Count);
+                list.PushBack(x);
+            }
+
+            foreach (var n in data)
+            {
+                if (firstIdx.TryGetValue(n, out var i))
+                {
+                    Assert.Equal(i, list.IndexOf(n));
+                }
+                else
+                {
+                    Assert.Equal(-1, list.IndexOf(n));
+                }
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(ShuffledIntArrayData))]
+        public void LastIndexOfTest(int[] data)
+        {
+            DoubleEndedList<int> list = new(data.Length / 2);
+
+            if (data.Length == 0)
+            {
+                foreach (var n in (NonEmptyAndNonSingleIntArrayData as IEnumerable<int[]>).First())
+                {
+                    Assert.Equal(-1, list.LastIndexOf(n));
+                }
+            }
+
+            Dictionary<int, Index> lastIdx = [];
+            for (int i = 0; i < data.Length; i += 2)
+            {
+                var x = data[^(i + 1)];
+                _ = lastIdx.TryAdd(x, ^(list.Count + 1));
+                list.PushFront(x);
+            }
+
+            foreach (var n in data)
+            {
+                if (lastIdx.TryGetValue(n, out var i))
+                {
+                    Assert.Equal(i.GetOffset(list.Count), list.LastIndexOf(n));
+                }
+                else
+                {
+                    Assert.Equal(-1, list.LastIndexOf(n));
+                }
             }
         }
 
