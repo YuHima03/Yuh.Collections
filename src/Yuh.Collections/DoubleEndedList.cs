@@ -156,6 +156,9 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="collection">The collection whose elements are copied to the new list.</param>
         /// <exception cref="ArgumentNullException"><paramref name="collection"/> is <see langword="null"/>.</exception>
+#if NET9_0_OR_GREATER
+        [OverloadResolutionPriority(-1)]
+#endif
         public DoubleEndedList(IEnumerable<T> collection) : this(0)
         {
             ArgumentNullException.ThrowIfNull(collection);
@@ -507,6 +510,9 @@ namespace Yuh.Collections
         /// <param name="items">The collection whose elements should be inserted into the <see cref="DoubleEndedList{T}"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="items"/> is null.</exception>
         /// <exception cref="ArgumentOutOfRangeException">The <paramref name="index"/> is invalid (less than 0 or greater than <see cref="Count"/>.)</exception>
+#if NET9_0_OR_GREATER
+        [OverloadResolutionPriority(-1)]
+#endif
         public void InsertRange(int index, IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
@@ -765,6 +771,9 @@ namespace Yuh.Collections
         /// Adds the elements of the specified collection to the end of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <param name="items">The collection whose elements should be added to the end of the <see cref="DoubleEndedList{T}"/>.</param>
+#if NET9_0_OR_GREATER
+        [OverloadResolutionPriority(-1)]
+#endif
         public void PushBackRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
@@ -849,6 +858,9 @@ namespace Yuh.Collections
         /// Adds the elements of the specified collection to the front of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <param name="items">The collection whose elements should be added to the front of the <see cref="DoubleEndedList{T}"/>.</param>
+#if NET9_0_OR_GREATER
+        [OverloadResolutionPriority(-1)]
+#endif
         public void PushFrontRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
