@@ -1051,11 +1051,10 @@ namespace Yuh.Collections
             }
 
             var count = _count;
-            var head = _head;
             if (index == 0)
             {
                 EnsureCapacity(length, 0);
-                _head = head - length;
+                _head -= length;
             }
             else if (index == count)
             {
@@ -1066,6 +1065,7 @@ namespace Yuh.Collections
             {
                 EnsureCapacity(length, 0);
 
+                var head = _head;
                 var items = _items.AsSpan();
                 var newHead = head - length;
                 items.Slice(head, index).CopyTo(items.Slice(newHead, index));
@@ -1078,7 +1078,7 @@ namespace Yuh.Collections
 
                 var items = _items.AsSpan();
                 var copyCnt = count - index;
-                var copyStartIdx = head + index;
+                var copyStartIdx = _head + index;
                 items.Slice(copyStartIdx, copyCnt).CopyTo(items.Slice(copyStartIdx + length, copyCnt));
             }
 
