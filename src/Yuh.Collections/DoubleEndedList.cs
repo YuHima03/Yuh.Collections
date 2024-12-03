@@ -1043,7 +1043,7 @@ namespace Yuh.Collections
         private void ReserveRangeForInsertInternal(int index, int length)
         {
             Debug.Assert((uint)index < _count, $"Invalid parameter: {nameof(index)}");
-            Debug.Assert(0 <= length && (uint)checked(index + length) < _count, $"Invalid parameter: {nameof(length)}");
+            Debug.Assert(0 <= length, $"Invalid parameter: {nameof(length)}");
 
             if (length == 0)
             {
