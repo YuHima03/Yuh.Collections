@@ -1,5 +1,4 @@
-﻿using Xunit.Sdk;
-using Yuh.Collections.Tests.DataProviders;
+﻿using Yuh.Collections.Tests.DataProviders;
 using Yuh.Collections.Tests.Helpers;
 
 namespace Yuh.Collections.Tests
@@ -9,6 +8,13 @@ namespace Yuh.Collections.Tests
         public static TheoryData<int[]> NonEmptyAndNonSingleIntArrayData => [.. IntArrayData.DataSource.Where(x => x.Length >= 2)];
 
         public static TheoryData<int[]> ShuffledIntArrayData => [.. IntArrayData.DataSource.Select(x => x.Shuffle(123456).ToArray())];
+
+        public static TheoryData<ValueTuple<int[], int[]>> ShuffledIntArrayPairData => [
+            .. Enumerable.Zip(
+                IntArrayData.DataSource.Select(x => x.Shuffle(345678).ToArray()),
+                IntArrayData.DataSource.Select(x => x.Shuffle(123890).ToArray())
+            )
+        ];
 
         [Theory]
         [ClassData(typeof(IntArrayData))]
@@ -234,6 +240,57 @@ namespace Yuh.Collections.Tests
         }
 
         [Theory]
+        [MemberData(nameof(NonEmptyAndNonSingleIntArrayData))]
+        public void InsertTest(int[] data)
+        {
+            DoubleEndedList<int> list = new(data.AsSpan());
+            List<int> expected = new(data);
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                list.Insert(i * 2, data[^(i + 1)]);
+                expected.Insert(i * 2, data[^(i + 1)]);
+            }
+
+            Assert.Equal(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(expected), list.AsReadOnlySpan());
+        }
+
+        [Theory]
+        [MemberData(nameof(NonEmptyAndNonSingleIntArrayData))]
+        public void InsertIEnumerableRangeTest(int[] data)
+        {
+            DoubleEndedList<int> list = new(data.AsSpan());
+            List<int> expected = new(data);
+
+            int step = Math.Max(data.Length / 64, 1);
+            for (int i = 0; i < data.Length; i += step)
+            {
+                list.InsertRange(i, data as IEnumerable<int>);
+                expected.InsertRange(i, data);
+            }
+
+            Assert.Equal(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(expected), list.AsReadOnlySpan());
+        }
+
+        [Theory]
+        [MemberData(nameof(NonEmptyAndNonSingleIntArrayData))]
+        public void InsertSpanRangeTest(int[] data)
+        {
+            DoubleEndedList<int> list = new(data.AsSpan());
+            List<int> expected = new(data);
+
+            Span<int> dataSpan = data.AsSpan();
+            int step = Math.Max(data.Length / 64, 1);
+            for (int i = 0; i < data.Length; i += step)
+            {
+                list.InsertRange(i, dataSpan);
+                expected.InsertRange(i, data);
+            }
+
+            Assert.Equal(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(expected), list.AsReadOnlySpan());
+        }
+
+        [Theory]
         [MemberData(nameof(ShuffledIntArrayData))]
         public void LastIndexOfTest(int[] data)
         {
@@ -265,6 +322,56 @@ namespace Yuh.Collections.Tests
                 {
                     Assert.Equal(-1, list.LastIndexOf(n));
                 }
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(ShuffledIntArrayData))]
+        public void PeekFirstTest(int[] data)
+        {
+            var (fi, bi) = (0, data.Length - 1);
+
+            DoubleEndedList<int> list = [];
+            for (int i = 0; i < data.Length; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    list.PushFront(data[fi]);
+                    fi++;
+                }
+                else
+                {
+                    list.PushBack(data[bi]);
+                    bi--;
+                }
+                i++;
+
+                Assert.Equal(data[fi - 1], list.PeekFirst());
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(ShuffledIntArrayData))]
+        public void PeekLastTest(int[] data)
+        {
+            var (fi, bi) = (0, data.Length - 1);
+
+            DoubleEndedList<int> list = [];
+            for (int i = 0; i < data.Length; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    list.PushBack(data[bi]);
+                    bi--;
+                }
+                else
+                {
+                    list.PushFront(data[fi]);
+                    fi--;
+                }
+                i++;
+
+                Assert.Equal(data[bi + 1], list.PeekLast());
             }
         }
 
