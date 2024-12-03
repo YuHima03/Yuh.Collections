@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Text;
 using Yuh.Collections.Tests.DataProviders;
 using Yuh.Collections.Tests.Helpers;
 
@@ -28,6 +29,52 @@ namespace Yuh.Collections.Tests
                 }
 
                 Assert.Equal(handler.ToStringAndClear(), builder.ToBasicString());
+            }
+            finally
+            {
+                builder.Dispose();
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(FormattedData))]
+        public void AppendUtf8FormattedTest(IFormattable[] items)
+        {
+            CollectionBuilder<byte> builder = [];
+            DefaultInterpolatedStringHandler handler = new(0, items.Length);
+
+            try
+            {
+                foreach (var f in items)
+                {
+                    builder.AppendUtf8Formatted(f);
+                    handler.AppendFormatted(f);
+                }
+
+                Assert.Equal(Encoding.UTF8.GetBytes(handler.ToStringAndClear()), builder.ToArray());
+            }
+            finally
+            {
+                builder.Dispose();
+            }
+        }
+
+        [Theory]
+        [ClassData(typeof(StringArrayData))]
+        public void AppendUtf8LiteralTest(string[] data)
+        {
+            CollectionBuilder<byte> builder = [];
+            DefaultInterpolatedStringHandler handler = new(data.Select(x => x.Length).Sum(), 0);
+
+            try
+            {
+                foreach (var s in data)
+                {
+                    builder.AppendLiteral(s);
+                    handler.AppendLiteral(s);
+                }
+
+                Assert.Equal(Encoding.UTF8.GetBytes(handler.ToStringAndClear()), builder.ToArray());
             }
             finally
             {
