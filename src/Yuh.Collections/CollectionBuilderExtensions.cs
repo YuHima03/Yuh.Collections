@@ -305,27 +305,51 @@ namespace Yuh.Collections
         /// <returns>A <see cref="string"/> which contains characters are copied from the <see cref="CollectionBuilder{T}"/>.</returns>
         public static string ToBasicString(in this CollectionBuilder<char> builder)
         {
-            int length = builder.Count;
-            if (length <= 512)
+            if (builder.Count == 0)
             {
-                Span<char> chars = stackalloc char[length];
-                builder.CopyTo(chars);
-                return new(chars);
+                return string.Empty;
             }
-            else if (length <= (1 << 25))
-            {
-                var charsArray = ArrayPool<char>.Shared.Rent(length);
-                var chars = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(charsArray), length);
-                builder.CopyTo(chars);
-                string s = new(chars);
 
-                ArrayPool<char>.Shared.Return(charsArray);
-                return s;
-            }
-            else
+#if NET9_0_OR_GREATER
+            using var en = builder.GetSegmentEnumerator();
+            return string.Create(
+                builder.Count,
+                en,
+                static (dest, enumerator) => {
+                    int copiedCnt = 0;
+                    while (enumerator.MoveNext())
             {
-                return new(builder.ToArray());
+                        var src = enumerator.Current;
+                        src.CopyTo(dest[copiedCnt..]);
+                        copiedCnt += src.Length;
+                    }
+                }
+            );
+#else
+            using CollectionBuilderConstants.Segments<ReadOnlyMemory<char>> _segments = new();
+            Span<ReadOnlyMemory<char>> segments = _segments.AsSpan();
+            int segmentCount = 0;
+
+            using var en = builder.GetSegmentMemoryEnumerator();
+            while (en.MoveNext())
+            {
+                segments[segmentCount] = en.Current;
+                segmentCount++;
             }
+
+            return string.Create(
+                builder.Count,
+                _segments,
+                static (dest, stat) => {
+                    int copiedCnt = 0;
+                    foreach (var seg in stat.AsSpan())
+            {
+                        seg.Span.CopyTo(dest[copiedCnt..]);
+                        copiedCnt += seg.Length;
+                    }
+            }
+            );
+#endif
         }
 
         /// <summary>
