@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -23,6 +24,35 @@ namespace Yuh.Collections
 #pragma warning restore IDE0051, IDE0044
         }
 #endif
+
+        internal struct Segments<T>() : IDisposable
+        {
+#if NET8_0_OR_GREATER
+            private Array27<T> Array = new();
+#else
+            private T[] Array = ArrayPool<T>.Shared.Rent(MaxSegmentCount);
+#endif
+
+#if NET8_0_OR_GREATER
+            [UnscopedRef]
+            public Span<T> AsSpan() => Array;
+#else
+            public readonly Span<T> AsSpan() => Array.AsSpan()[..MaxSegmentCount];
+#endif
+
+            public void Dispose()
+            {
+#if NET8_0_OR_GREATER
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    ((Span<T>)Array).Clear();
+    }
+#else
+                ArrayPool<T>.Shared.Return(Array, RuntimeHelpers.IsReferenceOrContainsReferences<T>());
+                Array = [];
+#endif
+            }
+        }
     }
 
     /// <summary>
