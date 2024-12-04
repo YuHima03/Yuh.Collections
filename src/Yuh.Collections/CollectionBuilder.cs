@@ -46,7 +46,7 @@ namespace Yuh.Collections
                 if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
                 {
                     ((Span<T>)Array).Clear();
-    }
+                }
 #else
                 ArrayPool<T>.Shared.Return(Array, RuntimeHelpers.IsReferenceOrContainsReferences<T>());
                 Array = [];
@@ -570,6 +570,16 @@ namespace Yuh.Collections
         readonly IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerableForIteration().GetEnumerator();
 
         readonly IEnumerator IEnumerable.GetEnumerator() => GetEnumerableForIteration().GetEnumerator();
+
+        public readonly SegmentEnumerator GetSegmentEnumerator()
+        {
+            return new SegmentEnumerator(AllocatedSegments, _countInCurrentSegment);
+        }
+
+        public readonly SegmentMemoryEnumerator GetSegmentMemoryEnumerator()
+        {
+            return new SegmentMemoryEnumerator(AllocatedSegments, _countInCurrentSegment);
+        }
 
         /// <summary>
         /// Allocates new buffer than can accommodate at least <see cref="_nextSegmentLength"/> elements.
