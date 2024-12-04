@@ -28,7 +28,7 @@ namespace Yuh.Collections.Tests
                     handler.AppendFormatted(f);
                 }
 
-                Assert.Equal(handler.ToStringAndClear(), builder.ToBasicString());
+                Assert.Equal(handler.ToStringAndClear(), builder.ToSystemString());
             }
             finally
             {
@@ -112,7 +112,7 @@ namespace Yuh.Collections.Tests
 
         [Theory]
         [ClassData(typeof(StringArrayData))]
-        public void ToBasicStringTest(string[] items)
+        public void ToSystemStringTest(string[] items)
         {
             using CollectionBuilder<char> builder = new();
             DefaultInterpolatedStringHandler handler = new(0, items.Length);
@@ -123,7 +123,7 @@ namespace Yuh.Collections.Tests
                 handler.AppendFormatted(str);
             }
 
-            Assert.Equal(handler.ToStringAndClear(), builder.ToBasicString());
+            Assert.Equal(handler.ToStringAndClear(), builder.ToSystemString());
         }
 
         [Theory]
@@ -137,7 +137,7 @@ namespace Yuh.Collections.Tests
                 builder.AppendRange(str.AsSpan());
             }
 
-            Assert.Equal(builder.ToBasicString(), builder.ToStringBuilder().ToString());
+            Assert.Equal(builder.ToSystemString(), builder.ToStringBuilder().ToString());
         }
     }
 }

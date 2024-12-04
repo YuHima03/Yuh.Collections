@@ -303,7 +303,7 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="builder">A <see cref="CollectionBuilder{T}"/> whose elements (characters) are copied to the new <see cref="string"/>.</param>
         /// <returns>A <see cref="string"/> which contains characters are copied from the <see cref="CollectionBuilder{T}"/>.</returns>
-        public static string ToBasicString(in this CollectionBuilder<char> builder)
+        public static string ToSystemString(in this CollectionBuilder<char> builder)
         {
             if (builder.Count == 0)
             {
