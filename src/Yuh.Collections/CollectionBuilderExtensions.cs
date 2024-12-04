@@ -298,6 +298,92 @@ namespace Yuh.Collections
             return list;
         }
 
+        public static string ToSystemString(in this CollectionBuilder<byte> builder)
+        {
+            int length = builder.Count;
+            switch (length)
+            {
+                case <= 1024:
+                {
+                    Span<byte> bytes = stackalloc byte[length];
+                    builder.CopyTo(bytes);
+                    return Encoding.UTF8.GetString(bytes);
+                }
+                case <= (1 << 26):
+                {
+                    var bytes = ArrayPool<byte>.Shared.Rent(length);
+                    try
+                    {
+                        builder.CopyTo(bytes.AsSpan());
+                        return Encoding.UTF8.GetString(bytes);
+                    }
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(bytes);
+                    }
+                }
+                default:
+                {
+                    var decoder = Encoding.UTF8.GetDecoder();
+
+                    using CollectionBuilderConstants.Segments<(char[], int)> _decoded = new();
+                    Span<(char[], int)> decoded = _decoded.AsSpan();
+                    int decodedSegmentCount = 0;
+                    int strLen = 0;
+
+                    using var en = builder.GetSegmentEnumerator();
+                    while (en.MoveNext())
+                    {
+                        int estCnt = decoder.GetCharCount(en.Current, false);
+                        char[] chars = ArrayPool<char>.Shared.Rent(estCnt);
+                        int charsWritten = decoder.GetChars(en.Current, chars.AsSpan(), false);
+
+                        strLen = checked(strLen + charsWritten);
+                        decoded[decodedSegmentCount] = (chars, charsWritten);
+                        decodedSegmentCount++;
+                    }
+                    decoder.Reset();
+
+#if NET9_0_OR_GREATER
+                    return string.Create<ReadOnlySpan<(char[], int)>>(
+                        strLen,
+                        decoded[..decodedSegmentCount],
+                        static (dest, src) => {
+                            int copiedCnt = 0;
+
+                            for (int i = 0; i < src.Length; i++)
+                            {
+                                var (chars, len) = src[i];
+                                chars.AsSpan()[..len].CopyTo(dest.Slice(copiedCnt, len));
+
+                                copiedCnt += len;
+                                ArrayPool<char>.Shared.Return(chars);
+                            }
+                        }
+                    );
+#else
+                    return string.Create(
+                        strLen,
+                        (_decoded, decodedSegmentCount),
+                        static (dest, stat) => {
+                            ReadOnlySpan<(char[], int)> src = stat._decoded.AsSpan()[..stat.decodedSegmentCount];
+                            int copiedCnt = 0;
+
+                            for (int i = 0; i < src.Length; i++)
+                            {
+                                var (chars, len) = src[i];
+                                chars.AsSpan()[..len].CopyTo(dest.Slice(copiedCnt, len));
+
+                                copiedCnt += len;
+                                ArrayPool<char>.Shared.Return(chars);
+                            }
+                        }
+                    );
+#endif
+                }
+            }
+        }
+
         /// <summary>
         /// Creates a <see cref="string"/> from the <see cref="CollectionBuilder{T}"/>.
         /// </summary>
