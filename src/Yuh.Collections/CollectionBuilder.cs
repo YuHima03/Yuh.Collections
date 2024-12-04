@@ -830,7 +830,7 @@ namespace Yuh.Collections
             public void Dispose()
             {
 #if NET7_0_OR_GREATER
-                _countRef = ref Unsafe.AsRef<int>(IntPtr.Zero.ToPointer());
+                _countRef = ref Unsafe.NullRef<int>();
 #endif
                 _currentSegment = [];
                 _enumeratedCount = -1;
