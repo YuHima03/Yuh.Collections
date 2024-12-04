@@ -919,6 +919,111 @@ namespace Yuh.Collections
 #endif
         }
 
+        public ref struct SegmentEnumerator
+#if NET9_0_OR_GREATER
+            : IEnumerator<ReadOnlySpan<T>>
+#endif
+        {
+            private readonly int _countInFinalSegment;
+            private ReadOnlySpan<T> _currentSegment = [];
+            private int _index = -1;
+            private ReadOnlySpan<T[]> _segments;
+
+            public readonly ReadOnlySpan<T> Current => _currentSegment;
+
+#if NET9_0_OR_GREATER
+            readonly object? IEnumerator.Current => throw new NotSupportedException();
+#endif
+
+            internal SegmentEnumerator(ReadOnlySpan<T[]> segments, int countInFinalSegment) : this()
+            {
+                _countInFinalSegment = countInFinalSegment;
+                _segments = segments;
+            }
+
+            public void Dispose()
+            {
+                _currentSegment = [];
+                _segments = [];
+            }
+
+            public bool MoveNext()
+            {
+                var segmentCount = _segments.Length;
+                var index = ++_index;
+
+                if (index < segmentCount - 1)
+                {
+                    _currentSegment = _segments[index].AsSpan();
+                    return true;
+                }
+                else if (index == segmentCount - 1)
+                {
+                    _currentSegment = _segments[index].AsSpan()[.._countInFinalSegment];
+                    return true;
+                }
+
+                _currentSegment = [];
+                return false;
+            }
+
+            public void Reset()
+            {
+                _currentSegment = [];
+                _index = -1;
+            }
+        }
+
+        public ref struct SegmentMemoryEnumerator : IEnumerator<ReadOnlyMemory<T>>
+        {
+            private readonly int _countInFinalSegment;
+            private ReadOnlyMemory<T> _currentSegment = ReadOnlyMemory<T>.Empty;
+            private int _index = -1;
+            private ReadOnlySpan<T[]> _segments;
+
+            public readonly ReadOnlyMemory<T> Current => _currentSegment;
+
+            readonly object? IEnumerator.Current => Current;
+
+            internal SegmentMemoryEnumerator(ReadOnlySpan<T[]> segments, int countInFinalSegment) : this()
+            {
+                _segments = segments;
+                _countInFinalSegment = countInFinalSegment;
+            }
+
+            public void Dispose()
+            {
+                _currentSegment = ReadOnlyMemory<T>.Empty;
+                _segments = [];
+            }
+
+            public bool MoveNext()
+            {
+                var segmentCount = _segments.Length;
+                var index = ++_index;
+
+                if (index < segmentCount - 1)
+                {
+                    _currentSegment = _segments[index].AsMemory();
+                    return true;
+                }
+                else if (index == segmentCount - 1)
+                {
+                    _currentSegment = new ReadOnlyMemory<T>(_segments[index], 0, _countInFinalSegment);
+                    return true;
+                }
+
+                _currentSegment = ReadOnlyMemory<T>.Empty;
+                return false;
+            }
+
+            public void Reset()
+            {
+                _currentSegment = ReadOnlyMemory<T>.Empty;
+                _index = -1;
+            }
+        }
+
         /// <summary>
         /// Represents a read-only collection that has at most two segments.
         /// </summary>
