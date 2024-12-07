@@ -960,6 +960,7 @@ namespace Yuh.Collections
 
             public void Dispose()
             {
+                _currentMemory = ReadOnlyMemory<T>.Empty;
                 _currentSpan = [];
                 _segments = [];
             }
@@ -971,21 +972,28 @@ namespace Yuh.Collections
 
                 if (index < segmentCount - 1)
                 {
-                    _currentSpan = _segments[index].AsSpan();
+                    var seg = _segments[index];
+                    _currentMemory = seg.AsMemory();
+                    _currentSpan = seg.AsSpan();
                     return true;
                 }
                 else if (index == segmentCount - 1)
                 {
-                    _currentSpan = _segments[index].AsSpan()[.._countInFinalSegment];
+                    var seg = _segments[index];
+                    var countInFinalSegment = _countInFinalSegment;
+                    _currentMemory = new ReadOnlyMemory<T>(seg, 0, countInFinalSegment);
+                    _currentSpan = new ReadOnlySpan<T>(seg, 0, countInFinalSegment);
                     return true;
                 }
 
+                _currentMemory = ReadOnlyMemory<T>.Empty;
                 _currentSpan = [];
                 return false;
             }
 
             public void Reset()
             {
+                _currentMemory = ReadOnlyMemory<T>.Empty;
                 _currentSpan = [];
                 _index = -1;
             }
