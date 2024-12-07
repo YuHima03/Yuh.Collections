@@ -298,6 +298,11 @@ namespace Yuh.Collections
             return list;
         }
 
+        /// <summary>
+        /// Creates a <see cref="string"/> from a collection builder that represents a UTF-8 encoded string.
+        /// </summary>
+        /// <param name="builder">A <see cref="CollectionBuilder{T}"/> that represents a UTF-8 encoded string to create a <see cref="string"/> from.</param>
+        /// <returns>A <see cref="string"/> converted from the UTF-8 encoded string that the collection builder represents.</returns>
         public static string ToSystemString(in this CollectionBuilder<byte> builder)
         {
             int length = builder.Count;
