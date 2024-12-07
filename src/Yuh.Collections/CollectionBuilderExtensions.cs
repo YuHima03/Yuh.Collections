@@ -334,9 +334,9 @@ namespace Yuh.Collections
                     using var en = builder.GetSegmentEnumerator();
                     while (en.MoveNext())
                     {
-                        int estCnt = decoder.GetCharCount(en.Current, false);
+                        int estCnt = decoder.GetCharCount(en.CurrentSpan, false);
                         char[] chars = ArrayPool<char>.Shared.Rent(estCnt);
-                        int charsWritten = decoder.GetChars(en.Current, chars.AsSpan(), false);
+                        int charsWritten = decoder.GetChars(en.CurrentSpan, chars.AsSpan(), false);
 
                         strLen = checked(strLen + charsWritten);
                         decoded[decodedSegmentCount] = (chars, charsWritten);
@@ -396,8 +396,8 @@ namespace Yuh.Collections
                 return string.Empty;
             }
 
-#if NET9_0_OR_GREATER
             using var en = builder.GetSegmentEnumerator();
+#if NET9_0_OR_GREATER
             return string.Create(
                 builder.Count,
                 en,
@@ -405,7 +405,7 @@ namespace Yuh.Collections
                     int copiedCnt = 0;
                     while (enumerator.MoveNext())
             {
-                        var src = enumerator.Current;
+                        var src = enumerator.CurrentSpan;
                         src.CopyTo(dest[copiedCnt..]);
                         copiedCnt += src.Length;
                     }
@@ -416,10 +416,9 @@ namespace Yuh.Collections
             Span<ReadOnlyMemory<char>> segments = _segments.AsSpan();
             int segmentCount = 0;
 
-            using var en = builder.GetSegmentMemoryEnumerator();
             while (en.MoveNext())
             {
-                segments[segmentCount] = en.Current;
+                segments[segmentCount] = en.CurrentMemory;
                 segmentCount++;
             }
 
@@ -429,11 +428,11 @@ namespace Yuh.Collections
                 static (dest, stat) => {
                     int copiedCnt = 0;
                     foreach (var seg in stat.AsSpan())
-            {
+                    {
                         seg.Span.CopyTo(dest[copiedCnt..]);
                         copiedCnt += seg.Length;
                     }
-            }
+                }
             );
 #endif
         }
