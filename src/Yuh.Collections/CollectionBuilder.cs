@@ -938,18 +938,18 @@ namespace Yuh.Collections
         {
             private readonly int _countInFinalSegment;
             private ReadOnlyMemory<T> _currentMemory = ReadOnlyMemory<T>.Empty;
-            private ReadOnlySpan<T> _currentSegment = [];
+            private ReadOnlySpan<T> _currentSpan = [];
             private int _index = -1;
             private ReadOnlySpan<T[]> _segments;
 
             public readonly ReadOnlyMemory<T> CurrentMemory => _currentMemory;
 
-            public readonly ReadOnlySpan<T> CurrentSpan => _currentSegment;
+            public readonly ReadOnlySpan<T> CurrentSpan => _currentSpan;
 
             readonly object? IEnumerator.Current => throw new NotSupportedException();
             readonly ReadOnlyMemory<T> IEnumerator<ReadOnlyMemory<T>>.Current => _currentMemory;
 #if NET9_0_OR_GREATER
-            readonly ReadOnlySpan<T> IEnumerator<ReadOnlySpan<T>>.Current => _currentSegment;
+            readonly ReadOnlySpan<T> IEnumerator<ReadOnlySpan<T>>.Current => _currentSpan;
 #endif
 
             internal SegmentEnumerator(ReadOnlySpan<T[]> segments, int countInFinalSegment) : this()
@@ -960,7 +960,7 @@ namespace Yuh.Collections
 
             public void Dispose()
             {
-                _currentSegment = [];
+                _currentSpan = [];
                 _segments = [];
             }
 
@@ -971,22 +971,22 @@ namespace Yuh.Collections
 
                 if (index < segmentCount - 1)
                 {
-                    _currentSegment = _segments[index].AsSpan();
+                    _currentSpan = _segments[index].AsSpan();
                     return true;
                 }
                 else if (index == segmentCount - 1)
                 {
-                    _currentSegment = _segments[index].AsSpan()[.._countInFinalSegment];
+                    _currentSpan = _segments[index].AsSpan()[.._countInFinalSegment];
                     return true;
                 }
 
-                _currentSegment = [];
+                _currentSpan = [];
                 return false;
             }
 
             public void Reset()
             {
-                _currentSegment = [];
+                _currentSpan = [];
                 _index = -1;
             }
         }
