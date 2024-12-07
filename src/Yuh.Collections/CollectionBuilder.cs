@@ -931,18 +931,25 @@ namespace Yuh.Collections
 
         public ref struct SegmentEnumerator
 #if NET9_0_OR_GREATER
-            : IEnumerator<ReadOnlySpan<T>>
+            : IEnumerator<ReadOnlyMemory<T>>, IEnumerator<ReadOnlySpan<T>>
+#else
+            : IEnumerator<ReadOnlyMemory<T>>
 #endif
         {
             private readonly int _countInFinalSegment;
+            private ReadOnlyMemory<T> _currentMemory = ReadOnlyMemory<T>.Empty;
             private ReadOnlySpan<T> _currentSegment = [];
             private int _index = -1;
             private ReadOnlySpan<T[]> _segments;
 
-            public readonly ReadOnlySpan<T> Current => _currentSegment;
+            public readonly ReadOnlyMemory<T> CurrentMemory => _currentMemory;
 
-#if NET9_0_OR_GREATER
+            public readonly ReadOnlySpan<T> CurrentSpan => _currentSegment;
+
             readonly object? IEnumerator.Current => throw new NotSupportedException();
+            readonly ReadOnlyMemory<T> IEnumerator<ReadOnlyMemory<T>>.Current => _currentMemory;
+#if NET9_0_OR_GREATER
+            readonly ReadOnlySpan<T> IEnumerator<ReadOnlySpan<T>>.Current => _currentSegment;
 #endif
 
             internal SegmentEnumerator(ReadOnlySpan<T[]> segments, int countInFinalSegment) : this()
