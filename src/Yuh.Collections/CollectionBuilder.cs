@@ -582,11 +582,6 @@ namespace Yuh.Collections
             return new SegmentEnumerator(AllocatedSegments, _countInCurrentSegment);
         }
 
-        public readonly SegmentMemoryEnumerator GetSegmentMemoryEnumerator()
-        {
-            return new SegmentMemoryEnumerator(AllocatedSegments, _countInCurrentSegment);
-        }
-
         /// <summary>
         /// Allocates new buffer than can accommodate at least <see cref="_nextSegmentLength"/> elements.
         /// </summary>
@@ -1019,56 +1014,6 @@ namespace Yuh.Collections
             {
                 _currentMemory = ReadOnlyMemory<T>.Empty;
                 _currentSpan = [];
-                _index = -1;
-            }
-        }
-
-        public ref struct SegmentMemoryEnumerator : IEnumerator<ReadOnlyMemory<T>>
-        {
-            private readonly int _countInFinalSegment;
-            private ReadOnlyMemory<T> _currentSegment = ReadOnlyMemory<T>.Empty;
-            private int _index = -1;
-            private ReadOnlySpan<T[]> _segments;
-
-            public readonly ReadOnlyMemory<T> Current => _currentSegment;
-
-            readonly object? IEnumerator.Current => Current;
-
-            internal SegmentMemoryEnumerator(ReadOnlySpan<T[]> segments, int countInFinalSegment) : this()
-            {
-                _segments = segments;
-                _countInFinalSegment = countInFinalSegment;
-            }
-
-            public void Dispose()
-            {
-                _currentSegment = ReadOnlyMemory<T>.Empty;
-                _segments = [];
-            }
-
-            public bool MoveNext()
-            {
-                var segmentCount = _segments.Length;
-                var index = ++_index;
-
-                if (index < segmentCount - 1)
-                {
-                    _currentSegment = _segments[index].AsMemory();
-                    return true;
-                }
-                else if (index == segmentCount - 1)
-                {
-                    _currentSegment = new ReadOnlyMemory<T>(_segments[index], 0, _countInFinalSegment);
-                    return true;
-                }
-
-                _currentSegment = ReadOnlyMemory<T>.Empty;
-                return false;
-            }
-
-            public void Reset()
-            {
-                _currentSegment = ReadOnlyMemory<T>.Empty;
                 _index = -1;
             }
         }
