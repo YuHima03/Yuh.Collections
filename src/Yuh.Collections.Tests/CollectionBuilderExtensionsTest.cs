@@ -83,6 +83,29 @@ namespace Yuh.Collections.Tests
         }
 
         [Theory]
+        [ClassData(typeof(StringArrayData))]
+        public void AppendLiteralToUtf8StringBuilderTest(string[] data)
+        {
+            CollectionBuilder<byte> builder = [];
+            DefaultInterpolatedStringHandler handler = new(data.Select(x => x.Length).Sum(), 0);
+
+            try
+            {
+                foreach (var s in data)
+                {
+                    builder.AppendLiteral(s);
+                    handler.AppendLiteral(s);
+                }
+
+                Assert.Equal(handler.ToStringAndClear(), Encoding.UTF8.GetString(builder.ToArray()));
+            }
+            finally
+            {
+                builder.Dispose();
+            }
+        }
+
+        [Theory]
         [ClassData(typeof(SegmentedIntArrayData))]
         public void ToDoubleEndedListTest(int[][] items)
         {
@@ -108,6 +131,29 @@ namespace Yuh.Collections.Tests
             }
 
             Assert.Equal(items.Flatten().ToList(), builder.ToList());
+        }
+
+        [Theory]
+        [ClassData(typeof(StringArrayData))]
+        public void ToSystemStringFromUtf8StringBuilder(string[] data)
+        {
+            CollectionBuilder<byte> builder = [];
+            DefaultInterpolatedStringHandler handler = new(data.Select(x => x.Length).Sum(), 0);
+
+            try
+            {
+                foreach (var s in data)
+                {
+                    builder.AppendLiteral(s);
+                    handler.AppendLiteral(s);
+                }
+
+                Assert.Equal(handler.ToStringAndClear(), builder.ToSystemString());
+            }
+            finally
+            {
+                builder.Dispose();
+            }
         }
 
         [Theory]
