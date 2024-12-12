@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -23,12 +24,42 @@ namespace Yuh.Collections
 #pragma warning restore IDE0051, IDE0044
         }
 #endif
+
+        internal struct Segments<T>() : IDisposable
+        {
+#if NET8_0_OR_GREATER
+            private Array27<T> Array = new();
+#else
+            private T[] Array = ArrayPool<T>.Shared.Rent(MaxSegmentCount);
+#endif
+
+#if NET8_0_OR_GREATER
+            [UnscopedRef]
+            public Span<T> AsSpan() => Array;
+#else
+            public readonly Span<T> AsSpan() => Array.AsSpan()[..MaxSegmentCount];
+#endif
+
+            public void Dispose()
+            {
+#if NET8_0_OR_GREATER
+                if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
+                {
+                    ((Span<T>)Array).Clear();
+                }
+#else
+                ArrayPool<T>.Shared.Return(Array, RuntimeHelpers.IsReferenceOrContainsReferences<T>());
+                Array = [];
+#endif
+            }
+        }
     }
 
     /// <summary>
     /// Represents a temporary collection that is used to build new collections.
     /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
+    [DebuggerDisplay("Count = {_count}, SegmentsCount = {_segmentCount}")]
     public unsafe ref struct CollectionBuilder<T> : IDisposable, IEnumerable<T>
     {
         /// <summary>
@@ -542,6 +573,17 @@ namespace Yuh.Collections
         readonly IEnumerator IEnumerable.GetEnumerator() => GetEnumerableForIteration().GetEnumerator();
 
         /// <summary>
+        /// Returns an enumerator that enumerates segments in the <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="SegmentEnumerator"/> that can be used to enumerate segments in the <see cref="CollectionBuilder{T}"/>.
+        /// </returns>
+        public readonly SegmentEnumerator GetSegmentEnumerator()
+        {
+            return new SegmentEnumerator(AllocatedSegments, _countInCurrentSegment);
+        }
+
+        /// <summary>
         /// Allocates new buffer than can accommodate at least <see cref="_nextSegmentLength"/> elements.
         /// </summary>
         private void Grow()
@@ -830,7 +872,7 @@ namespace Yuh.Collections
             public void Dispose()
             {
 #if NET7_0_OR_GREATER
-                _countRef = ref Unsafe.AsRef<int>(IntPtr.Zero.ToPointer());
+                _countRef = ref Unsafe.NullRef<int>();
 #endif
                 _currentSegment = [];
                 _enumeratedCount = -1;
@@ -887,6 +929,94 @@ namespace Yuh.Collections
                 }
             }
 #endif
+        }
+
+        /// <summary>
+        /// An enumerator that can be used to enumerate segments of a <see cref="CollectionBuilder{T}"/>.
+        /// </summary>
+        public ref struct SegmentEnumerator
+#if NET9_0_OR_GREATER
+            : IEnumerator<ReadOnlyMemory<T>>, IEnumerator<ReadOnlySpan<T>>
+#else
+            : IEnumerator<ReadOnlyMemory<T>>
+#endif
+        {
+            private readonly int _countInFinalSegment;
+            private ReadOnlyMemory<T> _currentMemory = ReadOnlyMemory<T>.Empty;
+            private ReadOnlySpan<T> _currentSpan = [];
+            private int _index = -1;
+            private ReadOnlySpan<T[]> _segments;
+
+            /// <summary>
+            /// Gets the non <see langword="ref struct"/> span over the segment in the <see cref="CollectionBuilder{T}"/> at the current position of the enumerator.
+            /// </summary>
+            /// <returns>
+            /// The non <see langword="ref struct"/> span over the segment in the <see cref="CollectionBuilder{T}"/> at the current position of the enumerator.
+            /// </returns>
+            public readonly ReadOnlyMemory<T> CurrentMemory => _currentMemory;
+
+            /// <summary>
+            /// Gets the span over the segment in the <see cref="CollectionBuilder{T}"/> at the current position of the enumerator.
+            /// </summary>
+            /// <returns>
+            /// The span over the segment in the <see cref="CollectionBuilder{T}"/> at the current position of the enumerator.
+            /// </returns>
+            public readonly ReadOnlySpan<T> CurrentSpan => _currentSpan;
+
+            readonly object? IEnumerator.Current => throw new NotSupportedException();
+            readonly ReadOnlyMemory<T> IEnumerator<ReadOnlyMemory<T>>.Current => _currentMemory;
+#if NET9_0_OR_GREATER
+            readonly ReadOnlySpan<T> IEnumerator<ReadOnlySpan<T>>.Current => _currentSpan;
+#endif
+
+            internal SegmentEnumerator(ReadOnlySpan<T[]> segments, int countInFinalSegment) : this()
+            {
+                _countInFinalSegment = countInFinalSegment;
+                _segments = segments;
+            }
+
+            /// <inheritdoc/>
+            public void Dispose()
+            {
+                _currentMemory = ReadOnlyMemory<T>.Empty;
+                _currentSpan = [];
+                _segments = [];
+            }
+
+            /// <inheritdoc/>
+            public bool MoveNext()
+            {
+                var segmentCount = _segments.Length;
+                var index = ++_index;
+
+                if (index < segmentCount - 1)
+                {
+                    var seg = _segments[index];
+                    _currentMemory = seg.AsMemory();
+                    _currentSpan = seg.AsSpan();
+                    return true;
+                }
+                else if (index == segmentCount - 1)
+                {
+                    var seg = _segments[index];
+                    var countInFinalSegment = _countInFinalSegment;
+                    _currentMemory = new ReadOnlyMemory<T>(seg, 0, countInFinalSegment);
+                    _currentSpan = new ReadOnlySpan<T>(seg, 0, countInFinalSegment);
+                    return true;
+                }
+
+                _currentMemory = ReadOnlyMemory<T>.Empty;
+                _currentSpan = [];
+                return false;
+            }
+
+            /// <inheritdoc/>
+            public void Reset()
+            {
+                _currentMemory = ReadOnlyMemory<T>.Empty;
+                _currentSpan = [];
+                _index = -1;
+            }
         }
 
         /// <summary>
