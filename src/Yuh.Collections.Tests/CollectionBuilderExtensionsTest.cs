@@ -135,17 +135,17 @@ namespace Yuh.Collections.Tests
 
         [Theory]
         [ClassData(typeof(StringArrayData))]
-        public void ToSystemStringFromUtf8StringBuilder(string[] data)
+        public void ToStringFromUtf8StringTest(string[] data)
         {
             CollectionBuilder<byte> builder = [];
-            DefaultInterpolatedStringHandler handler = new(data.Select(x => x.Length).Sum(), 0);
+            DefaultInterpolatedStringHandler handler = new(0, data.Length);
 
             try
             {
-                foreach (var s in data)
+                foreach (var str in data)
                 {
-                    builder.AppendLiteral(s);
-                    handler.AppendLiteral(s);
+                    builder.AppendLiteral(str);
+                    handler.AppendFormatted(str);
                 }
 
                 Assert.Equal(handler.ToStringAndClear(), builder.ToSystemString());
