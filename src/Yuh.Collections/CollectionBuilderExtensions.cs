@@ -320,7 +320,7 @@ namespace Yuh.Collections
                     try
                     {
                         builder.CopyTo(bytes.AsSpan());
-                        return Encoding.UTF8.GetString(bytes);
+                        return Encoding.UTF8.GetString(bytes.AsSpan()[..length]);
                     }
                     finally
                     {
