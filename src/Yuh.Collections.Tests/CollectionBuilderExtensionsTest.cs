@@ -112,6 +112,29 @@ namespace Yuh.Collections.Tests
 
         [Theory]
         [ClassData(typeof(StringArrayData))]
+        public void ToStringFromUtf8StringTest(string[] data)
+        {
+            CollectionBuilder<byte> builder = [];
+            DefaultInterpolatedStringHandler handler = new(0, data.Length);
+
+            try
+            {
+                foreach (var str in data)
+                {
+                    builder.AppendLiteral(str);
+                    handler.AppendFormatted(str);
+                }
+
+                Assert.Equal(handler.ToStringAndClear(), builder.ToSystemString());
+            }
+            finally
+            {
+                builder.Dispose();
+            }
+        }
+
+        [Theory]
+        [ClassData(typeof(StringArrayData))]
         public void ToSystemStringTest(string[] items)
         {
             using CollectionBuilder<char> builder = new();
