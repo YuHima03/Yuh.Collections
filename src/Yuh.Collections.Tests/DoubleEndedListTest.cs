@@ -240,6 +240,14 @@ namespace Yuh.Collections.Tests
         }
 
         [Theory]
+        [ClassData(typeof(IntArrayData))]
+        public void InitializeTest(int[] items)
+        {
+            DoubleEndedList<int> list = new(items as IEnumerable<int>);
+            Assert.Equal(items.AsSpan(), list.AsReadOnlySpan());
+        }
+
+        [Theory]
         [MemberData(nameof(NonEmptyAndNonSingleIntArrayData))]
         public void InsertTest(int[] data)
         {
@@ -373,14 +381,6 @@ namespace Yuh.Collections.Tests
 
                 Assert.Equal(data[bi + 1], list.PeekLast());
             }
-        }
-
-        [Theory]
-        [ClassData(typeof(IntArrayData))]
-        public void InitializeTest(int[] items)
-        {
-            DoubleEndedList<int> list = new(items as IEnumerable<int>);
-            Assert.Equal(items.AsSpan(), list.AsReadOnlySpan());
         }
     }
 }
