@@ -59,6 +59,7 @@ namespace Yuh.Collections
     /// Represents a temporary collection that is used to build new collections.
     /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
+    [DebuggerDisplay("Count = {_count}, SegmentsCount = {_segmentCount}")]
     public unsafe ref struct CollectionBuilder<T> : IDisposable, IEnumerable<T>
     {
         /// <summary>
