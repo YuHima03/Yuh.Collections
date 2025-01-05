@@ -299,6 +299,17 @@ namespace Yuh.Collections.Tests
         }
 
         [Theory]
+        [ClassData(typeof(IntArrayData))]
+        public void ItemsTest(int[] data)
+        {
+            DoubleEndedList<int> list = new(data.AsSpan());
+
+            Assert.All(data, (v, i) => Assert.Equal(v, list[i]));
+            Assert.All(Enumerable.Range(-5, 5), i => Assert.Throws<IndexOutOfRangeException>(() => list[i]));
+            Assert.All(Enumerable.Range(list.Count, 5), i => Assert.Throws<IndexOutOfRangeException>(() => list[i]));
+        }
+
+        [Theory]
         [MemberData(nameof(ShuffledIntArrayData))]
         public void LastIndexOfTest(int[] data)
         {
