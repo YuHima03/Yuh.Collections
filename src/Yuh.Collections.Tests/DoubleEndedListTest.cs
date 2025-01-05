@@ -382,5 +382,63 @@ namespace Yuh.Collections.Tests
                 Assert.Equal(data[bi + 1], list.PeekLast());
             }
         }
+
+        [Theory]
+        [MemberData(nameof(ShuffledIntArrayData))]
+        public void PopBackTest(int[] data)
+        {
+            DoubleEndedList<int> list = [];
+            using DequeSlim<int> expected = new(data.Length);
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    list.PushBack(data[i]);
+                    expected.PushBack(data[i]);
+                }
+                else
+                {
+                    list.PushFront(data[i]);
+                    expected.PushFront(data[i]);
+                }
+
+                int back;
+                Assert.Equal(back = expected.PopBack(), list.PopBack());
+                Assert.Equal(expected.AsSpan(), list.AsReadOnlySpan());
+
+                list.PushBack(back);
+                expected.PushBack(back);
+            }
+        }
+
+        [Theory]
+        [ClassData(typeof(IntArrayData))]
+        public void PopFrontTest(int[] data)
+        {
+            DoubleEndedList<int> list = [];
+            using DequeSlim<int> expected = new(data.Length);
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    list.PushBack(data[i]);
+                    expected.PushBack(data[i]);
+                }
+                else
+                {
+                    list.PushFront(data[i]);
+                    expected.PushFront(data[i]);
+                }
+
+                int front;
+                Assert.Equal(front = expected.PopFront(), list.PopFront());
+                Assert.Equal(expected.AsSpan(), list.AsReadOnlySpan());
+
+                list.PushFront(front);
+                expected.PushFront(front);
+            }
+        }
     }
 }
