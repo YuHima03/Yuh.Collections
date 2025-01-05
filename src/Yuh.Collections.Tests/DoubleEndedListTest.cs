@@ -425,6 +425,27 @@ namespace Yuh.Collections.Tests
 
         [Theory]
         [ClassData(typeof(IntArrayData))]
+        public void PopBackRangeTest(int[] data)
+        {
+            Span<int> dataSpan = data.AsSpan();
+            DoubleEndedList<int> list = new(dataSpan);
+
+            using LessAllocArray<int> _buffer = new(data.Length);
+            Span<int> buffer = _buffer.Array.AsSpan();
+
+            for (int i = 1; i <= data.Length; i++)
+            {
+                var destination = buffer[..i];
+                list.PopBackRange(destination);
+                Assert.Equal(dataSpan[^i..], destination);
+                list.PushBackRange(destination);
+            }
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => _ = list.PopBackRange(list.Count + 1));
+        }
+
+        [Theory]
+        [ClassData(typeof(IntArrayData))]
         public void PopFrontTest(int[] data)
         {
             DoubleEndedList<int> list = [];
@@ -450,6 +471,27 @@ namespace Yuh.Collections.Tests
                 list.PushFront(front);
                 expected.PushFront(front);
             }
+        }
+
+        [Theory]
+        [ClassData(typeof(IntArrayData))]
+        public void PopFrontRangeTest(int[] data)
+        {
+            Span<int> dataSpan = data.AsSpan();
+            DoubleEndedList<int> list = new(dataSpan);
+
+            using LessAllocArray<int> _buffer = new(data.Length);
+            Span<int> buffer = _buffer.Array.AsSpan();
+
+            for (int i = 1; i <= data.Length; i++)
+            {
+                var destination = buffer[..i];
+                list.PopFrontRange(destination);
+                Assert.Equal(dataSpan[..i], destination);
+                list.PushFrontRange(destination);
+            }
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => _ = list.PopFrontRange(list.Count + 1));
         }
     }
 }
