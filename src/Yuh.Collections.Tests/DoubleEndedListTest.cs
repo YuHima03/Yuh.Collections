@@ -387,7 +387,7 @@ namespace Yuh.Collections.Tests
                     list.PushFront(data[fi]);
                     fi++;
                 }
-                
+
                 Assert.Equal(data[bi + 1], list.PeekLast());
             }
         }
@@ -490,6 +490,52 @@ namespace Yuh.Collections.Tests
             }
 
             Assert.Throws<ArgumentOutOfRangeException>(() => _ = list.PopFrontRange(list.Count + 1));
+        }
+
+        [Theory]
+        [ClassData(typeof(IntArrayData))]
+        public void PushBacRangeTest(int[] data)
+        {
+            Span<int> dataSpan = data.AsSpan();
+            DoubleEndedList<int> list = new(dataSpan);
+
+            using LessAllocArray<int> _buffer = new(data.Length);
+            Span<int> buffer = _buffer.Array.AsSpan();
+
+            using LessAllocArray<int> _expected = new(data.Length * 2);
+            Span<int> expected = _expected.Array.AsSpan();
+            dataSpan.CopyTo(expected);
+            dataSpan.CopyTo(expected[data.Length..]);
+
+            for (int i = 1; i <= data.Length; i++)
+            {
+                list.PushBackRange(dataSpan[..i]);
+                Assert.Equal(expected[..list.Count], list.AsReadOnlySpan());
+                list.PopBackRange(buffer[..i]);
+            }
+        }
+
+        [Theory]
+        [ClassData(typeof(IntArrayData))]
+        public void PushFrontRangeTest(int[] data)
+        {
+            Span<int> dataSpan = data.AsSpan();
+            DoubleEndedList<int> list = new(dataSpan);
+
+            using LessAllocArray<int> _buffer = new(data.Length);
+            Span<int> buffer = _buffer.Array.AsSpan();
+
+            using LessAllocArray<int> _expected = new(data.Length * 2);
+            Span<int> expected = _expected.Array.AsSpan();
+            dataSpan.CopyTo(expected);
+            dataSpan.CopyTo(expected[data.Length..]);
+            
+            for (int i = 0; i < data.Length; i++)
+            {
+                list.PushFrontRange(dataSpan[^i..]);
+                Assert.Equal(expected[^list.Count..], list.AsReadOnlySpan());
+                list.PopFrontRange(buffer[..i]);
+            }
         }
     }
 }
