@@ -363,7 +363,6 @@ namespace Yuh.Collections.Tests
                     list.PushBack(data[bi]);
                     bi--;
                 }
-                i++;
 
                 Assert.Equal(data[fi - 1], list.PeekFirst());
             }
@@ -386,10 +385,9 @@ namespace Yuh.Collections.Tests
                 else
                 {
                     list.PushFront(data[fi]);
-                    fi--;
+                    fi++;
                 }
-                i++;
-
+                
                 Assert.Equal(data[bi + 1], list.PeekLast());
             }
         }
