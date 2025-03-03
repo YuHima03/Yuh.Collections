@@ -7,10 +7,12 @@ namespace Yuh.Collections.Tests.DataProviders
         public readonly static string[][] DataSource = [
             [],
             ["foo", "bar", "baz", "qax"],
-            [.. Enumerable.Repeat("The quick brown fox jumps over the lazy dog\r\n", 1024)]
+            [.. Enumerable.Repeat(string.Intern("The quick brown fox jumps over the lazy dog\r\n"), 1024)]
         ];
 
-        public IEnumerator<object[]> GetEnumerator() => DataSource.Select<string[], object[]>(x => [x]).GetEnumerator();
+        public readonly static IEnumerable<object[]> ObjectDataSource = DataSource.Select<string[], object[]>(x => [x]);
+
+        public IEnumerator<object[]> GetEnumerator() => ObjectDataSource.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
