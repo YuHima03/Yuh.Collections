@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net7.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+    <LangVersion>13</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -10,9 +11,9 @@
     <SignAssembly>False</SignAssembly>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>Yuh.Collections</Title>
-    <Version>1.0.0-rc.2</Version>
-    <AssemblyVersion>0.5.0</AssemblyVersion>
-    <FileVersion>0.5.0.0</FileVersion>
+    <Version>1.0.0-rc.3</Version>
+    <AssemblyVersion>0.6.0</AssemblyVersion>
+    <FileVersion>0.6.0.0</FileVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
     <Authors>YuHima</Authors>
@@ -24,7 +25,14 @@
     <Description>Provides collection types and searching methods.</Description>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes></PackageReleaseNotes>
+    <PackageReleaseNotes>Add extension methods for CollectionBuilder{T} type and fix some bugs on DoubleEndedList{T} type.</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TiredCompilation>True</TiredCompilation>
+    <TiredCompilationQuickJit>True</TiredCompilationQuickJit>
+    <TiredCompilationQuickJitForLoops>True</TiredCompilationQuickJitForLoops>
+    <TiredPGO>True</TiredPGO>
   </PropertyGroup>
 
   <ItemGroup>
