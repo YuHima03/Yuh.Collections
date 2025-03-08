@@ -351,6 +351,13 @@ namespace Yuh.Collections.Tests
             var (fi, bi) = (0, data.Length - 1);
 
             DoubleEndedList<int> list = [];
+
+            if (data.Length == 0)
+            {
+                Assert.Throws<InvalidOperationException>(() => list.PeekFirst());
+                return;
+            }
+
             for (int i = 0; i < data.Length; i++)
             {
                 if (i % 2 == 0)
@@ -375,6 +382,13 @@ namespace Yuh.Collections.Tests
             var (fi, bi) = (0, data.Length - 1);
 
             DoubleEndedList<int> list = [];
+
+            if (data.Length == 0)
+            {
+                Assert.Throws<InvalidOperationException>(() => list.PeekLast());
+                return;
+            }
+
             for (int i = 0; i < data.Length; i++)
             {
                 if (i % 2 == 0)
@@ -398,6 +412,12 @@ namespace Yuh.Collections.Tests
         {
             DoubleEndedList<int> list = [];
             using DequeSlim<int> expected = new(data.Length);
+
+            if (data.Length == 0)
+            {
+                Assert.Throws<InvalidOperationException>(() => list.PopBack());
+                return;
+            }
 
             for (int i = 0; i < data.Length; i++)
             {
@@ -428,6 +448,16 @@ namespace Yuh.Collections.Tests
             Span<int> dataSpan = data.AsSpan();
             DoubleEndedList<int> list = new(dataSpan);
 
+            if (data.Length == 0)
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(() => _ = list.PopBackRange(1));
+                return;
+            }
+            else
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(() => _ = list.PopBackRange(list.Count + 1));
+            }
+
             using LessAllocArray<int> _buffer = new(data.Length);
             Span<int> buffer = _buffer.Array.AsSpan();
 
@@ -448,6 +478,12 @@ namespace Yuh.Collections.Tests
         {
             DoubleEndedList<int> list = [];
             using DequeSlim<int> expected = new(data.Length);
+
+            if (data.Length == 0)
+            {
+                Assert.Throws<InvalidOperationException>(() => list.PopFront());
+                return;
+            }
 
             for (int i = 0; i < data.Length; i++)
             {
@@ -477,6 +513,16 @@ namespace Yuh.Collections.Tests
         {
             Span<int> dataSpan = data.AsSpan();
             DoubleEndedList<int> list = new(dataSpan);
+
+            if (data.Length == 0)
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(() => _ = list.PopFrontRange(1));
+                return;
+            }
+            else
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(() => _ = list.PopFrontRange(list.Count + 1));
+            }
 
             using LessAllocArray<int> _buffer = new(data.Length);
             Span<int> buffer = _buffer.Array.AsSpan();
@@ -529,7 +575,7 @@ namespace Yuh.Collections.Tests
             Span<int> expected = _expected.Array.AsSpan();
             dataSpan.CopyTo(expected);
             dataSpan.CopyTo(expected[data.Length..]);
-            
+
             for (int i = 0; i < data.Length; i++)
             {
                 list.PushFrontRange(dataSpan[^i..]);
