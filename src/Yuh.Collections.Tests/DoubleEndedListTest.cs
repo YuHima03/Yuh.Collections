@@ -611,5 +611,76 @@ namespace Yuh.Collections.Tests
                 list.PopFrontRange(buffer[..i]);
             }
         }
+
+        [Theory]
+        [ClassData(typeof(IntArrayData))]
+        public void RemoveTest(int[] data)
+        {
+            DoubleEndedList<int> list = new(data.AsSpan());
+            List<int> expected = [.. data];
+
+            if (data.Length == 0)
+            {
+                Assert.False(list.Remove(0));
+                return;
+            }
+
+            var step = data.Length / 16;
+            for (int i = 0; i < data.Length; i += step)
+            {
+                Assert.True(list.Remove(data[i]));
+                expected.Remove(data[i]);
+                Assert.Equal(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(expected), list.AsReadOnlySpan());
+            }
+        }
+
+        [Theory]
+        [ClassData(typeof(IntArrayData))]
+        public void RemoveAtTest(int[] data)
+        {
+            DoubleEndedList<int> list = new(data.AsSpan());
+            List<int> expected = [.. data];
+
+            if (data.Length == 0)
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.RemoveAt(0));
+                return;
+            }
+            else
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(() => list.RemoveAt(list.Count));
+            }
+
+            var step = Math.Max(1, (data.Length / 16) + 1);
+            for (int i = 0; i < list.Count; i += step)
+            {
+                list.RemoveAt(i);
+                expected.RemoveAt(i);
+                Assert.Equal(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(expected), list.AsReadOnlySpan());
+            }
+        }
+
+        [Theory]
+        [ClassData(typeof(IntArrayData))]
+        public void RemoveRangeTest(int[] data)
+        {
+            DoubleEndedList<int> list = new(data.AsSpan());
+            List<int> expected = [.. data];
+
+            Assert.Throws<ArgumentException>(() => list.RemoveRange(0, list.Count + 1));
+
+            if (data.Length == 0)
+            {
+                return;
+            }
+
+            var removeCount = data.Length / 16;
+            while (list.Count < removeCount * 2)
+            {
+                list.RemoveRange(list.Count / 2, removeCount);
+                expected.RemoveRange(expected.Count / 2, removeCount);
+                Assert.Equal(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(expected), list.AsReadOnlySpan());
+            }
+        }
     }
 }
