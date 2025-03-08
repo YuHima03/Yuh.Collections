@@ -156,14 +156,24 @@ namespace Yuh.Collections
         /// </summary>
         /// <param name="collection">The collection whose elements are copied to the new list.</param>
         /// <exception cref="ArgumentNullException"><paramref name="collection"/> is <see langword="null"/>.</exception>
+#if NET9_0_OR_GREATER
+        [OverloadResolutionPriority(-1)]
+#endif
         public DoubleEndedList(IEnumerable<T> collection) : this(0)
         {
             ArgumentNullException.ThrowIfNull(collection);
 
             if (collection is ICollection<T> c)
             {
-                Resize(0, c.Count);
+                var count = c.Count;
+                if (count == 0)
+                {
+                    return;
+                }
+
+                Resize(0, count);
                 c.CopyTo(_items, 0);
+                _count = count;
             }
             else
             {
@@ -181,9 +191,14 @@ namespace Yuh.Collections
         /// <param name="span">The span whose elements are copied to the new list.</param>
         public DoubleEndedList(ReadOnlySpan<T> span) : this(span.Length)
         {
+            if (span.IsEmpty)
+            {
+                return;
+            }
+
             span.CopyTo(_items.AsSpan());
-            _head = 0;
             _count = span.Length;
+            _head = 0;
             _version++;
         }
 
@@ -219,10 +234,7 @@ namespace Yuh.Collections
         /// Items should not be added or removed from the <see cref="DoubleEndedList{T}"/> while the returned <see cref="ReadOnlySpan{T}"/> is in use.
         /// </remarks>
         /// <returns>The read-only span representation of the <see cref="DoubleEndedList{T}"/>.</returns>
-        public ReadOnlySpan<T> AsReadOnlySpan()
-        {
-            return MemoryMarshal.CreateReadOnlySpan(ref _items[_head], _count);
-        }
+        public ReadOnlySpan<T> AsReadOnlySpan() => AsSpan();
 
         /// <summary>
         /// Creates a new span over the <see cref="DoubleEndedList{T}"/>.
@@ -230,7 +242,12 @@ namespace Yuh.Collections
         /// <returns>The span representation of the <see cref="DoubleEndedList{T}"/>.</returns>
         internal Span<T> AsSpan()
         {
-            return MemoryMarshal.CreateSpan(ref _items[_head], _count);
+            var count = _count;
+            if (_count == 0)
+            {
+                return [];
+            }
+            return _items.AsSpan().Slice(_head, count);
         }
 
         /// <summary>
@@ -453,7 +470,13 @@ namespace Yuh.Collections
         /// <returns>The zero-based index of the first occurrence of <paramref name="item"/>, if found; otherwise, <c>-1</c>.</returns>
         public int IndexOf(T item)
         {
-            var idx = Array.IndexOf(_items, item, _head, _count);
+            var count = _count;
+            if (count == 0)
+            {
+                return -1;
+            }
+
+            var idx = Array.IndexOf(_items, item, _head, count);
             return (idx >= 0) ? (idx - _head) : -1;
         }
 
@@ -487,6 +510,9 @@ namespace Yuh.Collections
         /// <param name="items">The collection whose elements should be inserted into the <see cref="DoubleEndedList{T}"/>.</param>
         /// <exception cref="ArgumentNullException"><paramref name="items"/> is null.</exception>
         /// <exception cref="ArgumentOutOfRangeException">The <paramref name="index"/> is invalid (less than 0 or greater than <see cref="Count"/>.)</exception>
+#if NET9_0_OR_GREATER
+        [OverloadResolutionPriority(-1)]
+#endif
         public void InsertRange(int index, IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
@@ -498,11 +524,26 @@ namespace Yuh.Collections
 
             if (items is ICollection<T> collection)
             {
-                InsertRangeInternal(index, collection);
+                var count = collection.Count;
+                if (count == 0)
+                {
+                    return;
+                }
+                ReserveRangeForInsertInternal(index, collection.Count);
+                collection.CopyTo(_items, _head + index);
             }
             else
             {
-                InsertRangeInternal(index, System.Runtime.InteropServices.CollectionsMarshal.AsSpan(items.ToList()));
+                using CollectionBuilder<T> builder = new();
+                builder.AppendRange(items);
+
+                var count = builder.Count;
+                if (count == 0)
+                {
+                    return;
+                }
+                ReserveRangeForInsertInternal(index, builder.Count);
+                builder.CopyTo(_items.AsSpan().Slice(_head + index, count));
             }
         }
 
@@ -518,120 +559,13 @@ namespace Yuh.Collections
             {
                 ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index), ThrowHelpers.M_IndexOutOfRange);
             }
-            InsertRangeInternal(index, items);
-        }
 
-        /// <remarks>
-        /// This method doesn't check if <paramref name="index"/> is valid index in the collection.
-        /// </remarks>
-        private void InsertRangeInternal(int index, ICollection<T> collection)
-        {
-            if (collection.Count == 0)
+            if (items.IsEmpty)
             {
                 return;
             }
-
-            if (index == 0)
-            {
-                PushFrontRange(collection);
-            }
-            else if (index == _count)
-            {
-                PushBackRange(collection);
-            }
-            else
-            {
-                int requiredCapacity = checked(_count + collection.Count);
-                if (requiredCapacity > Array.MaxLength)
-                {
-                    ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
-                }
-
-                ref var _itemsRef = ref _items[0];
-
-                if (index < (_count >> 1))
-                {
-                    EnsureCapacityInternal(collection.Count, 0);
-
-                    int newHead = _head - collection.Count;
-                    var src = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, _head), index);
-                    var dst = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, newHead), index);
-                    src.CopyTo(dst);
-
-                    collection.CopyTo(_items, newHead + index);
-                    _head = newHead;
-                }
-                else
-                {
-                    EnsureCapacityInternal(0, collection.Count);
-
-                    int cpyItemsCount = _count - index;
-                    int cpyHead = _head + index;
-                    var src = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, cpyHead), cpyItemsCount);
-                    var dst = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, cpyHead + collection.Count), cpyItemsCount);
-                    src.CopyTo(dst);
-
-                    collection.CopyTo(_items, cpyHead);
-                }
-
-                _count += collection.Count;
-                _version++;
-            }
-        }
-
-        private void InsertRangeInternal(int index, ReadOnlySpan<T> items)
-        {
-            if (items.Length == 0)
-            {
-                return;
-            }
-
-            if (index == 0)
-            {
-                PushFrontRange(items);
-            }
-            else if (index == _count)
-            {
-                PushBackRange(items);
-            }
-            else
-            {
-                int requiredCapacity = checked(_count + items.Length);
-                if (requiredCapacity > Array.MaxLength)
-                {
-                    ThrowHelpers.ThrowException(ThrowHelpers.M_CapacityReachedUpperLimit);
-                }
-
-                ref var _itemsRef = ref _items[0];
-
-                if (index < (_count >> 1))
-                {
-                    EnsureCapacityInternal(items.Length, 0);
-
-                    int newHead = _head - items.Length;
-                    var src = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, _head), index);
-                    var dst = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, newHead), index);
-                    src.CopyTo(dst);
-
-                    items.CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, newHead + index), items.Length));
-                    _head = newHead;
-                }
-                else
-                {
-                    EnsureCapacityInternal(0, items.Length);
-
-                    int cpyItemsCount = _count - index;
-                    int cpyHead = _head + index;
-                    var src = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, cpyHead), cpyItemsCount);
-                    var dst = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, cpyHead + items.Length), cpyItemsCount);
-                    src.CopyTo(dst);
-
-                    items.CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _itemsRef, cpyHead), items.Length));
-                }
-
-                _count += items.Length;
-                _version++;
-            }
+            ReserveRangeForInsertInternal(index, items.Length);
+            items.CopyTo(_items.AsSpan().Slice(_head + index, items.Length));
         }
 
         /// <summary>
@@ -644,7 +578,13 @@ namespace Yuh.Collections
         /// <returns>The zero-based index of the last occurrence of <paramref name="item"/>, if found; otherwise, <c>-1</c>.</returns>
         public int LastIndexOf(T item)
         {
-            var idx = Array.LastIndexOf(_items, item, _head, _count);
+            var count = _count;
+            if (count == 0)
+            {
+                return -1;
+            }
+
+            var idx = Array.LastIndexOf(_items, item, _head + count - 1, count);
             return (idx >= 0) ? (idx - _head) : -1;
         }
 
@@ -831,6 +771,9 @@ namespace Yuh.Collections
         /// Adds the elements of the specified collection to the end of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <param name="items">The collection whose elements should be added to the end of the <see cref="DoubleEndedList{T}"/>.</param>
+#if NET9_0_OR_GREATER
+        [OverloadResolutionPriority(-1)]
+#endif
         public void PushBackRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
@@ -838,6 +781,11 @@ namespace Yuh.Collections
             if (items is ICollection<T> collection)
             {
                 int count = collection.Count;
+                if (count == 0)
+                {
+                    return;
+                }
+
                 int requiredCapacity = _count + count;
 
                 if (requiredCapacity > Array.MaxLength)
@@ -867,6 +815,11 @@ namespace Yuh.Collections
         /// <param name="items">The read-only span whose elements should be added to the end of the <see cref="DoubleEndedList{T}"/>.</param>
         public void PushBackRange(ReadOnlySpan<T> items)
         {
+            if (items.IsEmpty)
+            {
+                return;
+            }
+
             int requiredCapacity = _count + items.Length;
 
             if (requiredCapacity > Array.MaxLength)
@@ -905,6 +858,9 @@ namespace Yuh.Collections
         /// Adds the elements of the specified collection to the front of the <see cref="DoubleEndedList{T}"/>.
         /// </summary>
         /// <param name="items">The collection whose elements should be added to the front of the <see cref="DoubleEndedList{T}"/>.</param>
+#if NET9_0_OR_GREATER
+        [OverloadResolutionPriority(-1)]
+#endif
         public void PushFrontRange(IEnumerable<T> items)
         {
             ArgumentNullException.ThrowIfNull(items);
@@ -912,6 +868,11 @@ namespace Yuh.Collections
             if (items is ICollection<T> collection)
             {
                 int count = collection.Count;
+                if (count == 0)
+                {
+                    return;
+                }
+
                 int requiredCapacity = _count + count;
 
                 if (requiredCapacity > Array.MaxLength)
@@ -942,6 +903,11 @@ namespace Yuh.Collections
         /// <param name="items">The read-only span whose elements should be added to the front of the <see cref="DoubleEndedList{T}"/>.</param>
         public void PushFrontRange(ReadOnlySpan<T> items)
         {
+            if (items.IsEmpty)
+            {
+                return;
+            }
+
             int count = items.Length;
 
             if (_count + count > Array.MaxLength)
@@ -1072,6 +1038,51 @@ namespace Yuh.Collections
 
             _count -= count;
             _version++;
+        }
+
+        private void ReserveRangeForInsertInternal(int index, int length)
+        {
+            Debug.Assert((uint)index < _count, $"Invalid parameter: {nameof(index)}");
+            Debug.Assert(0 <= length, $"Invalid parameter: {nameof(length)}");
+
+            if (length == 0)
+            {
+                return;
+            }
+
+            var count = _count;
+            if (index == 0)
+            {
+                EnsureCapacity(length, 0);
+                _head -= length;
+            }
+            else if (index == count)
+            {
+                EnsureCapacity(0, length);
+                _count += length;
+            }
+            else if (index < (count >> 1))
+            {
+                EnsureCapacity(length, 0);
+
+                var head = _head;
+                var items = _items.AsSpan();
+                var newHead = head - length;
+                items.Slice(head, index).CopyTo(items.Slice(newHead, index));
+
+                _head = newHead;
+            }
+            else
+            {
+                EnsureCapacity(0, length);
+
+                var items = _items.AsSpan();
+                var copyCnt = count - index;
+                var copyStartIdx = _head + index;
+                items.Slice(copyStartIdx, copyCnt).CopyTo(items.Slice(copyStartIdx + length, copyCnt));
+            }
+
+            _count = count + length;
         }
 
         /// <summary>
@@ -1274,7 +1285,7 @@ namespace Yuh.Collections
                 }
                 else
                 {
-                    ref var beginRef = ref Unsafe.Add(ref headRef, index - 1);
+                    ref var beginRef = ref Unsafe.Add(ref headRef, index);
                     var rangeLength = _count - index - 1;
 
                     // shift the elements in (index, _count) of the list.

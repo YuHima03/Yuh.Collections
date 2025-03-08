@@ -7,7 +7,9 @@ namespace Yuh.Collections.Tests.DataProviders
     {
         public readonly static int[][] DataSource = [.. SegmentedIntArrayData.DataSource.Select(arrays => arrays.Flatten().ToArray())];
 
-        public IEnumerator<object[]> GetEnumerator() => DataSource.Select<int[], object[]>(x => [x]).GetEnumerator();
+        public readonly static IEnumerable<object[]> ObjectDataSource = DataSource.Select<int[], object[]>(x => [x]);
+
+        public IEnumerator<object[]> GetEnumerator() => ObjectDataSource.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
