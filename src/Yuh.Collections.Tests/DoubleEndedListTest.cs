@@ -540,6 +540,20 @@ namespace Yuh.Collections.Tests
 
         [Theory]
         [ClassData(typeof(IntArrayData))]
+        public void PushBackTest(int[] data)
+        {
+            Span<int> dataSpan = data.AsSpan();
+            DoubleEndedList<int> list = [];
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                list.PushBack(data[i]);
+                Assert.Equal(dataSpan[..(i + 1)], list.AsReadOnlySpan());
+            }
+        }
+
+        [Theory]
+        [ClassData(typeof(IntArrayData))]
         public void PushBacRangeTest(int[] data)
         {
             Span<int> dataSpan = data.AsSpan();
@@ -558,6 +572,20 @@ namespace Yuh.Collections.Tests
                 list.PushBackRange(dataSpan[..i]);
                 Assert.Equal(expected[..list.Count], list.AsReadOnlySpan());
                 list.PopBackRange(buffer[..i]);
+            }
+        }
+
+        [Theory]
+        [ClassData(typeof(IntArrayData))]
+        public void PushFrontTest(int[] data)
+        {
+            Span<int> dataSpan = data.AsSpan();
+            DoubleEndedList<int> list = [];
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                list.PushFront(data[^(i + 1)]);
+                Assert.Equal(dataSpan[^(i + 1)..], list.AsReadOnlySpan());
             }
         }
 
