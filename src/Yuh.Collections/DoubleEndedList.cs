@@ -1285,7 +1285,7 @@ namespace Yuh.Collections
                 }
                 else
                 {
-                    ref var beginRef = ref Unsafe.Add(ref headRef, index - 1);
+                    ref var beginRef = ref Unsafe.Add(ref headRef, index);
                     var rangeLength = _count - index - 1;
 
                     // shift the elements in (index, _count) of the list.
